@@ -43,3 +43,12 @@ app.*.map.json
 /android/app/debug
 /android/app/profile
 /android/app/release
+
+# Environment / Secrets
+.env
+*.env
+../.mcp.json
+lib/config/secrets.dart
+
+# Supabase
+supabase/.temp/

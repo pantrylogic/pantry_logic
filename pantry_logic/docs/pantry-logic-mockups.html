@@ -1,0 +1,1747 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Pantry Logic — UI Mockups</title>
+<link href="https://fonts.googleapis.com/css2?family=Nunito+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<style>
+:root {
+  --primary: #2D5A27;
+  --primary-dark: #1E3D1A;
+  --secondary: #7A9E77;
+  --accent-light: #C5D8C2;
+  --accent-soft: #D4E2A5;
+  --bg: #F7F7F4;
+  --surface: #FFFFFF;
+  --text-primary: #2C2C2C;
+  --text-secondary: #6B6B6B;
+  --text-muted: #9E9E9E;
+  --success: #4CAF50;
+  --warning: #E8A838;
+  --error: #C75450;
+  --shadow: 0 1px 3px rgba(0,0,0,0.08);
+  --border: #E8E8E4;
+}
+
+[data-theme="dark"] {
+  --primary: #7FB87A;
+  --primary-dark: #2D5A27;
+  --secondary: #5A8A56;
+  --accent-light: #3A4D38;
+  --accent-soft: #A3C78F;
+  --bg: #1A1C1A;
+  --surface: #252825;
+  --text-primary: #E8E8E4;
+  --text-secondary: #9EAA9C;
+  --text-muted: #6B736B;
+  --success: #66BB6A;
+  --warning: #FFAB40;
+  --error: #EF5350;
+  --shadow: 0 1px 3px rgba(0,0,0,0.3);
+  --border: #3A3D3A;
+}
+
+* { margin: 0; padding: 0; box-sizing: border-box; }
+
+body {
+  font-family: 'Nunito Sans', sans-serif;
+  background: #111;
+  color: #ccc;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  min-height: 100vh;
+  padding: 20px;
+}
+
+/* Top controls */
+.controls {
+  display: flex;
+  gap: 12px;
+  align-items: center;
+  margin-bottom: 24px;
+  flex-wrap: wrap;
+  justify-content: center;
+}
+
+.controls button {
+  font-family: 'Nunito Sans', sans-serif;
+  font-size: 13px;
+  font-weight: 600;
+  padding: 8px 16px;
+  border: 1px solid #444;
+  border-radius: 8px;
+  background: #222;
+  color: #ccc;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.controls button.active {
+  background: #2D5A27;
+  border-color: #2D5A27;
+  color: #fff;
+}
+
+.controls button:hover {
+  border-color: #7FB87A;
+}
+
+.theme-toggle {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 13px;
+  color: #999;
+  margin-left: 16px;
+}
+
+.theme-toggle label {
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.screen-title {
+  font-size: 14px;
+  color: #888;
+  margin-bottom: 12px;
+  text-align: center;
+  letter-spacing: 0.5px;
+}
+
+/* Phone frame */
+.phone-frame {
+  width: 375px;
+  height: 812px;
+  border-radius: 40px;
+  border: 3px solid #333;
+  overflow: hidden;
+  position: relative;
+  background: var(--bg);
+  box-shadow: 0 20px 60px rgba(0,0,0,0.5);
+}
+
+.phone-screen {
+  width: 100%;
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  background: var(--bg);
+  color: var(--text-primary);
+}
+
+/* Status bar */
+.status-bar {
+  height: 54px;
+  padding: 14px 24px 0;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-size: 14px;
+  font-weight: 600;
+  flex-shrink: 0;
+}
+
+/* Screen content */
+.screen-content {
+  flex: 1;
+  overflow-y: auto;
+  padding: 0 20px 20px;
+}
+
+.screen-content::-webkit-scrollbar { display: none; }
+
+/* Bottom nav */
+.bottom-nav {
+  height: 72px;
+  background: var(--surface);
+  border-top: 1px solid var(--border);
+  display: flex;
+  justify-content: space-around;
+  align-items: center;
+  padding-bottom: 8px;
+  flex-shrink: 0;
+}
+
+.nav-item {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 2px;
+  font-size: 10px;
+  font-weight: 600;
+  color: var(--text-muted);
+  cursor: pointer;
+}
+
+.nav-item.active {
+  color: var(--primary);
+}
+
+.nav-item svg {
+  width: 22px;
+  height: 22px;
+}
+
+/* Screen: hidden by default */
+.screen { display: none; }
+.screen.active { display: flex; flex-direction: column; height: 100%; }
+
+/* ===== HOME SCREEN ===== */
+.home-greeting {
+  font-size: 22px;
+  font-weight: 700;
+  margin-bottom: 4px;
+  margin-top: 8px;
+}
+
+.home-subtitle {
+  font-size: 14px;
+  color: var(--text-secondary);
+  margin-bottom: 24px;
+}
+
+.tonight-card {
+  background: var(--surface);
+  border-radius: 12px;
+  padding: 16px 18px;
+  box-shadow: var(--shadow);
+  border: 1px solid var(--border);
+  margin-bottom: 16px;
+}
+
+.tonight-label {
+  font-size: 12px;
+  font-weight: 700;
+  color: var(--text-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.8px;
+  margin-bottom: 6px;
+}
+
+.tonight-meal {
+  font-size: 20px;
+  font-weight: 700;
+  color: var(--text-primary);
+}
+
+.tonight-status {
+  font-size: 13px;
+  color: var(--success);
+  margin-top: 4px;
+  font-weight: 500;
+}
+
+.hungry-btn {
+  background: var(--primary);
+  color: #fff;
+  border: none;
+  border-radius: 16px;
+  padding: 20px;
+  font-size: 18px;
+  font-weight: 700;
+  font-family: 'Nunito Sans', sans-serif;
+  width: 100%;
+  cursor: pointer;
+  margin-bottom: 16px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  transition: transform 0.15s;
+  box-shadow: 0 4px 16px rgba(45,90,39,0.25);
+}
+
+[data-theme="dark"] .hungry-btn {
+  background: #2D5A27;
+  color: #C5D8C2;
+  box-shadow: 0 4px 16px rgba(0,0,0,0.4);
+}
+
+.hungry-btn:hover { transform: scale(1.02); }
+
+.quick-stats {
+  display: flex;
+  gap: 12px;
+  margin-bottom: 16px;
+}
+
+.stat-card {
+  flex: 1;
+  background: var(--surface);
+  border-radius: 12px;
+  padding: 14px;
+  box-shadow: var(--shadow);
+  border: 1px solid var(--border);
+}
+
+.stat-number {
+  font-size: 24px;
+  font-weight: 800;
+  color: var(--primary);
+}
+
+.stat-label {
+  font-size: 11px;
+  color: var(--text-secondary);
+  font-weight: 600;
+}
+
+/* ===== GROCERY SCREEN ===== */
+.screen-header {
+  font-size: 24px;
+  font-weight: 700;
+  margin: 8px 0 16px;
+}
+
+.add-input-wrap {
+  display: flex;
+  gap: 8px;
+  margin-bottom: 20px;
+}
+
+.add-input {
+  flex: 1;
+  background: var(--surface);
+  border: 1.5px solid var(--border);
+  border-radius: 12px;
+  padding: 14px 16px;
+  font-size: 15px;
+  font-family: 'Nunito Sans', sans-serif;
+  color: var(--text-primary);
+  outline: none;
+}
+
+.add-input::placeholder { color: var(--text-muted); }
+
+.add-input:focus { border-color: var(--primary); }
+
+.add-btn {
+  background: var(--primary);
+  color: #fff;
+  border: none;
+  border-radius: 12px;
+  width: 48px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  font-size: 22px;
+  font-weight: 700;
+}
+
+.grocery-item {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 14px 0;
+  border-bottom: 1px solid var(--border);
+}
+
+.grocery-check {
+  width: 22px;
+  height: 22px;
+  border-radius: 6px;
+  border: 2px solid var(--secondary);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  cursor: pointer;
+}
+
+.grocery-check.checked {
+  background: var(--primary);
+  border-color: var(--primary);
+}
+
+.grocery-check.checked svg { opacity: 1; }
+.grocery-check svg { opacity: 0; }
+
+.grocery-info { flex: 1; }
+
+.grocery-name {
+  font-size: 15px;
+  font-weight: 600;
+}
+
+.grocery-name.checked-text {
+  text-decoration: line-through;
+  opacity: 0.45;
+}
+
+.grocery-note {
+  font-size: 12px;
+  color: var(--text-muted);
+  margin-top: 1px;
+}
+
+.grocery-user {
+  font-size: 12px;
+  color: var(--text-muted);
+  font-weight: 500;
+}
+
+/* Autocomplete */
+.autocomplete-dropdown {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  margin-top: -12px;
+  margin-bottom: 12px;
+  box-shadow: var(--shadow);
+  overflow: hidden;
+}
+
+.autocomplete-item {
+  padding: 10px 16px;
+  font-size: 14px;
+  color: var(--text-primary);
+  border-bottom: 1px solid var(--border);
+  cursor: pointer;
+}
+
+.autocomplete-item:last-child { border-bottom: none; }
+
+.autocomplete-item .match {
+  font-weight: 700;
+  color: var(--primary);
+}
+
+/* ===== INVENTORY SCREEN ===== */
+.search-bar {
+  background: var(--surface);
+  border: 1.5px solid var(--border);
+  border-radius: 12px;
+  padding: 12px 16px;
+  font-size: 15px;
+  font-family: 'Nunito Sans', sans-serif;
+  color: var(--text-primary);
+  width: 100%;
+  margin-bottom: 20px;
+  outline: none;
+}
+
+.search-bar::placeholder { color: var(--text-muted); }
+.search-bar:focus { border-color: var(--primary); }
+
+.location-group {
+  margin-bottom: 20px;
+}
+
+.location-header {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 10px;
+}
+
+.location-icon {
+  width: 28px;
+  height: 28px;
+  border-radius: 8px;
+  background: var(--accent-light);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 14px;
+}
+
+.location-name {
+  font-size: 14px;
+  font-weight: 700;
+  color: var(--text-secondary);
+  text-transform: uppercase;
+  letter-spacing: 0.6px;
+}
+
+.location-count {
+  font-size: 12px;
+  color: var(--text-muted);
+  margin-left: auto;
+}
+
+.inv-item {
+  background: var(--surface);
+  border-radius: 10px;
+  padding: 12px 14px;
+  margin-bottom: 6px;
+  box-shadow: var(--shadow);
+  border: 1px solid var(--border);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.inv-item-name {
+  font-size: 15px;
+  font-weight: 600;
+}
+
+.inv-item-detail {
+  font-size: 12px;
+  color: var(--text-muted);
+  margin-top: 2px;
+}
+
+.inv-item-qty {
+  font-size: 14px;
+  font-weight: 700;
+  color: var(--primary);
+  background: var(--accent-light);
+  padding: 4px 10px;
+  border-radius: 8px;
+}
+
+/* ===== MEALS SCREEN ===== */
+.meal-card {
+  background: var(--surface);
+  border-radius: 12px;
+  padding: 14px 16px;
+  margin-bottom: 10px;
+  box-shadow: var(--shadow);
+  border: 1px solid var(--border);
+  cursor: pointer;
+  transition: border-color 0.2s;
+}
+
+.meal-card:hover { border-color: var(--primary); }
+
+.meal-card-top {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.meal-card-name {
+  font-size: 16px;
+  font-weight: 700;
+}
+
+.category-chip {
+  font-size: 11px;
+  font-weight: 700;
+  padding: 4px 10px;
+  border-radius: 20px;
+  background: var(--accent-light);
+  color: var(--primary);
+}
+
+.meal-card-items {
+  display: flex;
+  gap: 6px;
+  flex-wrap: wrap;
+  margin-top: 10px;
+}
+
+.need-item {
+  font-size: 12px;
+  padding: 3px 8px;
+  border-radius: 6px;
+  font-weight: 500;
+}
+
+.need-item.have {
+  background: rgba(76, 175, 80, 0.12);
+  color: var(--success);
+}
+
+.need-item.missing {
+  background: rgba(232, 168, 56, 0.12);
+  color: var(--warning);
+}
+
+.meal-card-status {
+  font-size: 12px;
+  margin-top: 8px;
+  font-weight: 600;
+}
+
+.meal-card-status.ready { color: var(--success); }
+.meal-card-status.partial { color: var(--warning); }
+
+/* Meal detail overlay */
+.meal-detail-overlay {
+  position: absolute;
+  inset: 0;
+  background: var(--bg);
+  z-index: 10;
+  display: flex;
+  flex-direction: column;
+}
+
+.detail-header {
+  padding: 60px 20px 16px;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.back-btn {
+  width: 36px;
+  height: 36px;
+  border-radius: 10px;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  color: var(--text-primary);
+  font-size: 18px;
+}
+
+.detail-title {
+  font-size: 22px;
+  font-weight: 700;
+}
+
+.detail-content {
+  flex: 1;
+  padding: 0 20px;
+  overflow-y: auto;
+}
+
+.detail-section-title {
+  font-size: 12px;
+  font-weight: 700;
+  color: var(--text-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.8px;
+  margin: 20px 0 10px;
+}
+
+.need-list-item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 12px 0;
+  border-bottom: 1px solid var(--border);
+}
+
+.need-list-name {
+  font-size: 15px;
+  font-weight: 600;
+}
+
+.need-list-status {
+  font-size: 12px;
+  font-weight: 600;
+  padding: 4px 10px;
+  border-radius: 6px;
+}
+
+.need-list-status.have {
+  background: rgba(76,175,80,0.12);
+  color: var(--success);
+}
+
+.need-list-status.missing {
+  background: rgba(232,168,56,0.12);
+  color: var(--warning);
+}
+
+.add-missing-btn {
+  background: var(--primary);
+  color: #fff;
+  border: none;
+  border-radius: 12px;
+  padding: 14px;
+  font-size: 14px;
+  font-weight: 700;
+  font-family: 'Nunito Sans', sans-serif;
+  width: 100%;
+  cursor: pointer;
+  margin-top: 20px;
+}
+
+/* ===== CALENDAR SCREEN ===== */
+.week-strip {
+  display: flex;
+  gap: 4px;
+  margin-bottom: 24px;
+}
+
+.day-cell {
+  flex: 1;
+  text-align: center;
+  padding: 8px 2px;
+  border-radius: 10px;
+  cursor: pointer;
+}
+
+.day-cell.today {
+  background: var(--primary);
+  color: #fff;
+}
+
+.day-cell.today .day-name,
+.day-cell.today .day-number { color: #fff; }
+
+.day-name {
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--text-muted);
+}
+
+.day-number {
+  font-size: 16px;
+  font-weight: 700;
+  margin-top: 2px;
+  color: var(--text-primary);
+}
+
+.calendar-meal-card {
+  background: var(--surface);
+  border-radius: 12px;
+  padding: 14px 16px;
+  margin-bottom: 8px;
+  box-shadow: var(--shadow);
+  border: 1px solid var(--border);
+  display: flex;
+  align-items: center;
+  gap: 14px;
+}
+
+.cal-day-label {
+  font-size: 12px;
+  font-weight: 700;
+  color: var(--text-muted);
+  width: 36px;
+  flex-shrink: 0;
+}
+
+.cal-day-label.today-label { color: var(--primary); }
+
+.cal-meal-name {
+  font-size: 15px;
+  font-weight: 600;
+  flex: 1;
+}
+
+.cal-meal-empty {
+  font-size: 14px;
+  color: var(--text-muted);
+  font-style: italic;
+  flex: 1;
+}
+
+.cal-status-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+}
+
+.cal-status-dot.ready { background: var(--success); }
+.cal-status-dot.partial { background: var(--warning); }
+
+.eat-this-btn {
+  background: var(--primary);
+  color: #fff;
+  border: none;
+  border-radius: 10px;
+  padding: 8px 14px;
+  font-size: 12px;
+  font-weight: 700;
+  font-family: 'Nunito Sans', sans-serif;
+  cursor: pointer;
+}
+
+/* ===== HUNGRY FLOW ===== */
+.hungry-flow {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  height: 100%;
+  padding: 20px;
+  text-align: center;
+}
+
+.hungry-question {
+  font-size: 22px;
+  font-weight: 700;
+  margin-bottom: 32px;
+}
+
+.hunger-options {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  width: 100%;
+}
+
+.hunger-option {
+  background: var(--surface);
+  border: 2px solid var(--border);
+  border-radius: 14px;
+  padding: 18px;
+  font-size: 16px;
+  font-weight: 600;
+  font-family: 'Nunito Sans', sans-serif;
+  cursor: pointer;
+  color: var(--text-primary);
+  transition: all 0.15s;
+}
+
+.hunger-option:hover {
+  border-color: var(--primary);
+  background: var(--accent-light);
+}
+
+/* Hungry suggestion */
+.suggestion-card {
+  width: 100%;
+  text-align: center;
+}
+
+.suggestion-emoji {
+  font-size: 48px;
+  margin-bottom: 16px;
+}
+
+.suggestion-name {
+  font-size: 26px;
+  font-weight: 800;
+  margin-bottom: 8px;
+}
+
+.suggestion-status {
+  font-size: 14px;
+  font-weight: 600;
+  margin-bottom: 24px;
+  padding: 6px 14px;
+  border-radius: 8px;
+  display: inline-block;
+}
+
+.suggestion-status.ready {
+  background: rgba(76,175,80,0.12);
+  color: var(--success);
+}
+
+.suggestion-status.partial {
+  background: rgba(232,168,56,0.12);
+  color: var(--warning);
+}
+
+.suggestion-missing {
+  font-size: 13px;
+  color: var(--text-secondary);
+  margin-bottom: 32px;
+}
+
+.suggestion-actions {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  width: 100%;
+}
+
+.eat-this-big {
+  background: var(--primary);
+  color: #fff;
+  border: none;
+  border-radius: 14px;
+  padding: 18px;
+  font-size: 16px;
+  font-weight: 700;
+  font-family: 'Nunito Sans', sans-serif;
+  cursor: pointer;
+}
+
+.suggest-another {
+  background: transparent;
+  border: 2px solid var(--border);
+  border-radius: 14px;
+  padding: 16px;
+  font-size: 15px;
+  font-weight: 600;
+  font-family: 'Nunito Sans', sans-serif;
+  cursor: pointer;
+  color: var(--text-secondary);
+}
+
+/* ===== RESTOCK FLOW ===== */
+.restock-title {
+  font-size: 20px;
+  font-weight: 700;
+  margin-bottom: 6px;
+  text-align: center;
+}
+
+.restock-subtitle {
+  font-size: 14px;
+  color: var(--text-secondary);
+  margin-bottom: 24px;
+  text-align: center;
+}
+
+.restock-item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 14px 0;
+  border-bottom: 1px solid var(--border);
+}
+
+.restock-item-name {
+  font-size: 15px;
+  font-weight: 600;
+}
+
+.restock-actions {
+  display: flex;
+  gap: 8px;
+}
+
+.restock-btn {
+  font-size: 12px;
+  font-weight: 700;
+  font-family: 'Nunito Sans', sans-serif;
+  padding: 6px 12px;
+  border-radius: 8px;
+  border: none;
+  cursor: pointer;
+}
+
+.restock-btn.add-list {
+  background: var(--primary);
+  color: #fff;
+}
+
+.restock-btn.still-have {
+  background: var(--accent-light);
+  color: var(--primary);
+}
+
+.restock-done {
+  background: var(--primary);
+  color: #fff;
+  border: none;
+  border-radius: 12px;
+  padding: 16px;
+  font-size: 15px;
+  font-weight: 700;
+  font-family: 'Nunito Sans', sans-serif;
+  width: 100%;
+  cursor: pointer;
+  margin-top: 24px;
+}
+
+/* Auth screens */
+.auth-screen {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  height: 100%;
+  padding: 40px 24px;
+  text-align: center;
+}
+
+.auth-logo {
+  font-size: 40px;
+  margin-bottom: 8px;
+}
+
+.auth-title {
+  font-size: 28px;
+  font-weight: 800;
+  color: var(--primary);
+  margin-bottom: 4px;
+}
+
+.auth-subtitle {
+  font-size: 14px;
+  color: var(--text-secondary);
+  margin-bottom: 36px;
+  line-height: 1.4;
+}
+
+.auth-input {
+  background: var(--surface);
+  border: 1.5px solid var(--border);
+  border-radius: 12px;
+  padding: 14px 16px;
+  font-size: 15px;
+  font-family: 'Nunito Sans', sans-serif;
+  color: var(--text-primary);
+  width: 100%;
+  margin-bottom: 10px;
+  outline: none;
+}
+
+.auth-input::placeholder { color: var(--text-muted); }
+
+.auth-primary-btn {
+  background: var(--primary);
+  color: #fff;
+  border: none;
+  border-radius: 12px;
+  padding: 16px;
+  font-size: 15px;
+  font-weight: 700;
+  font-family: 'Nunito Sans', sans-serif;
+  width: 100%;
+  cursor: pointer;
+  margin-top: 8px;
+}
+
+.auth-secondary-btn {
+  background: transparent;
+  border: 2px solid var(--border);
+  border-radius: 12px;
+  padding: 14px;
+  font-size: 15px;
+  font-weight: 600;
+  font-family: 'Nunito Sans', sans-serif;
+  width: 100%;
+  cursor: pointer;
+  margin-top: 10px;
+  color: var(--text-secondary);
+}
+
+.auth-divider {
+  font-size: 12px;
+  color: var(--text-muted);
+  margin: 20px 0;
+}
+
+.invite-code {
+  font-size: 32px;
+  font-weight: 800;
+  letter-spacing: 6px;
+  color: var(--primary);
+  background: var(--accent-light);
+  padding: 16px 24px;
+  border-radius: 12px;
+  margin: 16px 0;
+}
+
+/* Screen label outside phone */
+.mockup-label {
+  font-size: 20px;
+  font-weight: 700;
+  color: #eee;
+  margin-bottom: 4px;
+  text-align: center;
+}
+
+.mockup-desc {
+  font-size: 13px;
+  color: #777;
+  margin-bottom: 16px;
+  text-align: center;
+  max-width: 375px;
+}
+
+/* Hide all screen views */
+.view { display: none; }
+.view.active { display: block; }
+</style>
+</head>
+<body>
+
+<div style="margin-bottom: 8px;">
+  <span style="font-size: 28px; font-weight: 800; color: #7FB87A;">🫙 Pantry Logic</span>
+  <span style="font-size: 14px; color: #666; margin-left: 8px;">UI Mockups — V1</span>
+</div>
+
+<div class="controls">
+  <button class="active" onclick="showScreen('home')">Home</button>
+  <button onclick="showScreen('grocery')">Grocery</button>
+  <button onclick="showScreen('grocery-typing')">Grocery (typing)</button>
+  <button onclick="showScreen('inventory')">Inventory</button>
+  <button onclick="showScreen('meals')">Meals</button>
+  <button onclick="showScreen('meal-detail')">Meal Detail</button>
+  <button onclick="showScreen('calendar')">Calendar</button>
+  <button onclick="showScreen('hungry-pick')">Hungry: Pick</button>
+  <button onclick="showScreen('hungry-result')">Hungry: Result</button>
+  <button onclick="showScreen('restock')">Restock Flow</button>
+  <button onclick="showScreen('auth')">Sign Up</button>
+  <button onclick="showScreen('join')">Join Home</button>
+  <div class="theme-toggle">
+    <label>
+      <input type="checkbox" id="darkToggle" onchange="toggleTheme()"> Dark mode
+    </label>
+  </div>
+</div>
+
+<div id="screenLabel" class="mockup-label">Home Dashboard</div>
+<div id="screenDesc" class="mockup-desc">The kitchen status board. Glance and know what's happening.</div>
+
+<div class="phone-frame" id="phoneFrame">
+  <div class="phone-screen">
+
+    <!-- ===== HOME ===== -->
+    <div class="screen active" id="screen-home">
+      <div class="status-bar">
+        <span>9:41</span>
+        <span style="font-size: 12px;">📶 🔋</span>
+      </div>
+      <div class="screen-content">
+        <div class="home-greeting">Hey, Justin 👋</div>
+        <div class="home-subtitle">Here's what's going on in the kitchen.</div>
+
+        <div class="tonight-card">
+          <div class="tonight-label">Tonight's Dinner</div>
+          <div class="tonight-meal">Chicken Tacos</div>
+          <div class="tonight-status">✓ You have everything</div>
+        </div>
+
+        <button class="hungry-btn" onclick="showScreen('hungry-pick')">
+          🍽 I'm Hungry
+        </button>
+
+        <div class="quick-stats">
+          <div class="stat-card">
+            <div class="stat-number">6</div>
+            <div class="stat-label">Grocery items</div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-number">23</div>
+            <div class="stat-label">In pantry</div>
+          </div>
+        </div>
+
+        <div class="tonight-card" style="cursor: pointer;" onclick="showScreen('calendar')">
+          <div class="tonight-label">This Week</div>
+          <div style="display: flex; justify-content: space-between; margin-top: 8px;">
+            <div style="text-align: center;">
+              <div style="font-size: 11px; color: var(--text-muted);">Mon</div>
+              <div style="font-size: 13px; font-weight: 600; color: var(--primary);">Tacos</div>
+            </div>
+            <div style="text-align: center;">
+              <div style="font-size: 11px; color: var(--text-muted);">Tue</div>
+              <div style="font-size: 13px; font-weight: 600;">Pasta</div>
+            </div>
+            <div style="text-align: center;">
+              <div style="font-size: 11px; color: var(--text-muted);">Wed</div>
+              <div style="font-size: 13px; color: var(--text-muted); font-style: italic;">—</div>
+            </div>
+            <div style="text-align: center;">
+              <div style="font-size: 11px; color: var(--text-muted);">Thu</div>
+              <div style="font-size: 13px; font-weight: 600;">Pizza</div>
+            </div>
+            <div style="text-align: center;">
+              <div style="font-size: 11px; color: var(--text-muted);">Fri</div>
+              <div style="font-size: 13px; color: var(--text-muted); font-style: italic;">—</div>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="bottom-nav">
+        <div class="nav-item active">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-4 0a1 1 0 01-1-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 01-1 1"/></svg>
+          Home
+        </div>
+        <div class="nav-item" onclick="showScreen('grocery')">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 3h2l.4 2M7 13h10l4-8H5.4M7 13L5.4 5M7 13l-2.293 2.293c-.63.63-.184 1.707.707 1.707H17m0 0a2 2 0 100 4 2 2 0 000-4zm-8 2a2 2 0 100 4 2 2 0 000-4z"/></svg>
+          Grocery
+        </div>
+        <div class="nav-item" onclick="showScreen('inventory')">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="2"/><path d="M3 9h18M9 21V9"/></svg>
+          Pantry
+        </div>
+        <div class="nav-item" onclick="showScreen('meals')">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2z"/><path d="M12 6v6l4 2"/></svg>
+          Meals
+        </div>
+        <div class="nav-item" onclick="showScreen('calendar')">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="4" width="18" height="18" rx="2"/><path d="M16 2v4M8 2v4M3 10h18"/></svg>
+          Calendar
+        </div>
+      </div>
+    </div>
+
+    <!-- ===== GROCERY ===== -->
+    <div class="screen" id="screen-grocery">
+      <div class="status-bar"><span>9:41</span><span style="font-size: 12px;">📶 🔋</span></div>
+      <div class="screen-content">
+        <div class="screen-header">Grocery List</div>
+        <div class="add-input-wrap">
+          <input class="add-input" placeholder="Add an item..." disabled>
+          <div class="add-btn">+</div>
+        </div>
+
+        <div class="grocery-item">
+          <div class="grocery-check"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="3"><path d="M5 13l4 4L19 7"/></svg></div>
+          <div class="grocery-info">
+            <div class="grocery-name">Chicken breast</div>
+            <div class="grocery-note">Boneless, skinless</div>
+          </div>
+          <div class="grocery-user">(Sarah)</div>
+        </div>
+
+        <div class="grocery-item">
+          <div class="grocery-check"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="3"><path d="M5 13l4 4L19 7"/></svg></div>
+          <div class="grocery-info">
+            <div class="grocery-name">Tortillas</div>
+          </div>
+          <div class="grocery-user">(Justin)</div>
+        </div>
+
+        <div class="grocery-item">
+          <div class="grocery-check"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="3"><path d="M5 13l4 4L19 7"/></svg></div>
+          <div class="grocery-info">
+            <div class="grocery-name">Shredded cheese</div>
+          </div>
+          <div class="grocery-user">(Tyler)</div>
+        </div>
+
+        <div class="grocery-item">
+          <div class="grocery-check"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="3"><path d="M5 13l4 4L19 7"/></svg></div>
+          <div class="grocery-info">
+            <div class="grocery-name">Pizza Pops</div>
+          </div>
+          <div class="grocery-user">(Tyler)</div>
+        </div>
+
+        <div class="grocery-item">
+          <div class="grocery-check"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="3"><path d="M5 13l4 4L19 7"/></svg></div>
+          <div class="grocery-info">
+            <div class="grocery-name">Milk</div>
+            <div class="grocery-note">2%</div>
+          </div>
+          <div class="grocery-user">(Sarah)</div>
+        </div>
+
+        <div class="grocery-item">
+          <div class="grocery-check checked"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="3"><path d="M5 13l4 4L19 7"/></svg></div>
+          <div class="grocery-info">
+            <div class="grocery-name checked-text">Eggs</div>
+          </div>
+          <div class="grocery-user" style="opacity: 0.4;">(Justin)</div>
+        </div>
+      </div>
+      <div class="bottom-nav">
+        <div class="nav-item" onclick="showScreen('home')">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-4 0a1 1 0 01-1-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 01-1 1"/></svg>
+          Home
+        </div>
+        <div class="nav-item active">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 3h2l.4 2M7 13h10l4-8H5.4M7 13L5.4 5M7 13l-2.293 2.293c-.63.63-.184 1.707.707 1.707H17m0 0a2 2 0 100 4 2 2 0 000-4zm-8 2a2 2 0 100 4 2 2 0 000-4z"/></svg>
+          Grocery
+        </div>
+        <div class="nav-item" onclick="showScreen('inventory')">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="2"/><path d="M3 9h18M9 21V9"/></svg>
+          Pantry
+        </div>
+        <div class="nav-item" onclick="showScreen('meals')">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2z"/><path d="M12 6v6l4 2"/></svg>
+          Meals
+        </div>
+        <div class="nav-item" onclick="showScreen('calendar')">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="4" width="18" height="18" rx="2"/><path d="M16 2v4M8 2v4M3 10h18"/></svg>
+          Calendar
+        </div>
+      </div>
+    </div>
+
+    <!-- ===== GROCERY TYPING (autocomplete) ===== -->
+    <div class="screen" id="screen-grocery-typing">
+      <div class="status-bar"><span>9:41</span><span style="font-size: 12px;">📶 🔋</span></div>
+      <div class="screen-content">
+        <div class="screen-header">Grocery List</div>
+        <div class="add-input-wrap">
+          <input class="add-input" value="chi" style="border-color: var(--primary);" disabled>
+          <div class="add-btn">+</div>
+        </div>
+        <div class="autocomplete-dropdown">
+          <div class="autocomplete-item"><span class="match">Chi</span>cken breast</div>
+          <div class="autocomplete-item"><span class="match">Chi</span>li powder</div>
+          <div class="autocomplete-item"><span class="match">Chi</span>ps</div>
+        </div>
+
+        <div class="grocery-item">
+          <div class="grocery-check"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="3"><path d="M5 13l4 4L19 7"/></svg></div>
+          <div class="grocery-info"><div class="grocery-name">Tortillas</div></div>
+          <div class="grocery-user">(Justin)</div>
+        </div>
+        <div class="grocery-item">
+          <div class="grocery-check"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="3"><path d="M5 13l4 4L19 7"/></svg></div>
+          <div class="grocery-info"><div class="grocery-name">Pizza Pops</div></div>
+          <div class="grocery-user">(Tyler)</div>
+        </div>
+      </div>
+      <div class="bottom-nav">
+        <div class="nav-item" onclick="showScreen('home')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-4 0a1 1 0 01-1-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 01-1 1"/></svg>Home</div>
+        <div class="nav-item active"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 3h2l.4 2M7 13h10l4-8H5.4M7 13L5.4 5M7 13l-2.293 2.293c-.63.63-.184 1.707.707 1.707H17m0 0a2 2 0 100 4 2 2 0 000-4zm-8 2a2 2 0 100 4 2 2 0 000-4z"/></svg>Grocery</div>
+        <div class="nav-item"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="2"/><path d="M3 9h18M9 21V9"/></svg>Pantry</div>
+        <div class="nav-item"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2z"/><path d="M12 6v6l4 2"/></svg>Meals</div>
+        <div class="nav-item"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="4" width="18" height="18" rx="2"/><path d="M16 2v4M8 2v4M3 10h18"/></svg>Calendar</div>
+      </div>
+    </div>
+
+    <!-- ===== INVENTORY ===== -->
+    <div class="screen" id="screen-inventory">
+      <div class="status-bar"><span>9:41</span><span style="font-size: 12px;">📶 🔋</span></div>
+      <div class="screen-content">
+        <div class="screen-header">Pantry</div>
+        <input class="search-bar" placeholder="Search pantry..." disabled>
+
+        <div class="location-group">
+          <div class="location-header">
+            <div class="location-icon">🧊</div>
+            <div class="location-name">Fridge</div>
+            <div class="location-count">8 items</div>
+          </div>
+          <div class="inv-item">
+            <div>
+              <div class="inv-item-name">Milk</div>
+              <div class="inv-item-detail">2%</div>
+            </div>
+            <div class="inv-item-qty">×1</div>
+          </div>
+          <div class="inv-item">
+            <div><div class="inv-item-name">Eggs</div></div>
+            <div class="inv-item-qty">×12</div>
+          </div>
+          <div class="inv-item">
+            <div><div class="inv-item-name">Shredded cheese</div></div>
+          </div>
+          <div class="inv-item">
+            <div><div class="inv-item-name">Greek yogurt</div></div>
+            <div class="inv-item-qty">×3</div>
+          </div>
+        </div>
+
+        <div class="location-group">
+          <div class="location-header">
+            <div class="location-icon">❄️</div>
+            <div class="location-name">Freezer</div>
+            <div class="location-count">5 items</div>
+          </div>
+          <div class="inv-item">
+            <div><div class="inv-item-name">Frozen pizza</div></div>
+            <div class="inv-item-qty">×3</div>
+          </div>
+          <div class="inv-item">
+            <div><div class="inv-item-name">Pizza Pops</div></div>
+            <div class="inv-item-qty">×8</div>
+          </div>
+          <div class="inv-item">
+            <div><div class="inv-item-name">Chicken breast</div></div>
+          </div>
+        </div>
+
+        <div class="location-group">
+          <div class="location-header">
+            <div class="location-icon">🏠</div>
+            <div class="location-name">Pantry</div>
+            <div class="location-count">10 items</div>
+          </div>
+          <div class="inv-item">
+            <div><div class="inv-item-name">Tortillas</div></div>
+          </div>
+          <div class="inv-item">
+            <div><div class="inv-item-name">Rice</div></div>
+          </div>
+          <div class="inv-item">
+            <div><div class="inv-item-name">Taco seasoning</div></div>
+            <div class="inv-item-qty">×2</div>
+          </div>
+          <div class="inv-item">
+            <div><div class="inv-item-name">Cereal</div></div>
+          </div>
+        </div>
+      </div>
+      <div class="bottom-nav">
+        <div class="nav-item" onclick="showScreen('home')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-4 0a1 1 0 01-1-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 01-1 1"/></svg>Home</div>
+        <div class="nav-item" onclick="showScreen('grocery')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 3h2l.4 2M7 13h10l4-8H5.4M7 13L5.4 5M7 13l-2.293 2.293c-.63.63-.184 1.707.707 1.707H17m0 0a2 2 0 100 4 2 2 0 000-4zm-8 2a2 2 0 100 4 2 2 0 000-4z"/></svg>Grocery</div>
+        <div class="nav-item active"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="2"/><path d="M3 9h18M9 21V9"/></svg>Pantry</div>
+        <div class="nav-item" onclick="showScreen('meals')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2z"/><path d="M12 6v6l4 2"/></svg>Meals</div>
+        <div class="nav-item" onclick="showScreen('calendar')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="4" width="18" height="18" rx="2"/><path d="M16 2v4M8 2v4M3 10h18"/></svg>Calendar</div>
+      </div>
+    </div>
+
+    <!-- ===== MEALS ===== -->
+    <div class="screen" id="screen-meals">
+      <div class="status-bar"><span>9:41</span><span style="font-size: 12px;">📶 🔋</span></div>
+      <div class="screen-content">
+        <div class="screen-header">Meals</div>
+        <div class="add-input-wrap" style="margin-bottom: 16px;">
+          <input class="add-input" placeholder="Add a meal..." disabled>
+          <div class="add-btn">+</div>
+        </div>
+
+        <div class="meal-card" onclick="showScreen('meal-detail')">
+          <div class="meal-card-top">
+            <div class="meal-card-name">Chicken Tacos</div>
+            <div class="category-chip">Meal</div>
+          </div>
+          <div class="meal-card-items">
+            <span class="need-item have">✓ Chicken</span>
+            <span class="need-item have">✓ Tortillas</span>
+            <span class="need-item have">✓ Cheese</span>
+            <span class="need-item have">✓ Taco seasoning</span>
+          </div>
+          <div class="meal-card-status ready">✓ You have everything</div>
+        </div>
+
+        <div class="meal-card">
+          <div class="meal-card-top">
+            <div class="meal-card-name">Spaghetti</div>
+            <div class="category-chip">Meal</div>
+          </div>
+          <div class="meal-card-items">
+            <span class="need-item have">✓ Pasta</span>
+            <span class="need-item missing">✗ Sauce</span>
+            <span class="need-item missing">✗ Ground beef</span>
+          </div>
+          <div class="meal-card-status partial">Missing 2 items</div>
+        </div>
+
+        <div class="meal-card">
+          <div class="meal-card-top">
+            <div class="meal-card-name">Frozen Pizza</div>
+            <div class="category-chip">Meal</div>
+          </div>
+          <div class="meal-card-items">
+            <span class="need-item have">✓ Frozen pizza</span>
+          </div>
+          <div class="meal-card-status ready">✓ You have everything</div>
+        </div>
+
+        <div class="meal-card">
+          <div class="meal-card-top">
+            <div class="meal-card-name">Yogurt Bowl</div>
+            <div class="category-chip">Light Meal</div>
+          </div>
+          <div class="meal-card-items">
+            <span class="need-item have">✓ Greek yogurt</span>
+            <span class="need-item have">✓ Cereal</span>
+          </div>
+          <div class="meal-card-status ready">✓ You have everything</div>
+        </div>
+
+        <div class="meal-card">
+          <div class="meal-card-top">
+            <div class="meal-card-name">Pizza Pops</div>
+            <div class="category-chip">Snack</div>
+          </div>
+        </div>
+
+        <div class="meal-card">
+          <div class="meal-card-top">
+            <div class="meal-card-name">Cereal</div>
+            <div class="category-chip">Snack</div>
+          </div>
+          <div class="meal-card-items">
+            <span class="need-item have">✓ Cereal</span>
+            <span class="need-item have">✓ Milk</span>
+          </div>
+          <div class="meal-card-status ready">✓ You have everything</div>
+        </div>
+      </div>
+      <div class="bottom-nav">
+        <div class="nav-item" onclick="showScreen('home')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-4 0a1 1 0 01-1-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 01-1 1"/></svg>Home</div>
+        <div class="nav-item" onclick="showScreen('grocery')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 3h2l.4 2M7 13h10l4-8H5.4M7 13L5.4 5M7 13l-2.293 2.293c-.63.63-.184 1.707.707 1.707H17m0 0a2 2 0 100 4 2 2 0 000-4zm-8 2a2 2 0 100 4 2 2 0 000-4z"/></svg>Grocery</div>
+        <div class="nav-item"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="2"/><path d="M3 9h18M9 21V9"/></svg>Pantry</div>
+        <div class="nav-item active"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2z"/><path d="M12 6v6l4 2"/></svg>Meals</div>
+        <div class="nav-item" onclick="showScreen('calendar')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="4" width="18" height="18" rx="2"/><path d="M16 2v4M8 2v4M3 10h18"/></svg>Calendar</div>
+      </div>
+    </div>
+
+    <!-- ===== MEAL DETAIL ===== -->
+    <div class="screen" id="screen-meal-detail">
+      <div class="meal-detail-overlay">
+        <div class="detail-header">
+          <div class="back-btn" onclick="showScreen('meals')">←</div>
+          <div class="detail-title">Chicken Tacos</div>
+          <div class="category-chip" style="margin-left: auto;">Meal</div>
+        </div>
+        <div class="detail-content">
+          <div class="detail-section-title">Need List</div>
+
+          <div class="need-list-item">
+            <div class="need-list-name">Chicken breast</div>
+            <div class="need-list-status have">In pantry</div>
+          </div>
+          <div class="need-list-item">
+            <div class="need-list-name">Tortillas</div>
+            <div class="need-list-status have">In pantry</div>
+          </div>
+          <div class="need-list-item">
+            <div class="need-list-name">Shredded cheese</div>
+            <div class="need-list-status have">In fridge</div>
+          </div>
+          <div class="need-list-item">
+            <div class="need-list-name">Taco seasoning</div>
+            <div class="need-list-status have">In pantry</div>
+          </div>
+          <div class="need-list-item">
+            <div class="need-list-name">Salsa</div>
+            <div class="need-list-status missing">Missing</div>
+          </div>
+          <div class="need-list-item">
+            <div class="need-list-name">Sour cream</div>
+            <div class="need-list-status missing">Missing</div>
+          </div>
+
+          <button class="add-missing-btn">Add 2 missing items to grocery list</button>
+
+          <div style="margin-top: 20px;">
+            <button class="eat-this-big" style="width: 100%;" onclick="showScreen('restock')">🍽 Eat This</button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ===== CALENDAR ===== -->
+    <div class="screen" id="screen-calendar">
+      <div class="status-bar"><span>9:41</span><span style="font-size: 12px;">📶 🔋</span></div>
+      <div class="screen-content">
+        <div class="screen-header">This Week</div>
+
+        <div class="week-strip">
+          <div class="day-cell today">
+            <div class="day-name">Mon</div>
+            <div class="day-number">17</div>
+          </div>
+          <div class="day-cell">
+            <div class="day-name">Tue</div>
+            <div class="day-number">18</div>
+          </div>
+          <div class="day-cell">
+            <div class="day-name">Wed</div>
+            <div class="day-number">19</div>
+          </div>
+          <div class="day-cell">
+            <div class="day-name">Thu</div>
+            <div class="day-number">20</div>
+          </div>
+          <div class="day-cell">
+            <div class="day-name">Fri</div>
+            <div class="day-number">21</div>
+          </div>
+          <div class="day-cell">
+            <div class="day-name">Sat</div>
+            <div class="day-number">22</div>
+          </div>
+          <div class="day-cell">
+            <div class="day-name">Sun</div>
+            <div class="day-number">23</div>
+          </div>
+        </div>
+
+        <div class="calendar-meal-card">
+          <div class="cal-day-label today-label">Mon</div>
+          <div class="cal-meal-name">Chicken Tacos</div>
+          <div class="cal-status-dot ready"></div>
+          <button class="eat-this-btn" onclick="showScreen('restock')">Eat This</button>
+        </div>
+
+        <div class="calendar-meal-card">
+          <div class="cal-day-label">Tue</div>
+          <div class="cal-meal-name">Spaghetti</div>
+          <div class="cal-status-dot partial"></div>
+        </div>
+
+        <div class="calendar-meal-card">
+          <div class="cal-day-label">Wed</div>
+          <div class="cal-meal-empty">Tap to plan dinner</div>
+        </div>
+
+        <div class="calendar-meal-card">
+          <div class="cal-day-label">Thu</div>
+          <div class="cal-meal-name">Frozen Pizza</div>
+          <div class="cal-status-dot ready"></div>
+        </div>
+
+        <div class="calendar-meal-card">
+          <div class="cal-day-label">Fri</div>
+          <div class="cal-meal-empty">Tap to plan dinner</div>
+        </div>
+
+        <div class="calendar-meal-card">
+          <div class="cal-day-label">Sat</div>
+          <div class="cal-meal-empty">Tap to plan dinner</div>
+        </div>
+
+        <div class="calendar-meal-card">
+          <div class="cal-day-label">Sun</div>
+          <div class="cal-meal-empty">Tap to plan dinner</div>
+        </div>
+      </div>
+      <div class="bottom-nav">
+        <div class="nav-item" onclick="showScreen('home')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-4 0a1 1 0 01-1-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 01-1 1"/></svg>Home</div>
+        <div class="nav-item" onclick="showScreen('grocery')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 3h2l.4 2M7 13h10l4-8H5.4M7 13L5.4 5M7 13l-2.293 2.293c-.63.63-.184 1.707.707 1.707H17m0 0a2 2 0 100 4 2 2 0 000-4zm-8 2a2 2 0 100 4 2 2 0 000-4z"/></svg>Grocery</div>
+        <div class="nav-item"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="2"/><path d="M3 9h18M9 21V9"/></svg>Pantry</div>
+        <div class="nav-item"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2z"/><path d="M12 6v6l4 2"/></svg>Meals</div>
+        <div class="nav-item active"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="4" width="18" height="18" rx="2"/><path d="M16 2v4M8 2v4M3 10h18"/></svg>Calendar</div>
+      </div>
+    </div>
+
+    <!-- ===== HUNGRY: PICK CATEGORY ===== -->
+    <div class="screen" id="screen-hungry-pick">
+      <div class="status-bar"><span>9:41</span><span style="font-size: 12px;">📶 🔋</span></div>
+      <div class="hungry-flow">
+        <div style="font-size: 48px; margin-bottom: 8px;">🍽</div>
+        <div class="hungry-question">What are you looking for?</div>
+        <div class="hunger-options">
+          <button class="hunger-option" onclick="showScreen('hungry-result')">🍿 Snack</button>
+          <button class="hunger-option" onclick="showScreen('hungry-result')">🥗 Light Meal</button>
+          <button class="hunger-option" onclick="showScreen('hungry-result')">🍛 Meal</button>
+        </div>
+        <div style="margin-top: 24px;">
+          <span style="font-size: 13px; color: var(--text-muted); cursor: pointer;" onclick="showScreen('home')">← Back to home</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- ===== HUNGRY: RESULT ===== -->
+    <div class="screen" id="screen-hungry-result">
+      <div class="status-bar"><span>9:41</span><span style="font-size: 12px;">📶 🔋</span></div>
+      <div class="hungry-flow">
+        <div class="suggestion-card">
+          <div class="suggestion-emoji">🌮</div>
+          <div class="suggestion-name">Chicken Tacos</div>
+          <div class="suggestion-status ready">✓ You have everything</div>
+          <div class="suggestion-actions">
+            <button class="eat-this-big" onclick="showScreen('restock')">🍽 Eat This</button>
+            <button class="suggest-another">Suggest Another</button>
+          </div>
+        </div>
+        <div style="margin-top: 20px;">
+          <span style="font-size: 13px; color: var(--text-muted); cursor: pointer;" onclick="showScreen('hungry-pick')">← Change category</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- ===== RESTOCK FLOW ===== -->
+    <div class="screen" id="screen-restock">
+      <div class="status-bar"><span>9:41</span><span style="font-size: 12px;">📶 🔋</span></div>
+      <div class="screen-content" style="padding-top: 20px;">
+        <div style="text-align: center; font-size: 36px; margin-bottom: 12px;">✅</div>
+        <div class="restock-title">Chicken Tacos — enjoy!</div>
+        <div class="restock-subtitle">Need to restock anything?</div>
+
+        <div class="restock-item">
+          <div class="restock-item-name">Chicken breast</div>
+          <div class="restock-actions">
+            <button class="restock-btn add-list">Add to list</button>
+            <button class="restock-btn still-have">Still have some</button>
+          </div>
+        </div>
+
+        <div class="restock-item">
+          <div class="restock-item-name">Tortillas</div>
+          <div class="restock-actions">
+            <button class="restock-btn add-list">Add to list</button>
+            <button class="restock-btn still-have">Still have some</button>
+          </div>
+        </div>
+
+        <div class="restock-item">
+          <div class="restock-item-name">Shredded cheese</div>
+          <div class="restock-actions">
+            <button class="restock-btn add-list">Add to list</button>
+            <button class="restock-btn still-have">Still have some</button>
+          </div>
+        </div>
+
+        <div class="restock-item">
+          <div>
+            <div class="restock-item-name">Taco seasoning</div>
+            <div style="font-size: 11px; color: var(--text-muted);">2 → 1 remaining</div>
+          </div>
+          <div style="font-size: 13px; color: var(--success); font-weight: 600;">Auto-reduced ✓</div>
+        </div>
+
+        <button class="restock-done" onclick="showScreen('home')">Done</button>
+      </div>
+    </div>
+
+    <!-- ===== AUTH: SIGN UP ===== -->
+    <div class="screen" id="screen-auth">
+      <div class="auth-screen">
+        <div class="auth-logo">🫙</div>
+        <div class="auth-title">Pantry Logic</div>
+        <div class="auth-subtitle">Know what you have. Know what to buy.<br>Decide what to eat in seconds.</div>
+        <input class="auth-input" placeholder="Your name" disabled>
+        <input class="auth-input" placeholder="Email" disabled>
+        <input class="auth-input" placeholder="Password" type="password" disabled>
+        <button class="auth-primary-btn">Create Account</button>
+        <div class="auth-divider">— or —</div>
+        <button class="auth-secondary-btn" onclick="showScreen('join')">Join a Household</button>
+      </div>
+    </div>
+
+    <!-- ===== JOIN HOME ===== -->
+    <div class="screen" id="screen-join">
+      <div class="auth-screen">
+        <div class="auth-logo">🏠</div>
+        <div class="auth-title" style="font-size: 22px;">Join a Household</div>
+        <div class="auth-subtitle">Enter the code from someone in your household.</div>
+        <input class="auth-input" placeholder="Household code" style="text-align: center; font-size: 20px; letter-spacing: 4px; font-weight: 700;" disabled>
+        <button class="auth-primary-btn">Join</button>
+        <div class="auth-divider">— or —</div>
+        <div style="margin-bottom: 24px;">
+          <div style="font-size: 14px; color: var(--text-secondary); margin-bottom: 12px;">Starting your own household?</div>
+          <button class="auth-secondary-btn" onclick="showScreen('auth')">Create a New Home</button>
+        </div>
+        <div style="font-size: 12px; color: var(--text-muted);">
+          Your household code:<br>
+          <div class="invite-code">TACO42</div>
+          Share this with your family
+        </div>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<script>
+const screens = {
+  'home': { label: 'Home Dashboard', desc: 'The kitchen status board. Glance and know what\'s happening.' },
+  'grocery': { label: 'Grocery List', desc: 'Shared list. Anyone can add. Checked items go to inventory.' },
+  'grocery-typing': { label: 'Grocery List (Typing)', desc: 'Text-first input with autocomplete from existing items.' },
+  'inventory': { label: 'Pantry Inventory', desc: 'Everything in the house, grouped by location.' },
+  'meals': { label: 'Meals', desc: 'Household meals with need lists and inventory status.' },
+  'meal-detail': { label: 'Meal Detail', desc: 'Full view of a meal with need list and "Add missing to list" action.' },
+  'calendar': { label: 'Dinner Calendar', desc: 'One meal per day. Plan the week at a glance.' },
+  'hungry-pick': { label: 'Hungry Button: Pick Category', desc: '"What are you looking for?" — fast, centered, no clutter.' },
+  'hungry-result': { label: 'Hungry Button: Suggestion', desc: 'One suggestion at a time. Eat This or Suggest Another.' },
+  'restock': { label: 'Restock Flow', desc: 'After eating: items with qty auto-reduce. Others prompt to restock or keep.' },
+  'auth': { label: 'Sign Up', desc: 'Create an account and start a household.' },
+  'join': { label: 'Join a Household', desc: 'Enter a code to join. Or create your own home.' }
+};
+
+function showScreen(id) {
+  document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+  document.getElementById('screen-' + id).classList.add('active');
+
+  document.querySelectorAll('.controls button').forEach(b => b.classList.remove('active'));
+  document.querySelectorAll('.controls button').forEach(b => {
+    if (b.textContent.toLowerCase().includes(id.split('-')[0]) || b.onclick?.toString().includes(id)) {
+      // handled below
+    }
+  });
+  // Highlight correct button
+  document.querySelectorAll('.controls button').forEach(b => {
+    const onclick = b.getAttribute('onclick');
+    if (onclick && onclick.includes("'" + id + "'")) {
+      b.classList.add('active');
+    }
+  });
+
+  const info = screens[id];
+  if (info) {
+    document.getElementById('screenLabel').textContent = info.label;
+    document.getElementById('screenDesc').textContent = info.desc;
+  }
+}
+
+function toggleTheme() {
+  const dark = document.getElementById('darkToggle').checked;
+  document.getElementById('phoneFrame').setAttribute('data-theme', dark ? 'dark' : 'light');
+}
+</script>
+
+</body>
+</html>
