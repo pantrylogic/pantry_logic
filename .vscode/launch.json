@@ -1,0 +1,12 @@
+{
+  "version": "0.2.0",
+  "configurations": [
+    {
+      "name": "Pantry Logic (Chrome)",
+      "type": "dart",
+      "request": "launch",
+      "program": "pantry_logic/lib/main.dart",
+      "args": ["--web-port", "8080"]
+    }
+  ]
+}

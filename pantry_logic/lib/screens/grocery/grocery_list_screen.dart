@@ -208,6 +208,21 @@ class _GroceryListScreenState extends State<GroceryListScreen> {
                 child: const Text('Save'),
               ),
             ),
+            const SizedBox(height: 8),
+            SizedBox(
+              width: double.infinity,
+              height: 48,
+              child: TextButton(
+                onPressed: () {
+                  Navigator.pop(ctx);
+                  _deleteItem(item);
+                },
+                style: TextButton.styleFrom(
+                  foregroundColor: isDark ? AppColors.errorDm : AppColors.error,
+                ),
+                child: const Text('Delete item'),
+              ),
+            ),
           ],
         ),
       ),

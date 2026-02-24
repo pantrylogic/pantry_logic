@@ -189,6 +189,10 @@ class _PantryScreenState extends State<PantryScreen> {
             }
           }
         },
+        onDelete: () {
+          Navigator.pop(ctx);
+          _deleteItem(item);
+        },
       ),
     );
   }
@@ -583,6 +587,7 @@ class _EditItemSheet extends StatelessWidget {
     required this.initialQuantity,
     required this.initialNotes,
     required this.onSave,
+    this.onDelete,
   });
 
   final InventoryItem item;
@@ -591,6 +596,7 @@ class _EditItemSheet extends StatelessWidget {
   final String initialQuantity;
   final String initialNotes;
   final void Function(String location, String quantity, String notes) onSave;
+  final VoidCallback? onDelete;
 
   @override
   Widget build(BuildContext context) {
@@ -602,6 +608,7 @@ class _EditItemSheet extends StatelessWidget {
       initialNotes: initialNotes,
       saveLabel: 'Save',
       onSave: onSave,
+      onDelete: onDelete,
     );
   }
 }
@@ -617,6 +624,7 @@ class _ItemSheet extends StatefulWidget {
     required this.initialNotes,
     required this.saveLabel,
     required this.onSave,
+    this.onDelete,
   });
 
   final String title;
@@ -626,6 +634,7 @@ class _ItemSheet extends StatefulWidget {
   final String initialNotes;
   final String saveLabel;
   final void Function(String location, String quantity, String notes) onSave;
+  final VoidCallback? onDelete;
 
   @override
   State<_ItemSheet> createState() => _ItemSheetState();
@@ -736,6 +745,19 @@ class _ItemSheetState extends State<_ItemSheet> {
                   : Text(widget.saveLabel),
             ),
           ),
+          if (widget.onDelete != null) ...[
+            const SizedBox(height: 8),
+            SizedBox(
+              width: double.infinity,
+              child: TextButton(
+                onPressed: widget.onDelete,
+                style: TextButton.styleFrom(
+                  foregroundColor: Theme.of(context).colorScheme.error,
+                ),
+                child: const Text('Delete item'),
+              ),
+            ),
+          ],
         ],
       ),
     );
