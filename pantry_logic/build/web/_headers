@@ -1,0 +1,8 @@
+/canvaskit/*.wasm
+  Content-Type: application/wasm
+
+/flutter.js
+  Content-Type: application/javascript
+
+/flutter_bootstrap.js
+  Content-Type: application/javascript
