@@ -14,9 +14,6 @@ dependencies:
   # Supabase backend
   supabase_flutter: ^2.8.4
 
-  # Load .env credentials
-  flutter_dotenv: ^5.2.1
-
   # Nunito Sans typography
   google_fonts: ^6.2.1
 
@@ -28,9 +25,6 @@ dev_dependencies:
 
 flutter:
   uses-material-design: true
-
-  assets:
-    - .env
 
   fonts:
     - family: NotoColorEmoji

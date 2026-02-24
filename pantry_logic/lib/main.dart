@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
 import 'core/theme.dart';
@@ -12,13 +11,9 @@ import 'screens/shell/main_shell.dart';
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
 
-  // Load credentials from .env
-  await dotenv.load(fileName: '.env');
-
-  // Initialise Supabase
   await Supabase.initialize(
-    url: dotenv.env['SUPABASE_URL']!,
-    anonKey: dotenv.env['SUPABASE_ANON_KEY']!,
+    url: 'https://jnketipluuuwljsykczy.supabase.co',
+    anonKey: 'sb_publishable_m4Tu7M8mPoVFV_f9KdOchg_TZBnk8hL',
   );
 
   runApp(const PantryLogicApp());
