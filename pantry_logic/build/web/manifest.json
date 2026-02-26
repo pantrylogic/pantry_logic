@@ -1,11 +1,11 @@
 {
-    "name": "pantry_logic",
+    "name": "Pantry Logic",
     "short_name": "pantry_logic",
     "start_url": ".",
     "display": "standalone",
     "background_color": "#0175C2",
     "theme_color": "#0175C2",
-    "description": "A new Flutter project.",
+    "description": "Pantry Logic is a shared household app that helps families manage groceries, track food inventory, and decide what to eat.",
     "orientation": "portrait-primary",
     "prefer_related_applications": false,
     "icons": [
