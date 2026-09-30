@@ -3,6 +3,7 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 import '../models/suggested_meal.dart';
 import '../models/restock_item.dart';
 import '../models/meal_category.dart';
+import '../core/quantity.dart';
 
 class HungryService {
   static final _client = Supabase.instance.client;
@@ -129,7 +130,7 @@ class HungryService {
       final inv = invMap[itemId];
       if (inv == null) continue; // not in inventory — skip
 
-      final parsedQty = double.tryParse(inv.quantity?.trim() ?? '');
+      final parsedQty = parseQuantity(inv.quantity);
 
       if (parsedQty != null) {
         // Has numeric quantity — auto-reduce
@@ -149,7 +150,7 @@ class HungryService {
           // Silently update
           await _client
               .from('inventory_items')
-              .update({'quantity': _formatQty(newQty)})
+              .update({'quantity': serializeQuantity(newQty)})
               .eq('id', inv.id);
         }
       } else {
@@ -163,12 +164,6 @@ class HungryService {
     }
 
     return decisions;
-  }
-
-  String _formatQty(double qty) {
-    // Return "2" instead of "2.0" for whole numbers.
-    if (qty == qty.truncateToDouble()) return qty.toInt().toString();
-    return qty.toString();
   }
 
   // ─── Post-restock user actions ────────────────────────────────────────────────

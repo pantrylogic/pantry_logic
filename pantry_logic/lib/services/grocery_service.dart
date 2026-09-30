@@ -3,6 +3,7 @@ import 'dart:convert';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import '../models/grocery_item.dart';
 import '../models/item.dart';
+import '../core/quantity.dart';
 
 class GroceryService {
   static final _client = Supabase.instance.client;
@@ -224,7 +225,7 @@ class GroceryService {
         .eq('item_id', item.itemId)
         .maybeSingle();
 
-    final mergedQuantity = _mergeQuantities(
+    final mergedQuantity = mergeQuantities(
       existing?['quantity'] as String?,
       item.quantity,
     );
@@ -266,27 +267,5 @@ class GroceryService {
   /// Removes all purchased items from the grocery list.
   Future<void> clearCompleted() async {
     await _client.from('grocery_items').delete().eq('purchased', true);
-  }
-
-  // ─── Helpers ─────────────────────────────────────────────────────────────────
-
-  /// Merges two quantity strings. If both are numeric, adds them.
-  /// Otherwise returns [incoming] (new purchase) or falls back to [existing].
-  String? _mergeQuantities(String? existing, String? incoming) {
-    if (incoming == null || incoming.isEmpty) return existing;
-    if (existing == null || existing.isEmpty) return incoming;
-
-    final existingNum = double.tryParse(existing);
-    final incomingNum = double.tryParse(incoming);
-
-    if (existingNum != null && incomingNum != null) {
-      final sum = existingNum + incomingNum;
-      return sum == sum.truncateToDouble()
-          ? sum.toInt().toString()
-          : sum.toStringAsFixed(1);
-    }
-
-    // Non-numeric: keep existing (item was already in pantry with a label)
-    return existing;
   }
 }
