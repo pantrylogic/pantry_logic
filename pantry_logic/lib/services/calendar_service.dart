@@ -3,6 +3,7 @@ import 'dart:convert';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import '../models/calendar_entry.dart';
 import '../models/meal.dart';
+import '../core/dates.dart';
 
 class CalendarService {
   static final _client = Supabase.instance.client;
@@ -35,7 +36,7 @@ class CalendarService {
     final ctrl = StreamController<List<CalendarEntry>>();
     final channels = <RealtimeChannel>[];
     final start = _dateOnly(weekStart);
-    final end = _dateOnly(weekStart.add(const Duration(days: 6)));
+    final end = _dateOnly(addDays(weekStart, 6));
 
     Future<void> fetchAndEmit() async {
       if (ctrl.isClosed) return;
@@ -151,7 +152,7 @@ class CalendarService {
   /// Fetch the week's entries (no stream) for the home dashboard week preview.
   Future<List<CalendarEntry>> getWeek(DateTime weekStart) async {
     final start = _dateOnly(weekStart);
-    final end = _dateOnly(weekStart.add(const Duration(days: 6)));
+    final end = _dateOnly(addDays(weekStart, 6));
 
     final rows = await _client
         .from('calendar_entries')
