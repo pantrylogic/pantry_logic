@@ -3,7 +3,10 @@ import '../../core/theme.dart';
 import '../../models/grocery_item.dart';
 import '../../models/item.dart';
 import '../../services/grocery_service.dart';
+import '../../widgets/add_bar.dart';
+import '../../widgets/app_snack_bar.dart';
 import '../../widgets/brand.dart';
+import '../../core/quantity.dart';
 
 class GroceryListScreen extends StatefulWidget {
   const GroceryListScreen({super.key});
@@ -14,71 +17,22 @@ class GroceryListScreen extends StatefulWidget {
 
 class _GroceryListScreenState extends State<GroceryListScreen> {
   final _groceryService = GroceryService();
-  final _inputCtrl = TextEditingController();
-  final _focusNode = FocusNode();
 
   late final Stream<List<GroceryItem>> _stream;
-  List<AutocompleteSuggestion> _suggestions = [];
-  bool _showSuggestions = false;
 
   @override
   void initState() {
     super.initState();
     // asBroadcastStream allows multiple StreamBuilders (AppBar + body) to listen
     _stream = _groceryService.streamGroceryItems().asBroadcastStream();
-    _inputCtrl.addListener(_onInputChanged);
-  }
-
-  @override
-  void dispose() {
-    _inputCtrl.removeListener(_onInputChanged);
-    _inputCtrl.dispose();
-    _focusNode.dispose();
-    super.dispose();
-  }
-
-  // ─── Input / autocomplete ────────────────────────────────────────────────────
-
-  void _onInputChanged() {
-    final query = _inputCtrl.text.trim();
-    if (query.isEmpty) {
-      setState(() {
-        _suggestions = [];
-        _showSuggestions = false;
-      });
-      return;
-    }
-    _fetchSuggestions(query);
-  }
-
-  Future<void> _fetchSuggestions(String query) async {
-    final results = await _groceryService.searchAutocomplete(query);
-    if (!mounted) return;
-    // Only apply if the input hasn't changed while we were fetching
-    if (_inputCtrl.text.trim() == query) {
-      setState(() {
-        _suggestions = results;
-        _showSuggestions = results.isNotEmpty;
-      });
-    }
   }
 
   // ─── Add item ────────────────────────────────────────────────────────────────
 
-  /// [suggestion] is non-null when user tapped a suggestion.
-  /// Falls back to the raw text in the input field.
-  Future<void> _addItem([AutocompleteSuggestion? suggestion]) async {
-    final text = _inputCtrl.text.trim();
-    final name = suggestion?.name ?? text;
-    if (name.isEmpty) return;
-
-    // Clear input and suggestions immediately for snappy UX
-    _inputCtrl.clear();
-    setState(() {
-      _suggestions = [];
-      _showSuggestions = false;
-    });
-
+  /// Adds [name] to the list. [suggestion] is set when the user picked an
+  /// autocomplete entry.
+  Future<void> _addItem(String name, [AutocompleteSuggestion? suggestion]) async {
+    final messenger = ScaffoldMessenger.of(context);
     try {
       final String itemId;
       if (suggestion?.itemId != null) {
@@ -92,12 +46,8 @@ class _GroceryListScreenState extends State<GroceryListScreen> {
         itemId = item.id;
       }
       await _groceryService.addGroceryItem(itemId: itemId);
-    } catch (_) {
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Could not add item. Try again.')),
-        );
-      }
+    } catch (e, st) {
+      showErrorSnackBar(messenger, 'Could not add $name. Try again.', e, st);
     }
   }
 
@@ -236,9 +186,6 @@ class _GroceryListScreenState extends State<GroceryListScreen> {
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
     final primary = isDark ? AppColors.primaryDm : AppColors.primary;
-    final surface = isDark ? AppColors.surfaceDm : AppColors.surface;
-    final border = isDark ? AppColors.borderDm : AppColors.border;
-    final textPrimary = isDark ? AppColors.textPrimaryDm : AppColors.textPrimary;
     final textMuted = isDark ? AppColors.textMutedDm : AppColors.textMuted;
 
     return Scaffold(
@@ -346,154 +293,15 @@ class _GroceryListScreenState extends State<GroceryListScreen> {
             ),
           ),
 
-          // ── Autocomplete suggestions ─────────────────────────────────────────
-          if (_showSuggestions && _suggestions.isNotEmpty)
-            Container(
-              margin: const EdgeInsets.fromLTRB(12, 0, 12, 4),
-              decoration: BoxDecoration(
-                color: surface,
-                borderRadius: BorderRadius.circular(12),
-                border: Border.all(color: border),
-                boxShadow: isDark
-                    ? null
-                    : [
-                        BoxShadow(
-                          color: Colors.black.withValues(alpha: 0.06),
-                          blurRadius: 8,
-                          offset: const Offset(0, -2),
-                        ),
-                      ],
-              ),
-              child: ClipRRect(
-                borderRadius: BorderRadius.circular(12),
-                child: Column(
-                  mainAxisSize: MainAxisSize.min,
-                  children: _suggestions.asMap().entries.map((entry) {
-                    final i = entry.key;
-                    final s = entry.value;
-                    return _SuggestionTile(
-                      suggestion: s,
-                      showDivider: i < _suggestions.length - 1,
-                      onTap: () => _addItem(s),
-                    );
-                  }).toList(),
-                ),
-              ),
-            ),
-
-          // ── Input area ───────────────────────────────────────────────────────
-          Container(
-            decoration: BoxDecoration(
-              color: surface,
-              border: Border(top: BorderSide(color: border, width: 0.5)),
-            ),
-            child: SafeArea(
-              top: false,
-              child: Padding(
-                padding: const EdgeInsets.fromLTRB(12, 8, 12, 8),
-                child: TextField(
-                  controller: _inputCtrl,
-                  focusNode: _focusNode,
-                  textCapitalization: TextCapitalization.words,
-                  onSubmitted: (_) => _addItem(),
-                  onTapOutside: (_) {
-                    Future.delayed(const Duration(milliseconds: 80), () {
-                      if (mounted) {
-                        setState(() {
-                          _suggestions = [];
-                          _showSuggestions = false;
-                        });
-                      }
-                    });
-                  },
-                  style: nsSans(fontSize: 15, color: textPrimary),
-                  decoration: InputDecoration(
-                    hintText: 'Add an item…',
-                    hintStyle: nsSans(fontSize: 15, color: textMuted),
-                    prefixIcon: Icon(Icons.add_rounded, color: primary, size: 22),
-                    border: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(12),
-                    ),
-                    contentPadding:
-                        const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
-                  ),
-                ),
-              ),
-            ),
+          AddBar(
+            hintText: 'Add an item…',
+            search: _groceryService.searchAutocomplete,
+            textCapitalization: TextCapitalization.words,
+            onSubmit: _addItem,
+            onSuggestion: (sug) => _addItem(sug.name, sug),
           ),
         ],
       ),
-    );
-  }
-}
-
-class _SuggestionTile extends StatelessWidget {
-  final AutocompleteSuggestion suggestion;
-  final bool showDivider;
-  final VoidCallback onTap;
-
-  const _SuggestionTile({
-    required this.suggestion,
-    required this.showDivider,
-    required this.onTap,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    final isDark = Theme.of(context).brightness == Brightness.dark;
-    final textPrimary =
-        isDark ? AppColors.textPrimaryDm : AppColors.textPrimary;
-    final textMuted = isDark ? AppColors.textMutedDm : AppColors.textMuted;
-    final primary = isDark ? AppColors.primaryDm : AppColors.primary;
-
-    return Column(
-      mainAxisSize: MainAxisSize.min,
-      children: [
-        InkWell(
-          onTap: onTap,
-          child: Padding(
-            padding:
-                const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-            child: Row(
-              children: [
-                // Household item indicator
-                if (suggestion.isHouseholdItem)
-                  Padding(
-                    padding: const EdgeInsets.only(right: 8),
-                    child: Icon(Icons.history_rounded,
-                        size: 14, color: primary),
-                  ),
-                Expanded(
-                  child: Text(
-                    suggestion.name,
-                    style: nsSans(
-                      fontSize: 15,
-                      fontWeight: FontWeight.w500,
-                      color: textPrimary,
-                    ),
-                  ),
-                ),
-                if (suggestion.category != null)
-                  Text(
-                    suggestion.category!,
-                    style: nsSans(
-                      fontSize: 12,
-                      color: textMuted,
-                    ),
-                  ),
-              ],
-            ),
-          ),
-        ),
-        if (showDivider)
-          Divider(
-            height: 1,
-            thickness: 0.5,
-            color: isDark ? AppColors.borderDm : AppColors.border,
-            indent: 16,
-            endIndent: 16,
-          ),
-      ],
     );
   }
 }
@@ -600,7 +408,7 @@ class _GroceryItemTile extends StatelessWidget {
                             Padding(
                               padding: const EdgeInsets.only(left: 6),
                               child: Text(
-                                item.quantity!,
+                                formatQuantity(item.quantity),
                                 style: nsSans(
                                   fontSize: 13,
                                   color: textSecondary,

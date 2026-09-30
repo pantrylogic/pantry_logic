@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import '../../core/theme.dart';
 import '../../services/auth_service.dart';
 import '../../widgets/auth_text_field.dart';
-import '../home/home_screen.dart';
+import '../shell/main_shell.dart';
 import 'sign_up_screen.dart';
 import '../../widgets/brand.dart';
 
@@ -54,7 +54,7 @@ class _JoinHouseholdScreenState extends State<JoinHouseholdScreen> {
 
       if (!mounted) return;
       Navigator.of(context).pushAndRemoveUntil(
-        MaterialPageRoute(builder: (_) => const HomeScreen()),
+        MaterialPageRoute(builder: (_) => const MainShell()),
         (_) => false,
       );
     } catch (e) {

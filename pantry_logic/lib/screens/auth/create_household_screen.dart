@@ -4,7 +4,7 @@ import '../../core/theme.dart';
 import '../../models/household.dart';
 import '../../services/auth_service.dart';
 import '../../widgets/auth_text_field.dart';
-import '../home/home_screen.dart';
+import '../shell/main_shell.dart';
 import '../../widgets/brand.dart';
 
 class CreateHouseholdScreen extends StatefulWidget {
@@ -64,7 +64,7 @@ class _CreateHouseholdScreenState extends State<CreateHouseholdScreen> {
 
   void _goToApp() {
     Navigator.of(context).pushAndRemoveUntil(
-      MaterialPageRoute(builder: (_) => const HomeScreen()),
+      MaterialPageRoute(builder: (_) => const MainShell()),
       (_) => false,
     );
   }

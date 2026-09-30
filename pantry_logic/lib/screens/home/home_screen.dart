@@ -1,14 +1,23 @@
 import 'package:flutter/material.dart';
+
+import '../../core/dates.dart';
+import '../../core/meal_status.dart';
+import '../../core/routes.dart';
 import '../../core/theme.dart';
+import '../../core/ui_prefs.dart';
 import '../../models/calendar_entry.dart';
 import '../../models/profile.dart';
 import '../../services/auth_service.dart';
 import '../../services/calendar_service.dart';
 import '../../services/settings_service.dart';
+import '../../widgets/app_snack_bar.dart';
+import '../../widgets/day_plan_sheets.dart';
 import '../hungry/hungry_category_screen.dart';
-import '../hungry/restock_screen.dart';
 import '../settings/settings_screen.dart';
-import '../../core/routes.dart';
+import '../shell/shell_controller.dart';
+
+/// Number of days shown in the plan card (today + 6).
+const _planDays = 7;
 
 class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
@@ -17,68 +26,91 @@ class HomeScreen extends StatefulWidget {
   State<HomeScreen> createState() => _HomeScreenState();
 }
 
-class _HomeScreenState extends State<HomeScreen> {
+class _HomeScreenState extends State<HomeScreen> with TabActivation {
   final _authService = AuthService();
   final _calendarService = CalendarService();
   final _settingsService = SettingsService();
 
   Profile? _profile;
-  CalendarEntry? _tonight;
-  List<CalendarEntry> _weekEntries = [];
+  Map<String, CalendarEntry> _entries = {};
   int _groceryCount = 0;
-  int _pantryCount = 0;
+  int _stockCount = 0;
   bool _loading = true;
+  bool _upcomingExpanded = false;
 
-  late final DateTime _weekStart;
+  DateTime get _today => DayClock.instance.value;
+
+  @override
+  int get tabIndex => ShellTab.home;
+
+  @override
+  void onTabActivated() => _load();
 
   @override
   void initState() {
     super.initState();
-    final now = DateTime.now();
-    _weekStart = now.subtract(Duration(days: now.weekday - 1));
+    DayClock.instance.addListener(_onDayChanged);
     _load();
+    UiPrefs.getBool(UiPrefs.homeUpcomingExpanded).then((v) {
+      if (mounted) setState(() => _upcomingExpanded = v);
+    });
   }
 
+  @override
+  void dispose() {
+    DayClock.instance.removeListener(_onDayChanged);
+    super.dispose();
+  }
+
+  /// Local midnight passed: the rolling window moves on by a day.
+  void _onDayChanged() => _load();
+
   Future<void> _load() async {
+    final start = _today;
     try {
-      final today = DateTime.now();
       final results = await Future.wait([
         _authService.getProfile(),
-        _calendarService.getEntryForDate(today),
-        _calendarService.getWeek(_weekStart),
+        _calendarService.getWeek(start),
         _settingsService.getGroceryCount(),
         _settingsService.getPantryCount(),
       ]);
-      if (mounted) {
-        setState(() {
-          _profile = results[0] as Profile?;
-          _tonight = results[1] as CalendarEntry?;
-          _weekEntries = results[2] as List<CalendarEntry>;
-          _groceryCount = results[3] as int;
-          _pantryCount = results[4] as int;
-          _loading = false;
-        });
-      }
-    } catch (_) {
+      if (!mounted) return;
+      setState(() {
+        _profile = results[0] as Profile?;
+        _entries = {
+          for (final e in results[1] as List<CalendarEntry>) dateKey(e.date): e,
+        };
+        _groceryCount = results[2] as int;
+        _stockCount = results[3] as int;
+        _loading = false;
+      });
+    } catch (e, st) {
+      logError('Load home dashboard', e, st);
       if (mounted) setState(() => _loading = false);
     }
   }
 
+  void _toggleUpcoming() {
+    setState(() => _upcomingExpanded = !_upcomingExpanded);
+    UiPrefs.setBool(UiPrefs.homeUpcomingExpanded, _upcomingExpanded);
+  }
+
+  void _onDayTap(DateTime day) {
+    final entry = _entries[dateKey(day)];
+    if (entry != null && entry.hasMeal) {
+      DayPlanSheets.dayActions(context, day, entry, onChanged: _load);
+    } else {
+      DayPlanSheets.pickMeal(context, day, onChanged: _load);
+    }
+  }
+
+  Future<void> _eatThis(CalendarEntry entry) async {
+    await DayPlanSheets.eatThis(context, entry);
+    _load();
+  }
+
   @override
   Widget build(BuildContext context) {
-    final isDark = Theme.of(context).brightness == Brightness.dark;
-    final primary = isDark ? AppColors.primaryDm : AppColors.primary;
-    final textPrimary =
-        isDark ? AppColors.textPrimaryDm : AppColors.textPrimary;
-    final textSecondary =
-        isDark ? AppColors.textSecondaryDm : AppColors.textSecondary;
-    final textMuted = isDark ? AppColors.textMutedDm : AppColors.textMuted;
-    final surface = isDark ? AppColors.surfaceDm : AppColors.surface;
-    final background = isDark ? AppColors.backgroundDm : AppColors.background;
-    final border = isDark ? AppColors.borderDm : AppColors.border;
-    final success = isDark ? AppColors.successDm : AppColors.success;
-    final warning = isDark ? AppColors.warningDm : AppColors.warning;
-
     return Scaffold(
       body: SafeArea(
         child: _loading
@@ -86,104 +118,21 @@ class _HomeScreenState extends State<HomeScreen> {
             : RefreshIndicator(
                 onRefresh: _load,
                 child: ListView(
+                  // Pull-to-refresh must work even when content is short.
+                  physics: const AlwaysScrollableScrollPhysics(),
                   padding: const EdgeInsets.only(bottom: 32),
                   children: [
-                    // ── Header row ────────────────────────────────────────────
-                    Padding(
-                      padding: const EdgeInsets.fromLTRB(20, 20, 20, 0),
-                      child: Row(
-                        children: [
-                          Expanded(
-                            child: Column(
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              children: [
-                                Text.rich(
-                                  TextSpan(
-                                    text:
-                                        'Hey, ${_profile?.displayName ?? 'there'} ',
-                                    children: [
-                                      WidgetSpan(
-                                        alignment:
-                                            PlaceholderAlignment.middle,
-                                        child: Icon(
-                                          Icons.waving_hand_rounded,
-                                          size: 22,
-                                          color: warning,
-                                        ),
-                                      ),
-                                    ],
-                                  ),
-                                  style: nsSans(
-                                    fontSize: 22,
-                                    fontWeight: FontWeight.w700,
-                                    color: textPrimary,
-                                  ),
-                                ),
-                                const SizedBox(height: 2),
-                                Text(
-                                  "Here's what's going on in the kitchen.",
-                                  style: nsSans(
-                                    fontSize: 13,
-                                    color: textSecondary,
-                                  ),
-                                ),
-                              ],
-                            ),
-                          ),
-                          // Settings gear
-                          GestureDetector(
-                            onTap: () => Navigator.of(context).push(
-                              MaterialPageRoute(
-                                  builder: (_) => const SettingsScreen()),
-                            ),
-                            child: Container(
-                              width: 36,
-                              height: 36,
-                              decoration: BoxDecoration(
-                                color: surface,
-                                shape: BoxShape.circle,
-                                border: Border.all(color: border),
-                              ),
-                              child: Icon(Icons.settings_outlined,
-                                  size: 18, color: textSecondary),
-                            ),
-                          ),
-                        ],
+                    _Header(
+                      name: _profile?.displayName,
+                      onSettings: () => Navigator.of(context).push(
+                        MaterialPageRoute(
+                            builder: (_) => const SettingsScreen()),
                       ),
                     ),
-
-                    // ── Anonymous banner ──────────────────────────────────────
-                    if (_profile?.isAnonymous == true)
-                      Container(
-                        margin: const EdgeInsets.fromLTRB(16, 16, 16, 0),
-                        padding: const EdgeInsets.symmetric(
-                            horizontal: 14, vertical: 10),
-                        decoration: BoxDecoration(
-                          color: warning.withValues(alpha: 0.12),
-                          borderRadius: BorderRadius.circular(10),
-                          border: Border.all(
-                            color: warning.withValues(alpha: 0.4),
-                          ),
-                        ),
-                        child: Row(
-                          children: [
-                            Icon(Icons.info_outline_rounded,
-                                color: warning, size: 18),
-                            const SizedBox(width: 10),
-                            Expanded(
-                              child: Text(
-                                'Guest session — create an account to keep access across devices.',
-                                style: nsSans(
-                                    fontSize: 13, color: warning, height: 1.4),
-                              ),
-                            ),
-                          ],
-                        ),
-                      ),
-
+                    if (_profile?.isAnonymous == true) const _GuestBanner(),
                     const SizedBox(height: 20),
 
-                    // ── Quick stats row ────────────────────────────────────────
+                    // ── Quick stats ──────────────────────────────────────────
                     Padding(
                       padding: const EdgeInsets.symmetric(horizontal: 16),
                       child: Row(
@@ -193,143 +142,51 @@ class _HomeScreenState extends State<HomeScreen> {
                               icon: Icons.shopping_cart_outlined,
                               count: _groceryCount,
                               label: 'to buy',
-                              primary: primary,
-                              surface: surface,
-                              border: border,
-                              textPrimary: textPrimary,
-                              textMuted: textMuted,
+                              onTap: () => goToTab(ShellTab.grocery),
                             ),
                           ),
                           const SizedBox(width: 12),
                           Expanded(
                             child: _StatCard(
                               icon: Icons.inventory_2_outlined,
-                              count: _pantryCount,
+                              count: _stockCount,
                               label: 'in stock',
-                              primary: primary,
-                              surface: surface,
-                              border: border,
-                              textPrimary: textPrimary,
-                              textMuted: textMuted,
+                              onTap: () => goToTab(ShellTab.stock),
                             ),
                           ),
                         ],
                       ),
                     ),
-
                     const SizedBox(height: 16),
 
-                    // ── Tonight's dinner ──────────────────────────────────────
+                    // ── Rolling 7-day plan ───────────────────────────────────
                     Padding(
                       padding: const EdgeInsets.symmetric(horizontal: 16),
-                      child: _TonightCard(
-                        entry: _tonight,
-                        primary: primary,
-                        surface: surface,
-                        border: border,
-                        textPrimary: textPrimary,
-                        textSecondary: textSecondary,
-                        textMuted: textMuted,
-                        success: success,
-                        warning: warning,
-                        isDark: isDark,
-                        background: background,
-                        onEatThis: _tonight?.mealId != null
-                            ? () => Navigator.of(context).push(
-                                  MaterialPageRoute(
-                                    builder: (_) => RestockScreen(
-                                      mealId: _tonight!.mealId!,
-                                      mealName: _tonight!.mealName ?? '',
-                                    ),
-                                  ),
-                                )
-                            : null,
+                      child: _PlanCard(
+                        days: rollingDays(_today, _planDays),
+                        today: _today,
+                        entries: _entries,
+                        upcomingExpanded: _upcomingExpanded,
+                        onToggleUpcoming: _toggleUpcoming,
+                        onDayTap: _onDayTap,
+                        onEatThis: _eatThis,
+                        onOpenCalendar: () => goToTab(ShellTab.calendar),
                       ),
                     ),
-
                     const SizedBox(height: 16),
 
-                    // ── I'm Hungry button ─────────────────────────────────────
+                    // ── I'm Hungry ───────────────────────────────────────────
                     Padding(
                       padding: const EdgeInsets.symmetric(horizontal: 16),
-                      child: GestureDetector(
+                      child: _HungryButton(
                         onTap: () => Navigator.of(context).push(
                           MaterialPageRoute(
-                              settings: AppRoutes.settings(
-                                  AppRoutes.hungryCategory),
-                              builder: (_) =>
-                                  const HungryCategoryScreen()),
-                        ),
-                        child: Container(
-                          width: double.infinity,
-                          padding: const EdgeInsets.symmetric(
-                              vertical: 18, horizontal: 24),
-                          decoration: BoxDecoration(
-                            color: primary,
-                            borderRadius: BorderRadius.circular(16),
-                          ),
-                          child: Row(
-                            children: [
-                              Icon(
-                                Icons.restaurant_rounded,
-                                size: 28,
-                                color:
-                                    isDark ? background : AppColors.surface,
-                              ),
-                              const SizedBox(width: 14),
-                              Expanded(
-                                child: Column(
-                                  crossAxisAlignment: CrossAxisAlignment.start,
-                                  children: [
-                                    Text(
-                                      "I'm Hungry",
-                                      style: nsSans(
-                                        fontSize: 17,
-                                        fontWeight: FontWeight.w700,
-                                        color: isDark
-                                            ? background
-                                            : AppColors.surface,
-                                      ),
-                                    ),
-                                    Text(
-                                      'Find something to eat',
-                                      style: nsSans(
-                                        fontSize: 13,
-                                        color: (isDark
-                                                ? background
-                                                : AppColors.surface)
-                                            .withValues(alpha: 0.75),
-                                      ),
-                                    ),
-                                  ],
-                                ),
-                              ),
-                              Icon(
-                                Icons.arrow_forward_ios_rounded,
-                                size: 14,
-                                color: (isDark ? background : AppColors.surface)
-                                    .withValues(alpha: 0.7),
-                              ),
-                            ],
+                            settings:
+                                AppRoutes.settings(AppRoutes.hungryCategory),
+                            builder: (_) => const HungryCategoryScreen(),
                           ),
                         ),
                       ),
-                    ),
-
-                    const SizedBox(height: 16),
-
-                    // ── This week ─────────────────────────────────────────────
-                    _WeekPreview(
-                      weekStart: _weekStart,
-                      entries: _weekEntries,
-                      primary: primary,
-                      surface: surface,
-                      border: border,
-                      textPrimary: textPrimary,
-                      textSecondary: textSecondary,
-                      textMuted: textMuted,
-                      success: success,
-                      warning: warning,
                     ),
                   ],
                 ),
@@ -339,338 +196,458 @@ class _HomeScreenState extends State<HomeScreen> {
   }
 }
 
-// ── Stat card ──────────────────────────────────────────────────────────────────
+// ── Header ──────────────────────────────────────────────────────────────────
+
+class _Header extends StatelessWidget {
+  const _Header({required this.name, required this.onSettings});
+
+  final String? name;
+  final VoidCallback onSettings;
+
+  @override
+  Widget build(BuildContext context) {
+    final p = AppPalette.of(context);
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(20, 20, 12, 0),
+      child: Row(
+        children: [
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text.rich(
+                  TextSpan(
+                    text: 'Hey, ${name ?? 'there'} ',
+                    children: [
+                      WidgetSpan(
+                        alignment: PlaceholderAlignment.middle,
+                        child: Icon(
+                          Icons.waving_hand_rounded,
+                          size: 22,
+                          color: p.warning,
+                        ),
+                      ),
+                    ],
+                  ),
+                  style: nsSans(
+                    fontSize: 22,
+                    fontWeight: FontWeight.w700,
+                    color: p.textPrimary,
+                  ),
+                ),
+                const SizedBox(height: 2),
+                Text(
+                  "Here's what's going on in the kitchen.",
+                  style: nsSans(fontSize: 13, color: p.textSecondary),
+                ),
+              ],
+            ),
+          ),
+          IconButton(
+            tooltip: 'Settings',
+            onPressed: onSettings,
+            icon: Icon(Icons.settings_outlined, color: p.textSecondary),
+            style: IconButton.styleFrom(
+              backgroundColor: p.surface,
+              side: BorderSide(color: p.border),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _GuestBanner extends StatelessWidget {
+  const _GuestBanner();
+
+  @override
+  Widget build(BuildContext context) {
+    final p = AppPalette.of(context);
+    return Container(
+      margin: const EdgeInsets.fromLTRB(16, 16, 16, 0),
+      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+      decoration: BoxDecoration(
+        color: p.warning.withValues(alpha: 0.12),
+        borderRadius: BorderRadius.circular(10),
+        border: Border.all(color: p.warning.withValues(alpha: 0.4)),
+      ),
+      child: Row(
+        children: [
+          Icon(Icons.info_outline_rounded, color: p.warningText, size: 18),
+          const SizedBox(width: 10),
+          Expanded(
+            child: Text(
+              'Guest session — create an account to keep access across devices.',
+              style: nsSans(fontSize: 13, color: p.warningText, height: 1.4),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+// ── Stat card ───────────────────────────────────────────────────────────────
 
 class _StatCard extends StatelessWidget {
-  final IconData icon;
-  final int count;
-  final String label;
-  final Color primary;
-  final Color surface;
-  final Color border;
-  final Color textPrimary;
-  final Color textMuted;
-
   const _StatCard({
     required this.icon,
     required this.count,
     required this.label,
-    required this.primary,
-    required this.surface,
-    required this.border,
-    required this.textPrimary,
-    required this.textMuted,
+    required this.onTap,
   });
+
+  final IconData icon;
+  final int count;
+  final String label;
+  final VoidCallback onTap;
 
   @override
   Widget build(BuildContext context) {
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
-      decoration: BoxDecoration(
-        color: surface,
+    final p = AppPalette.of(context);
+    return Material(
+      color: p.surface,
+      shape: RoundedRectangleBorder(
         borderRadius: BorderRadius.circular(14),
-        border: Border.all(color: border),
+        side: BorderSide(color: p.border),
       ),
-      child: Row(
-        children: [
-          Icon(icon, size: 20, color: primary),
-          const SizedBox(width: 10),
-          Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
+      clipBehavior: Clip.antiAlias,
+      child: InkWell(
+        onTap: onTap,
+        child: Padding(
+          padding: const EdgeInsets.fromLTRB(16, 14, 8, 14),
+          child: Row(
             children: [
-              Text(
-                '$count',
-                style: nsSans(
-                  fontSize: 20,
-                  fontWeight: FontWeight.w700,
-                  color: textPrimary,
+              Icon(icon, size: 20, color: p.primary),
+              const SizedBox(width: 10),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      '$count',
+                      style: nsSans(
+                        fontSize: 20,
+                        fontWeight: FontWeight.w700,
+                        color: p.textPrimary,
+                      ),
+                    ),
+                    Text(
+                      label,
+                      style: nsSans(fontSize: 12, color: p.textMuted),
+                    ),
+                  ],
                 ),
               ),
-              Text(
-                label,
-                style: nsSans(fontSize: 12, color: textMuted),
-              ),
+              Icon(Icons.chevron_right_rounded, size: 20, color: p.textMuted),
             ],
           ),
+        ),
+      ),
+    );
+  }
+}
+
+// ── Plan card ───────────────────────────────────────────────────────────────
+
+class _PlanCard extends StatelessWidget {
+  const _PlanCard({
+    required this.days,
+    required this.today,
+    required this.entries,
+    required this.upcomingExpanded,
+    required this.onToggleUpcoming,
+    required this.onDayTap,
+    required this.onEatThis,
+    required this.onOpenCalendar,
+  });
+
+  final List<DateTime> days;
+  final DateTime today;
+  final Map<String, CalendarEntry> entries;
+  final bool upcomingExpanded;
+  final VoidCallback onToggleUpcoming;
+  final ValueChanged<DateTime> onDayTap;
+  final ValueChanged<CalendarEntry> onEatThis;
+  final VoidCallback onOpenCalendar;
+
+  @override
+  Widget build(BuildContext context) {
+    final p = AppPalette.of(context);
+    final upcoming = days.skip(2).toList();
+    final plannedUpcoming =
+        upcoming.where((d) => entries[dateKey(d)]?.hasMeal == true).length;
+
+    Widget divider() => Divider(height: 1, indent: 14, endIndent: 14, color: p.border);
+
+    return Container(
+      decoration: BoxDecoration(
+        color: p.surface,
+        borderRadius: BorderRadius.circular(14),
+        border: Border.all(color: p.border),
+      ),
+      clipBehavior: Clip.antiAlias,
+      child: Column(
+        children: [
+          // Card header
+          Padding(
+            padding: const EdgeInsets.fromLTRB(14, 4, 4, 0),
+            child: Row(
+              children: [
+                Text(
+                  'DINNER PLAN',
+                  style: nsSans(
+                    fontSize: 11,
+                    fontWeight: FontWeight.w700,
+                    letterSpacing: 0.8,
+                    color: p.textMuted,
+                  ),
+                ),
+                const Spacer(),
+                TextButton(
+                  onPressed: onOpenCalendar,
+                  child: const Text('Calendar'),
+                ),
+              ],
+            ),
+          ),
+          _DayRow(
+            day: days[0],
+            label: 'Tonight',
+            entry: entries[dateKey(days[0])],
+            emphasized: true,
+            onTap: () => onDayTap(days[0]),
+            onEatThis: onEatThis,
+          ),
+          divider(),
+          _DayRow(
+            day: days[1],
+            label: 'Tomorrow',
+            entry: entries[dateKey(days[1])],
+            onTap: () => onDayTap(days[1]),
+          ),
+          divider(),
+          // Collapsible "next 5 days"
+          Semantics(
+            button: true,
+            expanded: upcomingExpanded,
+            child: InkWell(
+              onTap: onToggleUpcoming,
+              child: Padding(
+                padding: const EdgeInsets.fromLTRB(14, 12, 12, 12),
+                child: Row(
+                  children: [
+                    Text(
+                      'Next ${upcoming.length} days',
+                      style: nsSans(
+                        fontSize: 13,
+                        fontWeight: FontWeight.w700,
+                        color: p.textSecondary,
+                      ),
+                    ),
+                    const SizedBox(width: 8),
+                    Text(
+                      '$plannedUpcoming of ${upcoming.length} planned',
+                      style: nsSans(fontSize: 12, color: p.textMuted),
+                    ),
+                    const Spacer(),
+                    AnimatedRotation(
+                      turns: upcomingExpanded ? 0.5 : 0,
+                      duration: const Duration(milliseconds: 180),
+                      child: Icon(Icons.expand_more_rounded,
+                          size: 22, color: p.textMuted),
+                    ),
+                  ],
+                ),
+              ),
+            ),
+          ),
+          if (upcomingExpanded)
+            for (final d in upcoming) ...[
+              divider(),
+              _DayRow(
+                day: d,
+                label: kWeekdayShort[d.weekday - 1],
+                sublabel: '${d.day} ${kMonthShort[d.month - 1]}',
+                entry: entries[dateKey(d)],
+                onTap: () => onDayTap(d),
+              ),
+            ],
         ],
       ),
     );
   }
 }
 
-// ── Tonight card ───────────────────────────────────────────────────────────────
-
-class _TonightCard extends StatelessWidget {
-  final CalendarEntry? entry;
-  final Color primary;
-  final Color surface;
-  final Color border;
-  final Color textPrimary;
-  final Color textSecondary;
-  final Color textMuted;
-  final Color success;
-  final Color warning;
-  final Color background;
-  final bool isDark;
-  final VoidCallback? onEatThis;
-
-  const _TonightCard({
+class _DayRow extends StatelessWidget {
+  const _DayRow({
+    required this.day,
+    required this.label,
+    this.sublabel,
     required this.entry,
-    required this.primary,
-    required this.surface,
-    required this.border,
-    required this.textPrimary,
-    required this.textSecondary,
-    required this.textMuted,
-    required this.success,
-    required this.warning,
-    required this.background,
-    required this.isDark,
+    required this.onTap,
+    this.emphasized = false,
     this.onEatThis,
   });
 
+  final DateTime day;
+  final String label;
+  final String? sublabel;
+  final CalendarEntry? entry;
+  final VoidCallback onTap;
+  final bool emphasized;
+  final ValueChanged<CalendarEntry>? onEatThis;
+
   @override
   Widget build(BuildContext context) {
-    final hasMeal = entry != null && entry!.hasMeal;
+    final p = AppPalette.of(context);
+    final e = entry;
+    final hasMeal = e != null && e.hasMeal;
+    final status = hasMeal
+        ? MealStatus(needCount: e.needCount, missingCount: e.missingCount)
+        : null;
 
-    return Container(
-      padding: const EdgeInsets.all(16),
-      decoration: BoxDecoration(
-        color: surface,
-        borderRadius: BorderRadius.circular(14),
-        border: Border.all(color: border),
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Text(
-            'TONIGHT',
-            style: nsSans(
-              fontSize: 10,
-              fontWeight: FontWeight.w700,
-              letterSpacing: 0.8,
-              color: textMuted,
-            ),
-          ),
-          const SizedBox(height: 6),
-          if (hasMeal) ...[
-            Text(
-              entry!.mealName!,
-              style: nsSans(
-                fontSize: 17,
-                fontWeight: FontWeight.w700,
-                color: textPrimary,
-              ),
-            ),
-            if (entry!.hasNeedList) ...[
-              const SizedBox(height: 4),
-              Row(
+    return InkWell(
+      onTap: onTap,
+      child: Padding(
+        padding: EdgeInsets.fromLTRB(14, emphasized ? 12 : 10, 12,
+            emphasized ? 12 : 10),
+        child: Row(
+          children: [
+            SizedBox(
+              width: 76,
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Container(
-                    width: 7,
-                    height: 7,
-                    decoration: BoxDecoration(
-                      color:
-                          entry!.allInPantry ? success : warning,
-                      shape: BoxShape.circle,
-                    ),
-                  ),
-                  const SizedBox(width: 6),
                   Text(
-                    entry!.allInPantry
-                        ? 'All ingredients in stock'
-                        : '${entry!.missingCount} ingredient${entry!.missingCount == 1 ? '' : 's'} missing',
+                    label,
                     style: nsSans(
-                      fontSize: 12,
-                      color: entry!.allInPantry ? success : warning,
+                      fontSize: emphasized ? 14 : 13,
+                      fontWeight: FontWeight.w700,
+                      color: emphasized ? p.primary : p.textSecondary,
                     ),
                   ),
+                  if (sublabel != null)
+                    Text(
+                      sublabel!,
+                      style: nsSans(fontSize: 12, color: p.textMuted),
+                    ),
                 ],
               ),
-            ],
-            if (onEatThis != null) ...[
-              const SizedBox(height: 12),
-              GestureDetector(
-                onTap: onEatThis,
-                child: Container(
-                  padding:
-                      const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
-                  decoration: BoxDecoration(
-                    color: primary,
-                    borderRadius: BorderRadius.circular(8),
-                  ),
-                  child: Text(
-                    'Eat This',
-                    style: nsSans(
-                      fontSize: 13,
-                      fontWeight: FontWeight.w600,
-                      color: isDark ? background : AppColors.surface,
-                    ),
-                  ),
-                ),
-              ),
-            ],
-          ] else
-            Text(
-              'Nothing planned — tap Calendar to plan dinner.',
-              style: nsSans(fontSize: 14, color: textMuted, height: 1.4),
             ),
-        ],
+            Expanded(
+              child: hasMeal
+                  ? Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          e.mealName ?? '',
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                          style: nsSans(
+                            fontSize: emphasized ? 16 : 14,
+                            fontWeight: FontWeight.w700,
+                            color: p.textPrimary,
+                          ),
+                        ),
+                        const SizedBox(height: 2),
+                        Row(
+                          children: [
+                            Icon(status!.icon,
+                                size: 13, color: status.textColor(p)),
+                            const SizedBox(width: 4),
+                            Flexible(
+                              child: Text(
+                                emphasized ? status.longLabel : status.label,
+                                overflow: TextOverflow.ellipsis,
+                                style: nsSans(
+                                  fontSize: 12,
+                                  color: status.textColor(p),
+                                ),
+                              ),
+                            ),
+                          ],
+                        ),
+                      ],
+                    )
+                  : Text(
+                      'Nothing planned',
+                      style: nsSans(fontSize: 14, color: p.textMuted),
+                    ),
+            ),
+            const SizedBox(width: 8),
+            if (hasMeal && onEatThis != null)
+              FilledButton(
+                onPressed: () => onEatThis!(e),
+                style: FilledButton.styleFrom(
+                  minimumSize: const Size(0, 36),
+                  padding: const EdgeInsets.symmetric(horizontal: 14),
+                  textStyle: nsSans(fontSize: 13, fontWeight: FontWeight.w700),
+                ),
+                child: const Text('Eat This'),
+              )
+            else
+              Icon(
+                hasMeal
+                    ? Icons.chevron_right_rounded
+                    : Icons.add_circle_outline_rounded,
+                size: hasMeal ? 20 : 22,
+                color: hasMeal ? p.textMuted : p.primary,
+              ),
+          ],
+        ),
       ),
     );
   }
 }
 
-// ── Week preview ───────────────────────────────────────────────────────────────
+// ── Hungry button ───────────────────────────────────────────────────────────
 
-class _WeekPreview extends StatelessWidget {
-  final DateTime weekStart;
-  final List<CalendarEntry> entries;
-  final Color primary;
-  final Color surface;
-  final Color border;
-  final Color textPrimary;
-  final Color textSecondary;
-  final Color textMuted;
-  final Color success;
-  final Color warning;
+class _HungryButton extends StatelessWidget {
+  const _HungryButton({required this.onTap});
 
-  const _WeekPreview({
-    required this.weekStart,
-    required this.entries,
-    required this.primary,
-    required this.surface,
-    required this.border,
-    required this.textPrimary,
-    required this.textSecondary,
-    required this.textMuted,
-    required this.success,
-    required this.warning,
-  });
+  final VoidCallback onTap;
 
   @override
   Widget build(BuildContext context) {
-    // Build a date → entry map
-    final entryMap = <String, CalendarEntry>{};
-    for (final e in entries) {
-      entryMap[_dateKey(e.date)] = e;
-    }
-
-    final today = DateTime.now();
-
-    return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 16),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Padding(
-            padding: const EdgeInsets.only(bottom: 8),
-            child: Text(
-              'THIS WEEK',
-              style: nsSans(
-                fontSize: 11,
-                fontWeight: FontWeight.w700,
-                letterSpacing: 0.8,
-                color: textMuted,
-              ),
-            ),
-          ),
-          Container(
-            decoration: BoxDecoration(
-              color: surface,
-              borderRadius: BorderRadius.circular(14),
-              border: Border.all(color: border),
-            ),
-            child: Column(
-              children: List.generate(7, (i) {
-                final day = weekStart.add(Duration(days: i));
-                final isToday = day.year == today.year &&
-                    day.month == today.month &&
-                    day.day == today.day;
-                final entry = entryMap[_dateKey(day)];
-                final hasMeal = entry != null && entry.hasMeal;
-
-                Color? dotColor;
-                if (hasMeal) {
-                  if (!entry.hasNeedList) {
-                    dotColor = textMuted;
-                  } else if (entry.allInPantry) {
-                    dotColor = success;
-                  } else {
-                    dotColor = warning;
-                  }
-                }
-
-                return Column(
+    final p = AppPalette.of(context);
+    final fg = p.onPrimary;
+    return Material(
+      color: p.primary,
+      borderRadius: BorderRadius.circular(16),
+      clipBehavior: Clip.antiAlias,
+      child: InkWell(
+        onTap: onTap,
+        child: Padding(
+          padding: const EdgeInsets.symmetric(vertical: 18, horizontal: 24),
+          child: Row(
+            children: [
+              Icon(Icons.restaurant_rounded, size: 28, color: fg),
+              const SizedBox(width: 14),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Padding(
-                      padding: const EdgeInsets.symmetric(
-                          horizontal: 14, vertical: 10),
-                      child: Row(
-                        children: [
-                          SizedBox(
-                            width: 36,
-                            child: Text(
-                              _dayAbbr(day.weekday),
-                              style: nsSans(
-                                fontSize: 12,
-                                fontWeight: isToday
-                                    ? FontWeight.w700
-                                    : FontWeight.w500,
-                                color: isToday ? primary : textMuted,
-                              ),
-                            ),
-                          ),
-                          if (hasMeal && dotColor != null) ...[
-                            Container(
-                              width: 7,
-                              height: 7,
-                              decoration: BoxDecoration(
-                                color: dotColor,
-                                shape: BoxShape.circle,
-                              ),
-                            ),
-                            const SizedBox(width: 8),
-                          ] else
-                            const SizedBox(width: 15),
-                          Expanded(
-                            child: Text(
-                              hasMeal
-                                  ? entry.mealName!
-                                  : '–',
-                              style: nsSans(
-                                fontSize: 13,
-                                fontWeight: hasMeal
-                                    ? FontWeight.w600
-                                    : FontWeight.w400,
-                                color: hasMeal ? textPrimary : textMuted,
-                              ),
-                            ),
-                          ),
-                        ],
-                      ),
+                    Text(
+                      "I'm Hungry",
+                      style: nsSans(
+                          fontSize: 17, fontWeight: FontWeight.w700, color: fg),
                     ),
-                    if (i < 6)
-                      Divider(
-                          height: 1,
-                          indent: 14,
-                          endIndent: 14,
-                          color: border),
+                    Text(
+                      'Find something to eat',
+                      style: nsSans(
+                          fontSize: 13, color: fg.withValues(alpha: 0.8)),
+                    ),
                   ],
-                );
-              }),
-            ),
+                ),
+              ),
+              Icon(Icons.arrow_forward_ios_rounded,
+                  size: 14, color: fg.withValues(alpha: 0.7)),
+            ],
           ),
-        ],
+        ),
       ),
     );
-  }
-
-  String _dateKey(DateTime d) =>
-      '${d.year}-${d.month.toString().padLeft(2, '0')}-${d.day.toString().padLeft(2, '0')}';
-
-  String _dayAbbr(int weekday) {
-    const abbrs = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
-    return abbrs[weekday - 1];
   }
 }
