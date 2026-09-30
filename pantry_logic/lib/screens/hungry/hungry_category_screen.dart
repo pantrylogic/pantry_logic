@@ -4,6 +4,8 @@ import '../../models/meal_category.dart';
 import '../../services/hungry_service.dart';
 import 'hungry_suggestion_screen.dart';
 import '../../widgets/brand.dart';
+import '../../core/routes.dart';
+import '../../widgets/app_snack_bar.dart';
 
 class HungryCategoryScreen extends StatefulWidget {
   const HungryCategoryScreen({super.key});
@@ -27,12 +29,11 @@ class _HungryCategoryScreenState extends State<HungryCategoryScreen> {
     try {
       final cats = await _service.getCategories();
       if (mounted) setState(() => _categories = cats);
-    } catch (e) {
+    } catch (e, st) {
       if (mounted) {
         setState(() => _categories = []);
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Could not load categories: $e')),
-        );
+        showErrorSnackBar(ScaffoldMessenger.of(context),
+            'Could not load meal categories.', e, st);
       }
     } finally {
       if (mounted) setState(() => _loading = false);
@@ -41,6 +42,7 @@ class _HungryCategoryScreenState extends State<HungryCategoryScreen> {
 
   void _pick(MealCategory cat) {
     Navigator.of(context).push(MaterialPageRoute(
+      settings: AppRoutes.settings(AppRoutes.hungrySuggestion),
       builder: (_) => HungrySuggestionScreen(
         categoryId: cat.id,
         categoryName: cat.name,

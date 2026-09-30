@@ -8,6 +8,7 @@ import '../../services/settings_service.dart';
 import '../hungry/hungry_category_screen.dart';
 import '../hungry/restock_screen.dart';
 import '../settings/settings_screen.dart';
+import '../../core/routes.dart';
 
 class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
@@ -254,6 +255,8 @@ class _HomeScreenState extends State<HomeScreen> {
                       child: GestureDetector(
                         onTap: () => Navigator.of(context).push(
                           MaterialPageRoute(
+                              settings: AppRoutes.settings(
+                                  AppRoutes.hungryCategory),
                               builder: (_) =>
                                   const HungryCategoryScreen()),
                         ),

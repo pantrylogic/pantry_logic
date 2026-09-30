@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 import '../../core/theme.dart';
 import '../../models/restock_item.dart';
 import '../../services/hungry_service.dart';
+import '../../core/routes.dart';
+import '../../widgets/app_snack_bar.dart';
 
 class RestockScreen extends StatefulWidget {
   final String mealId;
@@ -36,11 +38,10 @@ class _RestockScreenState extends State<RestockScreen> {
     try {
       final decisions = await _service.executeRestock(widget.mealId);
       if (mounted) setState(() => _decisions = decisions);
-    } catch (e) {
+    } catch (e, st) {
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Could not process restock: $e')),
-        );
+        showErrorSnackBar(ScaffoldMessenger.of(context),
+            'Could not update stock for this meal.', e, st);
         setState(() => _decisions = []);
       }
     } finally {
@@ -58,11 +59,10 @@ class _RestockScreenState extends State<RestockScreen> {
         await _service.removeFromInventoryByItemId(item.itemId);
       }
       if (mounted) setState(() => _choices[item.itemId] = true);
-    } catch (e) {
+    } catch (e, st) {
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Could not add to list: $e')),
-        );
+        showErrorSnackBar(ScaffoldMessenger.of(context),
+            'Could not add to the grocery list.', e, st);
       }
     } finally {
       if (mounted) setState(() => _actionInProgress.remove(item.itemId));
@@ -296,10 +296,8 @@ class _RestockScreenState extends State<RestockScreen> {
                 child: Padding(
                   padding: const EdgeInsets.fromLTRB(24, 12, 24, 12),
                   child: FilledButton(
-                    onPressed: !_loading
-                        ? () => Navigator.of(context)
-                            .popUntil((r) => r.isFirst || _shouldStop(r))
-                        : null,
+                    onPressed:
+                        !_loading ? () => popToRestockOrigin(context) : null,
                     style: FilledButton.styleFrom(
                       minimumSize: const Size(double.infinity, 52),
                       shape: RoundedRectangleBorder(
@@ -321,15 +319,6 @@ class _RestockScreenState extends State<RestockScreen> {
         ),
       ),
     );
-  }
-
-  // Pop back to the screen that opened the Hungry flow (or the meal detail).
-  // We stop at MealDetailScreen or HungryCategoryScreen.
-  bool _shouldStop(Route route) {
-    final name = route.settings.name;
-    return name == '/meal-detail' ||
-        name == '/hungry-category' ||
-        route.isFirst;
   }
 }
 

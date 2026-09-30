@@ -195,6 +195,21 @@ class MealService {
 
   // ─── Meal CRUD ───────────────────────────────────────────────────────────────
 
+  /// Fetches one meal with its category and current stock status.
+  Future<Meal?> getMeal(String mealId) async {
+    final row = await _client
+        .from('meals')
+        .select('*, meal_categories(name), meal_need_list(item_id)')
+        .eq('id', mealId)
+        .maybeSingle();
+    if (row == null) return null;
+    final inventoryRows =
+        await _client.from('inventory_items').select('item_id');
+    final inventoryIds =
+        inventoryRows.map((r) => r['item_id'] as String).toSet();
+    return Meal.fromJson(row, inventoryItemIds: inventoryIds);
+  }
+
   Future<void> addMeal({required String name, String? categoryId}) async {
     final hid = _householdId;
     if (hid == null) throw Exception('No household assigned.');

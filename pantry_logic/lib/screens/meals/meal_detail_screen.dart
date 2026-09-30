@@ -1,10 +1,17 @@
 import 'package:flutter/material.dart';
+
+import '../../core/meal_status.dart';
+import '../../core/routes.dart';
 import '../../core/theme.dart';
-import '../../models/item.dart';
 import '../../models/meal.dart';
 import '../../models/meal_category.dart';
 import '../../models/meal_need_item.dart';
 import '../../services/meal_service.dart';
+import '../../widgets/add_bar.dart';
+import '../../widgets/app_sheet.dart';
+import '../../widgets/app_snack_bar.dart';
+import '../../widgets/category_picker_sheet.dart';
+import '../../widgets/confirm_dialog.dart';
 import '../hungry/restock_screen.dart';
 
 class MealDetailScreen extends StatefulWidget {
@@ -20,21 +27,18 @@ class _MealDetailScreenState extends State<MealDetailScreen> {
   late final Stream<List<MealNeedItem>> _stream;
   List<MealCategory> _categories = [];
 
-  // Local copies of mutable meal fields — updated optimistically after edits
+  // Local copies of mutable meal fields — updated optimistically after edits.
   late String _name;
   late String? _categoryId;
   late String? _categoryName;
   late String? _notes;
 
-  // ── Add ingredient bar ────────────────────────────────────────────────────
-  final _addCtrl = TextEditingController();
-  final _addFocus = FocusNode();
-  List<AutocompleteSuggestion> _suggestions = [];
-  bool _showSuggestions = false;
-  bool _addingItem = false;
+  bool _suggestionsShowing = false;
 
-  // Guard against callbacks firing during/after dispose
-  bool _disposed = false;
+  /// Ingredients removed optimistically (swipe) before the stream catches up.
+  final Set<String> _hiddenItemIds = {};
+
+  String get _mealId => widget.meal.id;
 
   @override
   void initState() {
@@ -43,76 +47,20 @@ class _MealDetailScreenState extends State<MealDetailScreen> {
     _categoryId = widget.meal.categoryId;
     _categoryName = widget.meal.categoryName;
     _notes = widget.meal.notes;
-    _stream = _service.streamNeedList(widget.meal.id).asBroadcastStream();
+    _stream = _service.streamNeedList(_mealId).asBroadcastStream();
     _loadCategories();
-    _addCtrl.addListener(_onAddChanged);
   }
 
   Future<void> _loadCategories() async {
     try {
       final cats = await _service.getCategories();
-      if (!_disposed) setState(() => _categories = cats);
-    } catch (_) {}
-  }
-
-  @override
-  void dispose() {
-    _disposed = true;
-    _addCtrl.removeListener(_onAddChanged);
-    _addCtrl.dispose();
-    _addFocus.dispose();
-    super.dispose();
-  }
-
-  // ── Autocomplete ──────────────────────────────────────────────────────────
-
-  void _onAddChanged() {
-    final q = _addCtrl.text.trim();
-    if (q.isEmpty) {
-      setState(() {
-        _suggestions = [];
-        _showSuggestions = false;
-      });
-      return;
+      if (mounted) setState(() => _categories = cats);
+    } catch (e, st) {
+      logError('Load meal categories', e, st);
     }
-    _service.searchAutocomplete(q).then((results) {
-      if (_disposed) return;
-      if (_addCtrl.text.trim() == q) {
-        setState(() {
-          _suggestions = results;
-          _showSuggestions = results.isNotEmpty;
-        });
-      }
-    });
   }
 
-  void _hideSuggestions() {
-    setState(() => _showSuggestions = false);
-  }
-
-  Future<void> _pickSuggestion(AutocompleteSuggestion s) async {
-    _hideSuggestions();
-    _addCtrl.clear();
-    _addFocus.unfocus();
-    await _addIngredient(
-      name: s.name,
-      itemId: s.itemId,
-      category: s.category,
-      defaultLocation: s.defaultLocation,
-    );
-  }
-
-  Future<void> _submitAdd() async {
-    final name = _addCtrl.text.trim();
-    if (name.isEmpty) {
-      _addFocus.unfocus();
-      return;
-    }
-    _hideSuggestions();
-    _addCtrl.clear();
-    _addFocus.unfocus();
-    await _addIngredient(name: name);
-  }
+  // ── Ingredients ─────────────────────────────────────────────────────────
 
   Future<void> _addIngredient({
     required String name,
@@ -120,11 +68,8 @@ class _MealDetailScreenState extends State<MealDetailScreen> {
     String? category,
     String? defaultLocation,
   }) async {
-    if (_addingItem) return;
-    setState(() => _addingItem = true);
     final messenger = ScaffoldMessenger.of(context);
     try {
-      // If suggestion already has an item_id, use it directly; otherwise create
       final resolvedId = itemId ??
           (await _service.getOrCreateItem(
             name: name,
@@ -132,625 +77,533 @@ class _MealDetailScreenState extends State<MealDetailScreen> {
             defaultLocation: defaultLocation,
           ))
               .id;
-      await _service.addNeedItem(mealId: widget.meal.id, itemId: resolvedId);
-    } catch (e) {
-      messenger.showSnackBar(
-          SnackBar(content: Text('Could not add ingredient: $e')));
-    } finally {
-      if (!_disposed) setState(() => _addingItem = false);
+      await _service.addNeedItem(mealId: _mealId, itemId: resolvedId);
+      if (mounted) setState(() => _hiddenItemIds.remove(resolvedId));
+    } catch (e, st) {
+      showErrorSnackBar(messenger, 'Could not add $name. Try again.', e, st);
     }
   }
 
-  Future<void> _removeNeedItem(MealNeedItem item) async {
-    await _service.removeNeedItem(
-        mealId: widget.meal.id, itemId: item.itemId);
+  Future<void> _removeIngredient(MealNeedItem item) async {
+    final messenger = ScaffoldMessenger.of(context);
+    setState(() => _hiddenItemIds.add(item.itemId));
+    try {
+      await _service.removeNeedItem(mealId: _mealId, itemId: item.itemId);
+    } catch (e, st) {
+      if (mounted) setState(() => _hiddenItemIds.remove(item.itemId));
+      showErrorSnackBar(messenger, 'Could not remove ${item.itemName}.', e, st);
+      return;
+    }
+    showUndoSnackBar(
+      messenger,
+      '${item.itemName} removed from ingredients.',
+      onUndo: () => _addIngredient(name: item.itemName, itemId: item.itemId),
+    );
   }
-
-  // ── Add missing to grocery list ────────────────────────────────────────────
 
   Future<void> _addMissingToGrocery() async {
     final messenger = ScaffoldMessenger.of(context);
     try {
-      final count = await _service.addMissingToGroceryList(widget.meal.id);
-      messenger.showSnackBar(SnackBar(
-        content: Text(
-          count == 0
-              ? 'All missing items already on grocery list.'
-              : count == 1
-                  ? '1 item added to grocery list.'
-                  : '$count items added to grocery list.',
-        ),
-      ));
-    } catch (e) {
-      messenger.showSnackBar(
-          SnackBar(content: Text('Could not add to grocery list: $e')));
+      final count = await _service.addMissingToGroceryList(_mealId);
+      showAppSnackBar(
+        messenger,
+        count == 0
+            ? 'Everything missing is already on the grocery list.'
+            : '$count item${count == 1 ? '' : 's'} added to the grocery list.',
+      );
+    } catch (e, st) {
+      showErrorSnackBar(messenger, 'Could not add to the grocery list.', e, st);
     }
   }
 
-  // ── Edit actions ──────────────────────────────────────────────────────────
+  // ── Meal edits ──────────────────────────────────────────────────────────
 
-  Future<void> _showRenameSheet() async {
+  Future<void> _rename() async {
     final messenger = ScaffoldMessenger.of(context);
-    final result = await showModalBottomSheet<String>(
+    final result = await showAppSheet<String>(
       context: context,
-      isScrollControlled: true,
-      useSafeArea: true,
-      builder: (ctx) => _EditSheet(
+      builder: (_) => _TextEditSheet(
         title: 'Rename meal',
+        label: 'Meal name',
         initialText: _name,
-        hint: 'Meal name',
-        onSave: (v) => Navigator.of(ctx).pop(v),
       ),
     );
     final newName = result?.trim() ?? '';
     if (newName.isEmpty || newName == _name) return;
     try {
-      await _service.updateMeal(widget.meal.id, name: newName);
-      if (!_disposed) setState(() => _name = newName);
-    } catch (e) {
-      messenger.showSnackBar(SnackBar(content: Text('Could not rename: $e')));
+      await _service.updateMeal(_mealId, name: newName);
+      if (mounted) setState(() => _name = newName);
+    } catch (e, st) {
+      showErrorSnackBar(messenger, 'Could not rename the meal.', e, st);
     }
   }
 
-  Future<void> _showCategorySheet() async {
+  Future<void> _changeCategory() async {
     final messenger = ScaffoldMessenger.of(context);
-    final result = await showModalBottomSheet<_CategoryChoice>(
-      context: context,
-      isScrollControlled: true,
-      useSafeArea: true,
-      builder: (ctx) =>
-          _CategorySheet(categories: _categories, currentId: _categoryId),
+    if (_categories.isEmpty) await _loadCategories();
+    if (!mounted || _categories.isEmpty) return;
+    final id = await showCategoryPicker(
+      context,
+      categories: _categories,
+      selectedId: _categoryId,
+      title: 'Category',
+      confirmLabel: 'Save',
     );
-    if (result == null) return;
+    if (id == null || id == _categoryId) return;
     try {
-      if (result.isNone) {
-        await _service.updateMeal(widget.meal.id, clearCategory: true);
-        if (!_disposed) setState(() => (_categoryId = null, _categoryName = null));
-      } else {
-        await _service.updateMeal(
-            widget.meal.id, categoryId: result.categoryId);
-        if (!_disposed) {
-          final cat =
-              _categories.firstWhere((c) => c.id == result.categoryId);
-          setState(() {
-            _categoryId = cat.id;
-            _categoryName = cat.name;
-          });
-        }
+      await _service.updateMeal(_mealId, categoryId: id);
+      final cat = _categories.firstWhere((c) => c.id == id);
+      if (mounted) {
+        setState(() {
+          _categoryId = cat.id;
+          _categoryName = cat.name;
+        });
       }
-    } catch (e) {
-      messenger.showSnackBar(
-          SnackBar(content: Text('Could not update category: $e')));
+    } catch (e, st) {
+      showErrorSnackBar(messenger, 'Could not update the category.', e, st);
     }
   }
 
-  Future<void> _showNotesSheet() async {
+  Future<void> _editNotes() async {
     final messenger = ScaffoldMessenger.of(context);
-    final result = await showModalBottomSheet<String>(
+    final result = await showAppSheet<String>(
       context: context,
-      isScrollControlled: true,
-      useSafeArea: true,
-      builder: (ctx) => _EditSheet(
+      builder: (_) => _TextEditSheet(
         title: 'Notes',
+        label: 'Notes',
+        hint: 'e.g. serves 4, 30 min at 180°',
         initialText: _notes ?? '',
-        hint: 'e.g. serves 4, 30 min…',
-        maxLines: 4,
-        onSave: (v) => Navigator.of(ctx).pop(v),
+        maxLines: 5,
       ),
     );
     if (result == null) return;
+    final newNotes = result.trim().isEmpty ? null : result.trim();
     try {
-      final newNotes = result.trim().isEmpty ? null : result.trim();
       await _service.updateMeal(
-        widget.meal.id,
+        _mealId,
         notes: newNotes ?? '',
         clearNotes: newNotes == null,
       );
-      if (!_disposed) setState(() => _notes = newNotes);
-    } catch (e) {
-      messenger.showSnackBar(
-          SnackBar(content: Text('Could not save notes: $e')));
+      if (mounted) setState(() => _notes = newNotes);
+    } catch (e, st) {
+      showErrorSnackBar(messenger, 'Could not save notes.', e, st);
     }
   }
 
-  Future<void> _confirmDelete() async {
+  Future<void> _delete() async {
     final messenger = ScaffoldMessenger.of(context);
     final navigator = Navigator.of(context);
-    final confirmed = await showDialog<bool>(
-      context: context,
-      builder: (ctx) => AlertDialog(
-        title: Text(
-          'Delete meal?',
-          style: nsSans(fontWeight: FontWeight.w700, fontSize: 17),
-        ),
-        content: Text(
-          'This will permanently delete "$_name" and its ingredients.',
-          style: nsSans(fontSize: 14),
-        ),
+    if (!await confirmDeleteMeal(context, _name)) return;
+    try {
+      await _service.deleteMeal(_mealId);
+      navigator.pop();
+    } catch (e, st) {
+      showErrorSnackBar(messenger, 'Could not delete the meal.', e, st);
+    }
+  }
+
+  void _eatThis() {
+    Navigator.of(context).push(MaterialPageRoute(
+      settings: AppRoutes.settings(AppRoutes.restock),
+      builder: (_) => RestockScreen(mealId: _mealId, mealName: _name),
+    ));
+  }
+
+  // ── Build ───────────────────────────────────────────────────────────────
+
+  @override
+  Widget build(BuildContext context) {
+    final p = AppPalette.of(context);
+
+    return Scaffold(
+      appBar: AppBar(
+        title: Text(_name),
         actions: [
-          TextButton(
-            onPressed: () => Navigator.of(ctx).pop(false),
-            child: Text('Cancel', style: nsSans()),
+          PopupMenuButton<String>(
+            tooltip: 'Meal options',
+            onSelected: (v) {
+              switch (v) {
+                case 'rename':
+                  _rename();
+                case 'category':
+                  _changeCategory();
+                case 'notes':
+                  _editNotes();
+                case 'delete':
+                  _delete();
+              }
+            },
+            itemBuilder: (_) => [
+              const PopupMenuItem(value: 'rename', child: Text('Rename meal')),
+              const PopupMenuItem(
+                  value: 'category', child: Text('Change category')),
+              PopupMenuItem(
+                value: 'notes',
+                child: Text(_notes != null ? 'Edit notes' : 'Add notes'),
+              ),
+              const PopupMenuDivider(),
+              PopupMenuItem(
+                value: 'delete',
+                child: Text(
+                  'Delete meal',
+                  style: nsSans(color: p.error, fontWeight: FontWeight.w600),
+                ),
+              ),
+            ],
           ),
-          TextButton(
-            onPressed: () => Navigator.of(ctx).pop(true),
-            child: Text(
-              'Delete',
-              style: nsSans(
-                color: Theme.of(ctx).colorScheme.error,
-                fontWeight: FontWeight.w700,
+        ],
+      ),
+      body: StreamBuilder<List<MealNeedItem>>(
+        stream: _stream,
+        builder: (ctx, snap) {
+          final items = (snap.data ?? [])
+              .where((i) => !_hiddenItemIds.contains(i.itemId))
+              .toList();
+          final missingCount = items.where((i) => !i.inPantry).length;
+          final loading =
+              snap.connectionState == ConnectionState.waiting && !snap.hasData;
+
+          return Column(
+            children: [
+              _MealInfo(
+                categoryName: _categoryName,
+                notes: _notes,
+                onCategoryTap: _changeCategory,
+                onNotesTap: _editNotes,
+              ),
+              _IngredientsHeader(
+                count: items.length,
+                missingCount: missingCount,
+                onAddMissing: _addMissingToGrocery,
+              ),
+              Expanded(
+                child: loading
+                    ? const Center(child: CircularProgressIndicator())
+                    : items.isEmpty
+                        ? Center(
+                            child: Padding(
+                              padding: const EdgeInsets.all(32),
+                              child: Text(
+                                'No ingredients yet.\n'
+                                'Use the bar below to add some.',
+                                textAlign: TextAlign.center,
+                                style: nsSans(
+                                  fontSize: 14,
+                                  color: p.textMuted,
+                                  height: 1.5,
+                                ),
+                              ),
+                            ),
+                          )
+                        : ListView.separated(
+                            padding: const EdgeInsets.only(bottom: 8),
+                            itemCount: items.length,
+                            separatorBuilder: (ctx2, i2) => Divider(
+                              height: 1,
+                              indent: 52,
+                              endIndent: 16,
+                              color: p.border,
+                            ),
+                            itemBuilder: (_, i) => _IngredientRow(
+                              item: items[i],
+                              onRemove: () => _removeIngredient(items[i]),
+                            ),
+                          ),
+              ),
+              if (items.isNotEmpty && !_suggestionsShowing)
+                Container(
+                  padding: const EdgeInsets.fromLTRB(16, 10, 16, 10),
+                  decoration: BoxDecoration(
+                    color: p.surface,
+                    border: Border(top: BorderSide(color: p.border, width: 0.5)),
+                  ),
+                  child: FilledButton.icon(
+                    onPressed: _eatThis,
+                    icon: const Icon(Icons.restaurant_rounded, size: 20),
+                    label: const Text('Eat This'),
+                    style: FilledButton.styleFrom(
+                      minimumSize: const Size(double.infinity, 52),
+                    ),
+                  ),
+                ),
+              AddBar(
+                hintText: 'Add ingredient…',
+                search: _service.searchAutocomplete,
+                onSuggestionsVisibilityChanged: (v) =>
+                    setState(() => _suggestionsShowing = v),
+                onSubmit: (name) => _addIngredient(name: name),
+                onSuggestion: (s) => _addIngredient(
+                  name: s.name,
+                  itemId: s.itemId,
+                  category: s.category,
+                  defaultLocation: s.defaultLocation,
+                ),
+              ),
+            ],
+          );
+        },
+      ),
+    );
+  }
+}
+
+// ─── Header: category + notes ────────────────────────────────────────────────
+
+class _MealInfo extends StatelessWidget {
+  const _MealInfo({
+    required this.categoryName,
+    required this.notes,
+    required this.onCategoryTap,
+    required this.onNotesTap,
+  });
+
+  final String? categoryName;
+  final String? notes;
+  final VoidCallback onCategoryTap;
+  final VoidCallback onNotesTap;
+
+  @override
+  Widget build(BuildContext context) {
+    final p = AppPalette.of(context);
+
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.fromLTRB(16, 4, 16, 12),
+      decoration: BoxDecoration(
+        border: Border(bottom: BorderSide(color: p.border, width: 0.5)),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          // Category pill (or an "Add category" affordance)
+          Material(
+            color: categoryName != null ? p.accentLight : Colors.transparent,
+            shape: StadiumBorder(
+              side: categoryName != null
+                  ? BorderSide.none
+                  : BorderSide(color: p.border, width: 1.5),
+            ),
+            child: InkWell(
+              customBorder: const StadiumBorder(),
+              onTap: onCategoryTap,
+              child: Padding(
+                padding:
+                    const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                child: Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Icon(
+                      categoryName != null
+                          ? Icons.sell_outlined
+                          : Icons.add_rounded,
+                      size: 14,
+                      color: categoryName != null
+                          ? (p.isDark ? p.textPrimary : p.primary)
+                          : p.textMuted,
+                    ),
+                    const SizedBox(width: 6),
+                    Text(
+                      categoryName ?? 'Add category',
+                      style: nsSans(
+                        fontSize: 13,
+                        fontWeight: FontWeight.w700,
+                        color: categoryName != null
+                            ? (p.isDark ? p.textPrimary : p.primary)
+                            : p.textMuted,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ),
+          ),
+          const SizedBox(height: 8),
+          // Notes (or an "Add notes" affordance)
+          InkWell(
+            onTap: onNotesTap,
+            borderRadius: BorderRadius.circular(8),
+            child: Padding(
+              padding: const EdgeInsets.symmetric(vertical: 6),
+              child: Row(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Padding(
+                    padding: const EdgeInsets.only(top: 2),
+                    child: Icon(
+                      notes != null
+                          ? Icons.notes_rounded
+                          : Icons.edit_note_rounded,
+                      size: 18,
+                      color: p.textMuted,
+                    ),
+                  ),
+                  const SizedBox(width: 8),
+                  Expanded(
+                    child: Text(
+                      notes ?? 'Add notes',
+                      style: nsSans(
+                        fontSize: 14,
+                        color: notes != null ? p.textSecondary : p.textMuted,
+                        fontWeight:
+                            notes != null ? FontWeight.w400 : FontWeight.w600,
+                        height: 1.4,
+                      ),
+                    ),
+                  ),
+                ],
               ),
             ),
           ),
         ],
       ),
     );
-    if (confirmed != true) return;
-    try {
-      await _service.deleteMeal(widget.meal.id);
-      navigator.pop();
-    } catch (e) {
-      messenger.showSnackBar(SnackBar(content: Text('Could not delete: $e')));
-    }
   }
+}
 
-  // ── Build ─────────────────────────────────────────────────────────────────
+class _IngredientsHeader extends StatelessWidget {
+  const _IngredientsHeader({
+    required this.count,
+    required this.missingCount,
+    required this.onAddMissing,
+  });
+
+  final int count;
+  final int missingCount;
+  final VoidCallback onAddMissing;
 
   @override
   Widget build(BuildContext context) {
-    final isDark = Theme.of(context).brightness == Brightness.dark;
-    final primary = isDark ? AppColors.primaryDm : AppColors.primary;
-    final accentLight =
-        isDark ? AppColors.accentLightDm : AppColors.accentLight;
-    final textPrimary =
-        isDark ? AppColors.textPrimaryDm : AppColors.textPrimary;
-    final textSecondary =
-        isDark ? AppColors.textSecondaryDm : AppColors.textSecondary;
-    final textMuted = isDark ? AppColors.textMutedDm : AppColors.textMuted;
-    final surface = isDark ? AppColors.surfaceDm : AppColors.surface;
-    final border = isDark ? AppColors.borderDm : AppColors.border;
-    final success = isDark ? AppColors.successDm : AppColors.success;
-    final warning = isDark ? AppColors.warningDm : AppColors.warning;
-    final errorColor = isDark ? AppColors.errorDm : AppColors.error;
-
-    return GestureDetector(
-      onTap: () {
-        _hideSuggestions();
-        _addFocus.unfocus();
-      },
-      child: Scaffold(
-        appBar: AppBar(
-          title: Text(_name, style: nsSans(fontWeight: FontWeight.w700)),
-          actions: [
-            PopupMenuButton<String>(
-              onSelected: (v) {
-                switch (v) {
-                  case 'rename':
-                    _showRenameSheet();
-                  case 'category':
-                    _showCategorySheet();
-                  case 'notes':
-                    _showNotesSheet();
-                  case 'delete':
-                    _confirmDelete();
-                }
-              },
-              itemBuilder: (_) => [
-                PopupMenuItem(
-                  value: 'rename',
-                  child: Text('Rename meal', style: nsSans()),
-                ),
-                PopupMenuItem(
-                  value: 'category',
-                  child: Text('Change category', style: nsSans()),
-                ),
-                PopupMenuItem(
-                  value: 'notes',
-                  child: Text(
-                    _notes != null ? 'Edit notes' : 'Add notes',
-                    style: nsSans(),
-                  ),
-                ),
-                const PopupMenuDivider(),
-                PopupMenuItem(
-                  value: 'delete',
-                  child: Text(
-                    'Delete meal',
-                    style: nsSans(
-                      color: errorColor,
-                      fontWeight: FontWeight.w600,
-                    ),
-                  ),
-                ),
-              ],
+    final p = AppPalette.of(context);
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(16, 12, 8, 4),
+      child: Row(
+        children: [
+          Text(
+            'INGREDIENTS',
+            style: nsSans(
+              fontSize: 11,
+              fontWeight: FontWeight.w700,
+              letterSpacing: 0.8,
+              color: p.textMuted,
+            ),
+          ),
+          if (count > 0) ...[
+            const SizedBox(width: 8),
+            Text(
+              '$count',
+              style: nsSans(
+                fontSize: 12,
+                fontWeight: FontWeight.w700,
+                color: p.textMuted,
+              ),
             ),
           ],
-        ),
-        body: StreamBuilder<List<MealNeedItem>>(
-          stream: _stream,
-          builder: (ctx, snap) {
-            final items = snap.data ?? [];
-            final missingCount = items.where((i) => !i.inPantry).length;
+          const Spacer(),
+          if (missingCount > 0)
+            TextButton.icon(
+              onPressed: onAddMissing,
+              icon: const Icon(Icons.add_shopping_cart_rounded, size: 18),
+              label: Text('Add $missingCount missing'),
+              style: TextButton.styleFrom(
+                foregroundColor: p.warningText,
+                visualDensity: VisualDensity.compact,
+                textStyle: nsSans(fontSize: 13, fontWeight: FontWeight.w700),
+              ),
+            )
+          else
+            const SizedBox(height: 40),
+        ],
+      ),
+    );
+  }
+}
 
-            return Column(
-              children: [
-                // ── Meal info (category chip + notes) ──────────────────────
-                if (_categoryName != null || _notes != null)
-                  Container(
-                    width: double.infinity,
-                    padding: const EdgeInsets.fromLTRB(16, 12, 16, 12),
-                    decoration: BoxDecoration(
-                      color: surface,
-                      border: Border(
-                        bottom: BorderSide(color: border, width: 0.5),
-                      ),
-                    ),
-                    child: Wrap(
-                      spacing: 8,
-                      runSpacing: 6,
-                      crossAxisAlignment: WrapCrossAlignment.center,
-                      children: [
-                        if (_categoryName != null)
-                          GestureDetector(
-                            onTap: _showCategorySheet,
-                            child: Container(
-                              padding: const EdgeInsets.symmetric(
-                                  horizontal: 10, vertical: 4),
-                              decoration: BoxDecoration(
-                                color: accentLight,
-                                borderRadius: BorderRadius.circular(20),
-                              ),
-                              child: Text(
-                                _categoryName!,
-                                style: nsSans(
-                                  fontSize: 12,
-                                  fontWeight: FontWeight.w700,
-                                  color: primary,
-                                ),
-                              ),
-                            ),
-                          ),
-                        if (_notes != null)
-                          GestureDetector(
-                            onTap: _showNotesSheet,
-                            child: Text(
-                              _notes!,
-                              style: nsSans(
-                                fontSize: 13,
-                                color: textSecondary,
-                                height: 1.4,
-                              ),
-                            ),
-                          ),
-                      ],
-                    ),
-                  ),
+class _IngredientRow extends StatelessWidget {
+  const _IngredientRow({required this.item, required this.onRemove});
 
-                // ── Need list header ───────────────────────────────────────
-                Padding(
-                  padding: const EdgeInsets.fromLTRB(16, 18, 16, 8),
-                  child: Row(
-                    children: [
-                      Text(
-                        'INGREDIENTS',
-                        style: nsSans(
-                          fontSize: 11,
-                          fontWeight: FontWeight.w700,
-                          letterSpacing: 0.8,
-                          color: textMuted,
-                        ),
-                      ),
-                      const Spacer(),
-                      if (items.isNotEmpty)
-                        Text(
-                          '${items.length} item${items.length == 1 ? '' : 's'}',
-                          style: nsSans(fontSize: 12, color: textMuted),
-                        ),
-                    ],
-                  ),
-                ),
+  final MealNeedItem item;
+  final VoidCallback onRemove;
 
-                // ── Need list items ────────────────────────────────────────
-                Expanded(
-                  child: snap.connectionState == ConnectionState.waiting &&
-                          items.isEmpty
-                      ? const Center(child: CircularProgressIndicator())
-                      : items.isEmpty
-                          ? Center(
-                              child: Padding(
-                                padding: const EdgeInsets.all(32),
-                                child: Text(
-                                  'No ingredients added yet.\nUse the bar below to add some.',
-                                  textAlign: TextAlign.center,
-                                  style: nsSans(
-                                    fontSize: 14,
-                                    color: textMuted,
-                                    height: 1.5,
-                                  ),
-                                ),
-                              ),
-                            )
-                          : ListView.separated(
-                              padding: const EdgeInsets.only(bottom: 8),
-                              itemCount: items.length,
-                              separatorBuilder: (ctx2, i2) => Divider(
-                                height: 1,
-                                indent: 52,
-                                endIndent: 16,
-                                color: border,
-                              ),
-                              itemBuilder: (_, i) {
-                                final item = items[i];
-                                return Dismissible(
-                                  key: ValueKey(item.itemId),
-                                  direction: DismissDirection.endToStart,
-                                  background: Container(
-                                    alignment: Alignment.centerRight,
-                                    padding:
-                                        const EdgeInsets.only(right: 20),
-                                    color:
-                                        errorColor.withValues(alpha: 0.12),
-                                    child: Icon(
-                                      Icons.delete_outline_rounded,
-                                      color: errorColor,
-                                      size: 22,
-                                    ),
-                                  ),
-                                  onDismissed: (_) => _removeNeedItem(item),
-                                  child: Padding(
-                                    padding: const EdgeInsets.symmetric(
-                                        horizontal: 16, vertical: 12),
-                                    child: Row(
-                                      children: [
-                                        Icon(
-                                          item.inPantry
-                                              ? Icons.check_circle_rounded
-                                              : Icons
-                                                  .radio_button_unchecked_rounded,
-                                          size: 20,
-                                          color: item.inPantry
-                                              ? success
-                                              : warning,
-                                        ),
-                                        const SizedBox(width: 12),
-                                        Expanded(
-                                          child: Column(
-                                            crossAxisAlignment:
-                                                CrossAxisAlignment.start,
-                                            children: [
-                                              Text(
-                                                item.itemName,
-                                                style: nsSans(
-                                                  fontSize: 15,
-                                                  fontWeight:
-                                                      FontWeight.w600,
-                                                  color: textPrimary,
-                                                ),
-                                              ),
-                                              Text(
-                                                item.inPantry
-                                                    ? 'In stock · ${item.inventoryLocation}'
-                                                    : 'Missing',
-                                                style: nsSans(
-                                                  fontSize: 12,
-                                                  color: item.inPantry
-                                                      ? success
-                                                      : warning,
-                                                ),
-                                              ),
-                                            ],
-                                          ),
-                                        ),
-                                      ],
-                                    ),
-                                  ),
-                                );
-                              },
-                            ),
-                ),
+  @override
+  Widget build(BuildContext context) {
+    final p = AppPalette.of(context);
+    final status = IngredientStatus(item.inventoryLocation);
+    final color = status.color(p);
 
-                // ── Action buttons (Eat This + Add Missing) ───────────────
-                if (items.isNotEmpty && !_showSuggestions)
-                  Container(
-                    padding: const EdgeInsets.fromLTRB(16, 8, 16, 8),
-                    decoration: BoxDecoration(
-                      color: surface,
-                      border:
-                          Border(top: BorderSide(color: border, width: 0.5)),
-                    ),
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.stretch,
-                      children: [
-                        FilledButton.icon(
-                          onPressed: () => Navigator.of(context).push(
-                            MaterialPageRoute(
-                              builder: (_) => RestockScreen(
-                                mealId: widget.meal.id,
-                                mealName: _name,
-                              ),
-                            ),
-                          ),
-                          icon:
-                              const Icon(Icons.restaurant_rounded, size: 18),
-                          label: Text(
-                            'Eat This',
-                            style: nsSans(
-                                fontWeight: FontWeight.w700, fontSize: 14),
-                          ),
-                          style: FilledButton.styleFrom(
-                            minimumSize: const Size(double.infinity, 44),
-                          ),
-                        ),
-                        if (missingCount > 0) ...[
-                          const SizedBox(height: 8),
-                          FilledButton.icon(
-                            onPressed: _addMissingToGrocery,
-                            icon: const Icon(
-                                Icons.add_shopping_cart_rounded,
-                                size: 18),
-                            label: Text(
-                              'Add $missingCount missing to grocery list',
-                              style: nsSans(
-                                  fontWeight: FontWeight.w700, fontSize: 14),
-                            ),
-                            style: FilledButton.styleFrom(
-                              minimumSize: const Size(double.infinity, 44),
-                              backgroundColor:
-                                  warning.withValues(alpha: 0.15),
-                              foregroundColor: warning,
-                            ),
-                          ),
-                        ],
-                      ],
+    return Dismissible(
+      key: ValueKey(item.itemId),
+      direction: DismissDirection.endToStart,
+      background: Container(
+        alignment: Alignment.centerRight,
+        padding: const EdgeInsets.only(right: 20),
+        color: p.error.withValues(alpha: 0.12),
+        child: Icon(Icons.delete_outline_rounded, color: p.error, size: 22),
+      ),
+      onDismissed: (_) => onRemove(),
+      child: Padding(
+        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+        child: Row(
+          children: [
+            Icon(status.icon, size: 22, color: color),
+            const SizedBox(width: 14),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    item.itemName,
+                    style: nsSans(
+                      fontSize: 15,
+                      fontWeight: FontWeight.w600,
+                      color: p.textPrimary,
                     ),
                   ),
-
-                // ── Autocomplete suggestions (above add bar) ──────────────
-                if (_showSuggestions && _suggestions.isNotEmpty)
-                  Material(
-                    elevation: 2,
-                    child: Container(
-                      constraints: const BoxConstraints(maxHeight: 220),
-                      decoration: BoxDecoration(
-                        color: surface,
-                        border: Border(
-                          top: BorderSide(color: border, width: 0.5),
-                        ),
-                      ),
-                      child: ListView.builder(
-                        padding: EdgeInsets.zero,
-                        shrinkWrap: true,
-                        itemCount: _suggestions.length,
-                        itemBuilder: (_, i) {
-                          final s = _suggestions[i];
-                          return InkWell(
-                            onTap: () => _pickSuggestion(s),
-                            child: Padding(
-                              padding: const EdgeInsets.symmetric(
-                                  horizontal: 16, vertical: 12),
-                              child: Row(
-                                children: [
-                                  Icon(Icons.add_rounded,
-                                      size: 16, color: primary),
-                                  const SizedBox(width: 10),
-                                  Expanded(
-                                    child: Text(
-                                      s.name,
-                                      style: nsSans(
-                                          fontSize: 14, color: textPrimary),
-                                    ),
-                                  ),
-                                  if (s.category != null)
-                                    Text(
-                                      s.category!,
-                                      style: nsSans(
-                                          fontSize: 12, color: textMuted),
-                                    ),
-                                ],
-                              ),
-                            ),
-                          );
-                        },
-                      ),
+                  const SizedBox(height: 1),
+                  Text(
+                    status.label,
+                    style: nsSans(
+                      fontSize: 13,
+                      fontWeight: FontWeight.w600,
+                      color: color,
                     ),
                   ),
-
-                // ── Add ingredient bar ─────────────────────────────────────
-                Container(
-                  decoration: BoxDecoration(
-                    color: surface,
-                    border:
-                        Border(top: BorderSide(color: border, width: 0.5)),
-                  ),
-                  child: SafeArea(
-                    top: false,
-                    child: Padding(
-                      padding: const EdgeInsets.symmetric(
-                          horizontal: 16, vertical: 10),
-                      child: Row(
-                        children: [
-                          Expanded(
-                            child: TextField(
-                              controller: _addCtrl,
-                              focusNode: _addFocus,
-                              textCapitalization:
-                                  TextCapitalization.sentences,
-                              textInputAction: TextInputAction.done,
-                              onSubmitted: (_) => _submitAdd(),
-                              style:
-                                  nsSans(fontSize: 15, color: textPrimary),
-                              decoration: InputDecoration(
-                                hintText: 'Add ingredient…',
-                                hintStyle:
-                                    nsSans(fontSize: 15, color: textMuted),
-                                border: InputBorder.none,
-                                isDense: true,
-                                contentPadding: EdgeInsets.zero,
-                              ),
-                            ),
-                          ),
-                          const SizedBox(width: 8),
-                          _addingItem
-                              ? SizedBox(
-                                  width: 20,
-                                  height: 20,
-                                  child: CircularProgressIndicator(
-                                      strokeWidth: 2, color: primary),
-                                )
-                              : GestureDetector(
-                                  onTap: _submitAdd,
-                                  child: Icon(
-                                    Icons.add_circle_rounded,
-                                    color: primary,
-                                    size: 28,
-                                  ),
-                                ),
-                        ],
-                      ),
-                    ),
-                  ),
-                ),
-              ],
-            );
-          },
+                ],
+              ),
+            ),
+          ],
         ),
       ),
     );
   }
 }
 
-// ─── Edit sheet ─────────────────────────────────────────────────────────────
+// ─── Text edit sheet ─────────────────────────────────────────────────────────
 // StatefulWidget so it owns + disposes the TextEditingController at the
 // right point in the widget lifecycle (avoids "controller used after disposed"
 // when the sheet's close animation outlives the Future that created the ctrl).
 
-class _EditSheet extends StatefulWidget {
-  final String title;
-  final String initialText;
-  final String hint;
-  final int maxLines;
-  final void Function(String) onSave;
-
-  const _EditSheet({
+class _TextEditSheet extends StatefulWidget {
+  const _TextEditSheet({
     required this.title,
+    required this.label,
     required this.initialText,
-    required this.hint,
+    this.hint,
     this.maxLines = 1,
-    required this.onSave,
   });
 
+  final String title;
+  final String label;
+  final String initialText;
+  final String? hint;
+  final int maxLines;
+
   @override
-  State<_EditSheet> createState() => _EditSheetState();
+  State<_TextEditSheet> createState() => _TextEditSheetState();
 }
 
-class _EditSheetState extends State<_EditSheet> {
-  late final TextEditingController _ctrl;
-
-  @override
-  void initState() {
-    super.initState();
-    _ctrl = TextEditingController(text: widget.initialText);
-  }
+class _TextEditSheetState extends State<_TextEditSheet> {
+  late final TextEditingController _ctrl =
+      TextEditingController(text: widget.initialText);
 
   @override
   void dispose() {
@@ -760,169 +613,37 @@ class _EditSheetState extends State<_EditSheet> {
 
   @override
   Widget build(BuildContext context) {
-    final isDark = Theme.of(context).brightness == Brightness.dark;
-    final primary = isDark ? AppColors.primaryDm : AppColors.primary;
-    final textPrimary =
-        isDark ? AppColors.textPrimaryDm : AppColors.textPrimary;
-    final textMuted = isDark ? AppColors.textMutedDm : AppColors.textMuted;
-    final border = isDark ? AppColors.borderDm : AppColors.border;
-
-    // Keyboard inset owned here (StatefulWidget element deactivates cleanly).
-    final keyboardBottom = MediaQuery.viewInsetsOf(context).bottom;
-
-    return Padding(
-      padding: EdgeInsets.fromLTRB(16, 24, 16, 24 + keyboardBottom),
+    final p = AppPalette.of(context);
+    return AppSheet(
+      title: widget.title,
       child: Column(
-        mainAxisSize: MainAxisSize.min,
         crossAxisAlignment: CrossAxisAlignment.stretch,
+        mainAxisSize: MainAxisSize.min,
         children: [
-          Text(
-            widget.title,
-            style: nsSans(fontWeight: FontWeight.w700, fontSize: 17),
-          ),
-          const SizedBox(height: 16),
           TextField(
             controller: _ctrl,
             autofocus: true,
+            minLines: 1,
             maxLines: widget.maxLines,
             textCapitalization: TextCapitalization.sentences,
-            style: nsSans(fontSize: 15, color: textPrimary),
+            style: nsSans(fontSize: 15, color: p.textPrimary),
             decoration: InputDecoration(
+              labelText: widget.label,
               hintText: widget.hint,
-              hintStyle: nsSans(fontSize: 15, color: textMuted),
-              filled: true,
-              fillColor: isDark ? AppColors.surfaceDm : AppColors.surface,
-              contentPadding:
-                  const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
-              border: OutlineInputBorder(
-                borderRadius: BorderRadius.circular(10),
-                borderSide: BorderSide(color: border),
-              ),
-              enabledBorder: OutlineInputBorder(
-                borderRadius: BorderRadius.circular(10),
-                borderSide: BorderSide(color: border),
-              ),
-              focusedBorder: OutlineInputBorder(
-                borderRadius: BorderRadius.circular(10),
-                borderSide: BorderSide(color: primary, width: 1.5),
-              ),
             ),
+            onSubmitted: widget.maxLines == 1
+                ? (v) => Navigator.of(context).pop(v)
+                : null,
           ),
           const SizedBox(height: 16),
           FilledButton(
-            onPressed: () => widget.onSave(_ctrl.text),
-            child: Text('Save', style: nsSans(fontWeight: FontWeight.w700)),
+            onPressed: () => Navigator.of(context).pop(_ctrl.text),
+            style: FilledButton.styleFrom(
+              minimumSize: const Size(double.infinity, 52),
+            ),
+            child: const Text('Save'),
           ),
         ],
-      ),
-    );
-  }
-}
-
-// ─── Category sheet ──────────────────────────────────────────────────────────
-
-class _CategoryChoice {
-  final String? categoryId;
-  bool get isNone => categoryId == null;
-  const _CategoryChoice({this.categoryId});
-}
-
-class _CategorySheet extends StatelessWidget {
-  final List<MealCategory> categories;
-  final String? currentId;
-
-  const _CategorySheet({required this.categories, this.currentId});
-
-  @override
-  Widget build(BuildContext context) {
-    final isDark = Theme.of(context).brightness == Brightness.dark;
-    final primary = isDark ? AppColors.primaryDm : AppColors.primary;
-    final textPrimary =
-        isDark ? AppColors.textPrimaryDm : AppColors.textPrimary;
-    final textMuted = isDark ? AppColors.textMutedDm : AppColors.textMuted;
-
-    return Padding(
-      padding: const EdgeInsets.fromLTRB(16, 24, 16, 32),
-      child: Column(
-        mainAxisSize: MainAxisSize.min,
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Text(
-            'Change category',
-            style: nsSans(fontWeight: FontWeight.w700, fontSize: 17),
-          ),
-          const SizedBox(height: 12),
-          _CategoryTile(
-            label: 'None',
-            isSelected: currentId == null,
-            primary: primary,
-            textPrimary: textPrimary,
-            textMuted: textMuted,
-            onTap: () =>
-                Navigator.of(context).pop(const _CategoryChoice()),
-          ),
-          const SizedBox(height: 2),
-          ...categories.map(
-            (cat) => _CategoryTile(
-              label: cat.name,
-              isSelected: cat.id == currentId,
-              primary: primary,
-              textPrimary: textPrimary,
-              textMuted: textMuted,
-              onTap: () => Navigator.of(context)
-                  .pop(_CategoryChoice(categoryId: cat.id)),
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-}
-
-class _CategoryTile extends StatelessWidget {
-  final String label;
-  final bool isSelected;
-  final Color primary;
-  final Color textPrimary;
-  final Color textMuted;
-  final VoidCallback onTap;
-
-  const _CategoryTile({
-    required this.label,
-    required this.isSelected,
-    required this.primary,
-    required this.textPrimary,
-    required this.textMuted,
-    required this.onTap,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    return InkWell(
-      onTap: onTap,
-      borderRadius: BorderRadius.circular(8),
-      child: Padding(
-        padding: const EdgeInsets.symmetric(vertical: 10, horizontal: 4),
-        child: Row(
-          children: [
-            Icon(
-              isSelected
-                  ? Icons.radio_button_checked_rounded
-                  : Icons.radio_button_unchecked_rounded,
-              size: 20,
-              color: isSelected ? primary : textMuted,
-            ),
-            const SizedBox(width: 12),
-            Text(
-              label,
-              style: nsSans(
-                fontSize: 15,
-                fontWeight: isSelected ? FontWeight.w700 : FontWeight.w500,
-                color: isSelected ? primary : textPrimary,
-              ),
-            ),
-          ],
-        ),
       ),
     );
   }

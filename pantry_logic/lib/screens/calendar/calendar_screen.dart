@@ -4,6 +4,7 @@ import '../../models/calendar_entry.dart';
 import '../../models/meal.dart';
 import '../../services/calendar_service.dart';
 import '../hungry/restock_screen.dart';
+import '../../core/routes.dart';
 
 class CalendarScreen extends StatefulWidget {
   const CalendarScreen({super.key});
@@ -134,6 +135,7 @@ class _CalendarScreenState extends State<CalendarScreen> {
                     Navigator.of(ctx).pop();
                     Navigator.of(context).push(
                       MaterialPageRoute(
+                        settings: AppRoutes.settings(AppRoutes.restock),
                         builder: (_) => RestockScreen(
                           mealId: entry.mealId!,
                           mealName: entry.mealName!,

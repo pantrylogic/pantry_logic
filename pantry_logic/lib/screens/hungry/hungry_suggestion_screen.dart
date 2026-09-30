@@ -4,6 +4,8 @@ import '../../models/suggested_meal.dart';
 import '../../services/hungry_service.dart';
 import 'restock_screen.dart';
 import '../../widgets/brand.dart';
+import '../../core/routes.dart';
+import '../../widgets/app_snack_bar.dart';
 
 class HungrySuggestionScreen extends StatefulWidget {
   final String categoryId;
@@ -37,11 +39,10 @@ class _HungrySuggestionScreenState extends State<HungrySuggestionScreen> {
     try {
       final meals = await _service.getSuggestions(widget.categoryId);
       if (mounted) setState(() => _meals = meals);
-    } catch (e) {
+    } catch (e, st) {
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Could not load suggestions: $e')),
-        );
+        showErrorSnackBar(ScaffoldMessenger.of(context),
+            'Could not load suggestions.', e, st);
       }
     } finally {
       if (mounted) setState(() => _loading = false);
@@ -71,6 +72,7 @@ class _HungrySuggestionScreenState extends State<HungrySuggestionScreen> {
       }
       if (!mounted) return;
       await Navigator.of(context).push(MaterialPageRoute(
+        settings: AppRoutes.settings(AppRoutes.restock),
         builder: (_) => RestockScreen(
           mealId: meal.id,
           mealName: meal.name,
