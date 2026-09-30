@@ -5,6 +5,7 @@ import '../grocery/grocery_list_screen.dart';
 import '../pantry/pantry_screen.dart';
 import '../meals/meals_screen.dart';
 import '../calendar/calendar_screen.dart';
+import 'shell_controller.dart';
 
 class MainShell extends StatefulWidget {
   const MainShell({super.key});
@@ -14,7 +15,24 @@ class MainShell extends StatefulWidget {
 }
 
 class _MainShellState extends State<MainShell> {
-  int _currentIndex = 0;
+  final _controller = ShellController();
+
+  int get _currentIndex => _controller.value;
+
+  @override
+  void initState() {
+    super.initState();
+    _controller.addListener(_onTabChanged);
+  }
+
+  void _onTabChanged() => setState(() {});
+
+  @override
+  void dispose() {
+    _controller.removeListener(_onTabChanged);
+    _controller.dispose();
+    super.dispose();
+  }
 
   // IndexedStack keeps all screens alive — no re-init on tab switch
   static const _screens = [
@@ -33,9 +51,12 @@ class _MainShellState extends State<MainShell> {
     final textMuted = isDark ? AppColors.textMutedDm : AppColors.textMuted;
 
     return Scaffold(
-      body: IndexedStack(
-        index: _currentIndex,
-        children: _screens,
+      body: ShellScope(
+        controller: _controller,
+        child: IndexedStack(
+          index: _currentIndex,
+          children: _screens,
+        ),
       ),
       bottomNavigationBar: Container(
         decoration: BoxDecoration(
@@ -60,7 +81,7 @@ class _MainShellState extends State<MainShell> {
                   isActive: _currentIndex == 0,
                   primary: primary,
                   textMuted: textMuted,
-                  onTap: () => setState(() => _currentIndex = 0),
+                  onTap: () => _controller.goTo(0),
                 ),
                 _NavItem(
                   icon: Icons.shopping_cart_outlined,
@@ -69,7 +90,7 @@ class _MainShellState extends State<MainShell> {
                   isActive: _currentIndex == 1,
                   primary: primary,
                   textMuted: textMuted,
-                  onTap: () => setState(() => _currentIndex = 1),
+                  onTap: () => _controller.goTo(1),
                 ),
                 _NavItem(
                   icon: Icons.inventory_2_outlined,
@@ -78,7 +99,7 @@ class _MainShellState extends State<MainShell> {
                   isActive: _currentIndex == 2,
                   primary: primary,
                   textMuted: textMuted,
-                  onTap: () => setState(() => _currentIndex = 2),
+                  onTap: () => _controller.goTo(2),
                 ),
                 _NavItem(
                   icon: Icons.restaurant_menu_outlined,
@@ -87,7 +108,7 @@ class _MainShellState extends State<MainShell> {
                   isActive: _currentIndex == 3,
                   primary: primary,
                   textMuted: textMuted,
-                  onTap: () => setState(() => _currentIndex = 3),
+                  onTap: () => _controller.goTo(3),
                 ),
                 _NavItem(
                   icon: Icons.calendar_today_outlined,
@@ -96,7 +117,7 @@ class _MainShellState extends State<MainShell> {
                   isActive: _currentIndex == 4,
                   primary: primary,
                   textMuted: textMuted,
-                  onTap: () => setState(() => _currentIndex = 4),
+                  onTap: () => _controller.goTo(4),
                 ),
               ],
             ),

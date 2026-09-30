@@ -4,6 +4,7 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 import '../models/grocery_item.dart';
 import '../models/item.dart';
 import '../core/quantity.dart';
+import '../core/like.dart';
 
 class GroceryService {
   static final _client = Supabase.instance.client;
@@ -39,7 +40,7 @@ class GroceryService {
     final trimmed = query.trim();
     if (trimmed.isEmpty) return [];
 
-    final pattern = '%$trimmed%';
+    final pattern = '%${escapeLike(trimmed)}%';
 
     // Household items (already in vocab for this household)
     final itemRows = await _client
@@ -98,7 +99,7 @@ class GroceryService {
     final existing = await _client
         .from('items')
         .select()
-        .ilike('name', trimmed)
+        .ilike('name', escapeLike(trimmed))
         .maybeSingle();
 
     if (existing != null) return Item.fromJson(existing);
@@ -124,7 +125,7 @@ class GroceryService {
         final fallback = await _client
             .from('items')
             .select()
-            .ilike('name', trimmed)
+            .ilike('name', escapeLike(trimmed))
             .single();
         return Item.fromJson(fallback);
       }
@@ -225,6 +226,12 @@ class GroceryService {
         .eq('item_id', item.itemId)
         .maybeSingle();
 
+    // Only a brand-new stock row gets an added_by; merging into an existing
+    // row keeps whoever added it first.
+    final addedBy = existing == null
+        ? (item.addedBy ?? _client.auth.currentUser?.id)
+        : null;
+
     final mergedQuantity = mergeQuantities(
       existing?['quantity'] as String?,
       item.quantity,
@@ -246,6 +253,7 @@ class GroceryService {
         'location': location,
         if (mergedQuantity != null) 'quantity': mergedQuantity,
         if (notes != null) 'notes': notes,
+        if (addedBy != null) 'added_by': addedBy,
       },
       onConflict: 'household_id,item_id',
     );

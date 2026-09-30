@@ -4,6 +4,7 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 import '../models/inventory_item.dart';
 import '../models/item.dart';
 import '../models/storage_location.dart';
+import '../core/like.dart';
 
 class InventoryService {
   static final _client = Supabase.instance.client;
@@ -45,7 +46,7 @@ class InventoryService {
     final trimmed = query.trim();
     if (trimmed.isEmpty) return [];
 
-    final pattern = '%$trimmed%';
+    final pattern = '%${escapeLike(trimmed)}%';
 
     final itemRows = await _client
         .from('items')
@@ -99,7 +100,7 @@ class InventoryService {
       try {
         final rows = await _client
             .from('inventory_items')
-            .select('*, items(name)')
+            .select('*, items(name), profiles!added_by(display_name)')
             .order('location')
             .order('updated_at', ascending: false);
         if (!ctrl.isClosed) {
@@ -143,7 +144,7 @@ class InventoryService {
     final existing = await _client
         .from('items')
         .select()
-        .ilike('name', trimmed)
+        .ilike('name', escapeLike(trimmed))
         .maybeSingle();
 
     if (existing != null) return Item.fromJson(existing);
@@ -167,7 +168,7 @@ class InventoryService {
         final fallback = await _client
             .from('items')
             .select()
-            .ilike('name', trimmed)
+            .ilike('name', escapeLike(trimmed))
             .single();
         return Item.fromJson(fallback);
       }
@@ -185,9 +186,11 @@ class InventoryService {
     required String location,
     String? quantity,
     String? notes,
+    String? addedBy,
   }) async {
     final hid = _householdId;
     if (hid == null) throw Exception('No household assigned.');
+    final userId = addedBy ?? _client.auth.currentUser?.id;
     try {
       await _client.from('inventory_items').insert({
         'household_id': hid,
@@ -195,6 +198,7 @@ class InventoryService {
         'location': location,
         if (quantity != null && quantity.isNotEmpty) 'quantity': quantity,
         if (notes != null && notes.isNotEmpty) 'notes': notes,
+        if (userId != null) 'added_by': userId,
       });
     } on PostgrestException catch (e) {
       if (e.code == '23505') throw AlreadyInPantryException(itemName);
@@ -225,15 +229,37 @@ class InventoryService {
         .eq('id', inventoryItemId);
   }
 
+  /// Renames the underlying item (shared by stock, grocery and meal
+  /// ingredients). Throws [ItemNameTakenException] if another item in the
+  /// household already has that name (case-insensitive unique index).
+  Future<void> renameItem(String itemId, String newName) async {
+    final trimmed = newName.trim();
+    try {
+      await _client.from('items').update({'name': trimmed}).eq('id', itemId);
+    } on PostgrestException catch (e) {
+      if (e.code == '23505') throw ItemNameTakenException(trimmed);
+      rethrow;
+    }
+  }
+
   /// Adds an inventory item's underlying item to the grocery list.
-  Future<void> addToGroceryList(String itemId) async {
+  /// Returns false (and adds nothing) if it's already on the list.
+  Future<bool> addToGroceryList(String itemId) async {
     final hid = _householdId;
     if (hid == null) throw Exception('No household assigned.');
+    final existing = await _client
+        .from('grocery_items')
+        .select('id')
+        .eq('item_id', itemId)
+        .eq('purchased', false)
+        .limit(1);
+    if (existing.isNotEmpty) return false;
     final userId = _client.auth.currentUser?.id;
     await _client.from('grocery_items').insert({
       'household_id': hid,
       'item_id': itemId,
       if (userId != null) 'added_by': userId,
     });
+    return true;
   }
 }

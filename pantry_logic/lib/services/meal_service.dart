@@ -5,6 +5,7 @@ import '../models/meal_category.dart';
 import '../models/meal.dart';
 import '../models/meal_need_item.dart';
 import '../models/item.dart';
+import '../core/like.dart';
 
 class MealService {
   static final _client = Supabase.instance.client;
@@ -318,7 +319,7 @@ class MealService {
     final trimmed = query.trim();
     if (trimmed.isEmpty) return [];
 
-    final pattern = '%$trimmed%';
+    final pattern = '%${escapeLike(trimmed)}%';
 
     final itemRows = await _client
         .from('items')
@@ -370,7 +371,7 @@ class MealService {
     final existing = await _client
         .from('items')
         .select()
-        .ilike('name', trimmed)
+        .ilike('name', escapeLike(trimmed))
         .maybeSingle();
     if (existing != null) return Item.fromJson(existing);
 
@@ -393,7 +394,7 @@ class MealService {
         final fallback = await _client
             .from('items')
             .select()
-            .ilike('name', trimmed)
+            .ilike('name', escapeLike(trimmed))
             .single();
         return Item.fromJson(fallback);
       }

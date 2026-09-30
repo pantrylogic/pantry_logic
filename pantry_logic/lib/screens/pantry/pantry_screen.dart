@@ -1,9 +1,20 @@
 import 'package:flutter/material.dart';
+
+import '../../core/locations.dart';
+import '../../core/quantity.dart';
+import '../../core/theme.dart';
+import '../../core/ui_prefs.dart';
 import '../../models/inventory_item.dart';
-import '../../models/item.dart';
 import '../../models/storage_location.dart';
 import '../../services/inventory_service.dart';
+import '../../widgets/add_bar.dart';
+import '../../widgets/app_sheet.dart';
+import '../../widgets/app_snack_bar.dart';
+import '../../widgets/brand.dart';
+import '../../widgets/collapsible_section_header.dart';
+import '../shell/shell_controller.dart';
 
+/// The Stock tab: everything in the house, grouped by storage location.
 class PantryScreen extends StatefulWidget {
   const PantryScreen({super.key});
 
@@ -11,219 +22,79 @@ class PantryScreen extends StatefulWidget {
   State<PantryScreen> createState() => _PantryScreenState();
 }
 
-class _PantryScreenState extends State<PantryScreen> {
+class _PantryScreenState extends State<PantryScreen> with TabActivation {
   final _service = InventoryService();
   late final Stream<List<InventoryItem>> _stream;
 
-  // ─── Add-item bar ─────────────────────────────────────────────────────────────
-  final _addCtrl = TextEditingController();
-  final _addFocus = FocusNode();
-  List<AutocompleteSuggestion> _suggestions = [];
-  bool _showSuggestions = false;
+  List<StorageLocation> _locations = [];
 
-  // ─── Search ───────────────────────────────────────────────────────────────────
+  /// Locations the user has collapsed (persisted per device).
+  Set<String> _collapsed = {};
+
+  /// Rows removed optimistically (swipe/delete) before the stream catches up.
+  final Set<String> _hiddenIds = {};
+
   bool _searching = false;
   final _searchCtrl = TextEditingController();
   final _searchFocus = FocusNode();
-  String _searchQuery = '';
+  String _query = '';
 
-  // ─── Storage locations ────────────────────────────────────────────────────────
-  List<StorageLocation> _locations = [];
+  @override
+  int get tabIndex => ShellTab.stock;
+
+  @override
+  void onTabActivated() => _loadLocations();
 
   @override
   void initState() {
     super.initState();
     _stream = _service.streamInventoryItems().asBroadcastStream();
     _loadLocations();
-    _addCtrl.addListener(_onAddChanged);
+    _loadCollapsed();
     _searchCtrl.addListener(() {
-      setState(() => _searchQuery = _searchCtrl.text.trim().toLowerCase());
+      setState(() => _query = _searchCtrl.text.trim().toLowerCase());
     });
+  }
+
+  @override
+  void dispose() {
+    _searchCtrl.dispose();
+    _searchFocus.dispose();
+    super.dispose();
   }
 
   Future<void> _loadLocations() async {
     try {
       final locs = await _service.getStorageLocations();
       if (mounted) setState(() => _locations = locs);
-    } catch (_) {}
-  }
-
-  @override
-  void dispose() {
-    _addCtrl.dispose();
-    _addFocus.dispose();
-    _searchCtrl.dispose();
-    _searchFocus.dispose();
-    super.dispose();
-  }
-
-  // ─── Autocomplete ─────────────────────────────────────────────────────────────
-
-  void _onAddChanged() {
-    final q = _addCtrl.text;
-    if (q.trim().isEmpty) {
-      setState(() {
-        _suggestions = [];
-        _showSuggestions = false;
-      });
-      return;
-    }
-    _service.searchAutocomplete(q).then((results) {
-      if (mounted) {
-        setState(() {
-          _suggestions = results;
-          _showSuggestions = results.isNotEmpty;
-        });
-      }
-    });
-  }
-
-  void _hideSuggestions() {
-    setState(() => _showSuggestions = false);
-  }
-
-  // ─── Add item ─────────────────────────────────────────────────────────────────
-
-  Future<void> _addFromSuggestion(AutocompleteSuggestion suggestion) async {
-    _hideSuggestions();
-    _addCtrl.clear();
-    _addFocus.unfocus();
-    await _showAddItemSheet(
-      name: suggestion.name,
-      itemId: suggestion.itemId,
-      defaultLocation: suggestion.defaultLocation,
-      category: suggestion.category,
-    );
-  }
-
-  Future<void> _addFromText() async {
-    final name = _addCtrl.text.trim();
-    if (name.isEmpty) return;
-    _hideSuggestions();
-    _addCtrl.clear();
-    _addFocus.unfocus();
-    await _showAddItemSheet(name: name);
-  }
-
-  Future<void> _showAddItemSheet({
-    required String name,
-    String? itemId,
-    String? defaultLocation,
-    String? category,
-  }) async {
-    final initialLocation = defaultLocation ??
-        (_locations.isNotEmpty ? _locations.first.name : 'Pantry');
-
-    await showModalBottomSheet<void>(
-      context: context,
-      isScrollControlled: true,
-      useSafeArea: true,
-      builder: (ctx) => _AddItemSheet(
-        name: name,
-        locations: _locations,
-        initialLocation: initialLocation,
-        initialQuantity: '',
-        initialNotes: '',
-        onSave: (location, quantity, notes) async {
-          final messenger = ScaffoldMessenger.of(context);
-          try {
-            final item = await _service.getOrCreateItem(
-              name: name,
-              category: category,
-              defaultLocation: defaultLocation,
-            );
-            await _service.addInventoryItem(
-              itemId: item.id,
-              itemName: item.name,
-              location: location.isNotEmpty ? location : 'Pantry',
-              quantity: quantity,
-              notes: notes,
-            );
-            if (ctx.mounted) Navigator.pop(ctx);
-          } on AlreadyInPantryException {
-            if (ctx.mounted) {
-              Navigator.pop(ctx);
-              messenger.showSnackBar(
-                SnackBar(content: Text('$name is already in stock.')),
-              );
-            }
-          } catch (e) {
-            if (ctx.mounted) {
-              ScaffoldMessenger.of(ctx).showSnackBar(
-                const SnackBar(content: Text('Could not add item. Try again.')),
-              );
-            }
-          }
-        },
-      ),
-    );
-  }
-
-  // ─── Edit / delete ────────────────────────────────────────────────────────────
-
-  Future<void> _showEditSheet(InventoryItem item) async {
-    await showModalBottomSheet<void>(
-      context: context,
-      isScrollControlled: true,
-      useSafeArea: true,
-      builder: (ctx) => _EditItemSheet(
-        item: item,
-        locations: _locations,
-        initialLocation: item.location,
-        initialQuantity: item.quantity ?? '',
-        initialNotes: item.notes ?? '',
-        onSave: (location, quantity, notes) async {
-          try {
-            await _service.updateInventoryItem(
-              item.id,
-              location: location.isNotEmpty ? location : item.location,
-              quantity: quantity,
-              notes: notes,
-            );
-            if (ctx.mounted) Navigator.pop(ctx);
-          } catch (e) {
-            if (ctx.mounted) {
-              ScaffoldMessenger.of(ctx).showSnackBar(
-                const SnackBar(content: Text('Could not save. Try again.')),
-              );
-            }
-          }
-        },
-        onDelete: () {
-          Navigator.pop(ctx);
-          _deleteItem(item);
-        },
-      ),
-    );
-  }
-
-  Future<void> _deleteItem(InventoryItem item) async {
-    try {
-      await _service.deleteInventoryItem(item.id);
-      if (!mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text('${item.itemName} removed from stock.'),
-          action: SnackBarAction(
-            label: 'Add to grocery list',
-            onPressed: () async {
-              try {
-                await _service.addToGroceryList(item.itemId);
-              } catch (_) {}
-            },
-          ),
-        ),
-      );
-    } catch (_) {
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Could not remove item.')),
-        );
-      }
+    } catch (e, st) {
+      logError('Load storage locations', e, st);
     }
   }
 
-  // ─── Search toggle ────────────────────────────────────────────────────────────
+  Future<void> _loadCollapsed() async {
+    final saved = await UiPrefs.getStringSet(UiPrefs.stockCollapsedLocations);
+    if (mounted) setState(() => _collapsed = saved);
+  }
+
+  /// Location names in display order, plus [extra] if it isn't one of them
+  /// (e.g. an item whose custom location was deleted).
+  List<String> _locationNames([String? extra]) => sortLocationNames([
+        ..._locations.map((l) => l.name),
+        if (extra != null && extra.isNotEmpty) extra,
+      ]);
+
+  Future<void> _toggleSection(String location) async {
+    // While searching, sections with matches are forced open and the saved
+    // state is left alone.
+    if (_query.isNotEmpty) return;
+    final next = {..._collapsed};
+    if (!next.remove(location)) next.add(location);
+    setState(() => _collapsed = next);
+    await UiPrefs.setStringSet(UiPrefs.stockCollapsedLocations, next);
+  }
+
+  // ─── Search ────────────────────────────────────────────────────────────────
 
   void _startSearch() {
     setState(() => _searching = true);
@@ -231,409 +102,556 @@ class _PantryScreenState extends State<PantryScreen> {
   }
 
   void _stopSearch() {
-    setState(() {
-      _searching = false;
-      _searchQuery = '';
-    });
     _searchCtrl.clear();
     _searchFocus.unfocus();
+    setState(() => _searching = false);
   }
 
-  // ─── Build ────────────────────────────────────────────────────────────────────
+  // ─── Add ───────────────────────────────────────────────────────────────────
 
-  @override
-  Widget build(BuildContext context) {
-    return GestureDetector(
-      onTap: () {
-        _hideSuggestions();
-        _addFocus.unfocus();
-      },
-      child: Scaffold(
-        appBar: AppBar(
-          title: _searching
-              ? TextField(
-                  controller: _searchCtrl,
-                  focusNode: _searchFocus,
-                  decoration: const InputDecoration(
-                    hintText: 'Search stock…',
-                    border: InputBorder.none,
-                  ),
-                  style: Theme.of(context).textTheme.titleMedium,
-                )
-              : const Text('Stock'),
-          actions: [
-            if (_searching)
-              IconButton(
-                icon: const Icon(Icons.close),
-                onPressed: _stopSearch,
-              )
-            else
-              IconButton(
-                icon: const Icon(Icons.search),
-                onPressed: _startSearch,
-              ),
-          ],
-        ),
-        body: Column(
-          children: [
-            Expanded(
-              child: StreamBuilder<List<InventoryItem>>(
-                stream: _stream,
-                builder: (context, snapshot) {
-                  if (snapshot.connectionState == ConnectionState.waiting &&
-                      !snapshot.hasData) {
-                    return const Center(child: CircularProgressIndicator());
-                  }
-                  if (snapshot.hasError) {
-                    return Center(child: Text('Error: ${snapshot.error}'));
-                  }
+  Future<void> _openAddSheet({
+    required String name,
+    String? itemId,
+    String? category,
+    String? defaultLocation,
+  }) async {
+    final messenger = ScaffoldMessenger.of(context);
+    final names = _locationNames(defaultLocation);
+    final initialLocation = defaultLocation ??
+        (names.contains('Pantry')
+            ? 'Pantry'
+            : (names.isNotEmpty ? names.first : 'Pantry'));
 
-                  var items = snapshot.data ?? [];
-
-                  if (_searchQuery.isNotEmpty) {
-                    items = items
-                        .where((i) =>
-                            i.itemName
-                                .toLowerCase()
-                                .contains(_searchQuery) ||
-                            i.location
-                                .toLowerCase()
-                                .contains(_searchQuery))
-                        .toList();
-                  }
-
-                  if (items.isEmpty) {
-                    return Center(
-                      child: Text(
-                        _searchQuery.isNotEmpty
-                            ? 'No items match "$_searchQuery".'
-                            : 'Nothing in stock yet.\nAdd items below.',
-                        textAlign: TextAlign.center,
-                        style: Theme.of(context)
-                            .textTheme
-                            .bodyMedium
-                            ?.copyWith(
-                              color: Theme.of(context)
-                                  .colorScheme
-                                  .onSurface
-                                  .withValues(alpha: 0.5),
-                            ),
-                      ),
-                    );
-                  }
-
-                  // Group by location
-                  final grouped = <String, List<InventoryItem>>{};
-                  for (final item in items) {
-                    grouped.putIfAbsent(item.location, () => []).add(item);
-                  }
-
-                  // Order groups by storage_locations sort_order, then alphabetical
-                  final locationOrder = {
-                    for (var i = 0; i < _locations.length; i++)
-                      _locations[i].name: i
-                  };
-                  final groupKeys = grouped.keys.toList()
-                    ..sort((a, b) {
-                      final ia = locationOrder[a] ?? 999;
-                      final ib = locationOrder[b] ?? 999;
-                      if (ia != ib) return ia.compareTo(ib);
-                      return a.compareTo(b);
-                    });
-
-                  return ListView.builder(
-                    itemCount: groupKeys.length,
-                    itemBuilder: (context, gi) {
-                      final location = groupKeys[gi];
-                      final groupItems = grouped[location]!;
-                      return Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          _SectionHeader(location: location),
-                          ...groupItems.map(
-                            (item) => _InventoryTile(
-                              item: item,
-                              onTap: () => _showEditSheet(item),
-                              onDismissed: () => _deleteItem(item),
-                            ),
-                          ),
-                        ],
-                      );
-                    },
-                  );
-                },
-              ),
-            ),
-            if (_showSuggestions)
-              _SuggestionsDropdown(
-                suggestions: _suggestions,
-                onTap: _addFromSuggestion,
-              ),
-            Container(
-              decoration: BoxDecoration(
-                color: Theme.of(context).colorScheme.surface,
-                border: Border(
-                  top: BorderSide(
-                    color: Theme.of(context).dividerColor,
-                    width: 0.5,
-                  ),
-                ),
-              ),
-              child: SafeArea(
-                top: false,
-                child: _AddBar(
-                  controller: _addCtrl,
-                  focusNode: _addFocus,
-                  onSubmitted: (_) => _addFromText(),
-                  onTapOutside: (_) {
-                    Future.delayed(const Duration(milliseconds: 80), () {
-                      if (mounted) _hideSuggestions();
-                    });
-                  },
-                ),
-              ),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-}
-
-// ─── Add bar ──────────────────────────────────────────────────────────────────
-
-class _AddBar extends StatelessWidget {
-  const _AddBar({
-    required this.controller,
-    required this.focusNode,
-    required this.onSubmitted,
-    required this.onTapOutside,
-  });
-
-  final TextEditingController controller;
-  final FocusNode focusNode;
-  final ValueChanged<String> onSubmitted;
-  final TapRegionCallback onTapOutside;
-
-  @override
-  Widget build(BuildContext context) {
-    return Padding(
-      padding: const EdgeInsets.fromLTRB(12, 8, 12, 8),
-      child: TextField(
-        controller: controller,
-        focusNode: focusNode,
-        onSubmitted: onSubmitted,
-        onTapOutside: onTapOutside,
-        textCapitalization: TextCapitalization.sentences,
-        decoration: InputDecoration(
-          hintText: 'Add to stock…',
-          prefixIcon: const Icon(Icons.add),
-          border: OutlineInputBorder(
-            borderRadius: BorderRadius.circular(12),
-          ),
-          contentPadding:
-              const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
-        ),
-      ),
-    );
-  }
-}
-
-// ─── Suggestions dropdown ─────────────────────────────────────────────────────
-
-class _SuggestionsDropdown extends StatelessWidget {
-  const _SuggestionsDropdown({
-    required this.suggestions,
-    required this.onTap,
-  });
-
-  final List<AutocompleteSuggestion> suggestions;
-  final ValueChanged<AutocompleteSuggestion> onTap;
-
-  @override
-  Widget build(BuildContext context) {
-    return Material(
-      elevation: 4,
-      child: ListView.builder(
-        padding: EdgeInsets.zero,
-        shrinkWrap: true,
-        itemCount: suggestions.length,
-        itemBuilder: (context, i) {
-          final s = suggestions[i];
-          return ListTile(
-            dense: true,
-            leading: Icon(
-              s.isHouseholdItem ? Icons.inventory_2_outlined : Icons.search,
-              size: 18,
-            ),
-            title: Text(s.name),
-            subtitle: s.category != null ? Text(s.category!) : null,
-            trailing: Text(
-              s.defaultLocation,
-              style: Theme.of(context).textTheme.bodySmall,
-            ),
-            onTap: () => onTap(s),
-          );
+    await showAppSheet<void>(
+      context: context,
+      builder: (ctx) => _ItemSheet(
+        title: 'Add to stock',
+        saveLabel: 'Add to stock',
+        initialName: name,
+        locations: names,
+        initialLocation: initialLocation,
+        onSave: (r) async {
+          final sameName = r.name.toLowerCase() == name.toLowerCase();
+          try {
+            final resolvedId = sameName && itemId != null
+                ? itemId
+                : (await _service.getOrCreateItem(
+                    name: r.name,
+                    category: sameName ? category : null,
+                    defaultLocation: defaultLocation,
+                  ))
+                    .id;
+            await _service.addInventoryItem(
+              itemId: resolvedId,
+              itemName: r.name,
+              location: r.location,
+              quantity: r.quantity,
+              notes: r.notes,
+            );
+          } on AlreadyInPantryException {
+            showAppSnackBar(messenger, '${r.name} is already in stock.');
+          }
+          if (ctx.mounted) Navigator.pop(ctx);
+          return null;
         },
       ),
     );
   }
-}
 
-// ─── Section header ───────────────────────────────────────────────────────────
+  // ─── Edit ──────────────────────────────────────────────────────────────────
 
-class _SectionHeader extends StatelessWidget {
-  const _SectionHeader({required this.location});
+  Future<void> _openEditSheet(InventoryItem item) async {
+    final messenger = ScaffoldMessenger.of(context);
+    await showAppSheet<void>(
+      context: context,
+      builder: (ctx) => _ItemSheet(
+        title: 'Edit item',
+        saveLabel: 'Save',
+        initialName: item.itemName,
+        locations: _locationNames(item.location),
+        initialLocation: item.location,
+        initialQuantity: item.quantity ?? '',
+        initialNotes: item.notes ?? '',
+        addedByName: item.addedByName,
+        onSave: (r) async {
+          if (r.name != item.itemName) {
+            try {
+              await _service.renameItem(item.itemId, r.name);
+            } on ItemNameTakenException {
+              return '"${r.name}" already exists. Pick a different name.';
+            }
+          }
+          await _service.updateInventoryItem(
+            item.id,
+            location: r.location,
+            quantity: r.quantity,
+            notes: r.notes,
+          );
+          if (ctx.mounted) Navigator.pop(ctx);
+          return null;
+        },
+        onAddToGrocery: () => _addToGrocery(item, messenger),
+        onDelete: () {
+          Navigator.pop(ctx);
+          _deleteItem(item, messenger);
+        },
+      ),
+    );
+  }
 
-  final String location;
+  // ─── Row actions ───────────────────────────────────────────────────────────
+
+  Future<void> _addToGrocery(
+    InventoryItem item,
+    ScaffoldMessengerState messenger,
+  ) async {
+    try {
+      final added = await _service.addToGroceryList(item.itemId);
+      showAppSnackBar(
+        messenger,
+        added
+            ? 'Added ${item.itemName} to the grocery list.'
+            : '${item.itemName} is already on the grocery list.',
+      );
+    } catch (e, st) {
+      showErrorSnackBar(messenger, 'Could not add to the grocery list.', e, st);
+    }
+  }
+
+  Future<void> _deleteItem(
+    InventoryItem item,
+    ScaffoldMessengerState messenger,
+  ) async {
+    setState(() => _hiddenIds.add(item.id));
+    try {
+      await _service.deleteInventoryItem(item.id);
+    } catch (e, st) {
+      if (mounted) setState(() => _hiddenIds.remove(item.id));
+      showErrorSnackBar(messenger, 'Could not remove ${item.itemName}.', e, st);
+      return;
+    }
+    showUndoSnackBar(
+      messenger,
+      '${item.itemName} removed from stock.',
+      onUndo: () => _restoreItem(item, messenger),
+    );
+  }
+
+  Future<void> _restoreItem(
+    InventoryItem item,
+    ScaffoldMessengerState messenger,
+  ) async {
+    try {
+      await _service.addInventoryItem(
+        itemId: item.itemId,
+        itemName: item.itemName,
+        location: item.location,
+        quantity: item.quantity,
+        notes: item.notes,
+        addedBy: item.addedBy,
+      );
+    } on AlreadyInPantryException {
+      // Someone re-added it in the meantime — nothing to restore.
+    } catch (e, st) {
+      showErrorSnackBar(messenger, 'Could not restore ${item.itemName}.', e, st);
+    }
+  }
+
+  // ─── Build ─────────────────────────────────────────────────────────────────
 
   @override
   Widget build(BuildContext context) {
-    return Padding(
-      padding: const EdgeInsets.fromLTRB(16, 16, 16, 4),
-      child: Text(
-        location.toUpperCase(),
-        style: Theme.of(context).textTheme.labelSmall?.copyWith(
-              letterSpacing: 1.1,
-              color: Theme.of(context).colorScheme.primary,
-              fontWeight: FontWeight.w700,
+    final p = AppPalette.of(context);
+
+    return Scaffold(
+      appBar: AppBar(
+        title: _searching
+            ? TextField(
+                controller: _searchCtrl,
+                focusNode: _searchFocus,
+                style: nsSans(fontSize: 17, color: p.textPrimary),
+                decoration: const InputDecoration(
+                  hintText: 'Search stock…',
+                  border: InputBorder.none,
+                  enabledBorder: InputBorder.none,
+                  focusedBorder: InputBorder.none,
+                  filled: false,
+                ),
+              )
+            : const Text('Stock'),
+        actions: [
+          IconButton(
+            tooltip: _searching ? 'Close search' : 'Search',
+            icon: Icon(_searching ? Icons.close_rounded : Icons.search_rounded),
+            onPressed: _searching ? _stopSearch : _startSearch,
+          ),
+        ],
+      ),
+      body: Column(
+        children: [
+          Expanded(
+            child: StreamBuilder<List<InventoryItem>>(
+              stream: _stream,
+              builder: (context, snapshot) {
+                if (snapshot.connectionState == ConnectionState.waiting &&
+                    !snapshot.hasData) {
+                  return const Center(child: CircularProgressIndicator());
+                }
+                if (snapshot.hasError) {
+                  return const _EmptyState(
+                    icon: Icons.cloud_off_rounded,
+                    message: 'Could not load stock. Reopen the tab to try '
+                        'again.',
+                  );
+                }
+                return _buildList(snapshot.data ?? []);
+              },
             ),
+          ),
+          AddBar(
+            hintText: 'Add to stock…',
+            search: _service.searchAutocomplete,
+            suggestionTrailing: SuggestionTrailing.location,
+            keepFocusAfterSubmit: false,
+            onSubmit: (name) => _openAddSheet(name: name),
+            onSuggestion: (s) => _openAddSheet(
+              name: s.name,
+              itemId: s.itemId,
+              category: s.category,
+              defaultLocation: s.defaultLocation,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildList(List<InventoryItem> all) {
+    var items = all.where((i) => !_hiddenIds.contains(i.id)).toList();
+
+    if (_query.isNotEmpty) {
+      items = items
+          .where((i) =>
+              i.itemName.toLowerCase().contains(_query) ||
+              i.location.toLowerCase().contains(_query))
+          .toList();
+    }
+
+    if (items.isEmpty) {
+      return _EmptyState(
+        icon: _query.isNotEmpty
+            ? Icons.search_off_rounded
+            : Icons.inventory_2_outlined,
+        message: _query.isNotEmpty
+            ? 'Nothing matches "${_searchCtrl.text.trim()}".'
+            : 'Nothing in stock yet.\nAdd items below.',
+      );
+    }
+
+    final grouped = <String, List<InventoryItem>>{};
+    for (final item in items) {
+      grouped.putIfAbsent(item.location, () => []).add(item);
+    }
+    final locations = sortLocationNames(grouped.keys);
+
+    final children = <Widget>[];
+    for (final location in locations) {
+      final group = grouped[location]!
+        ..sort((a, b) =>
+            a.itemName.toLowerCase().compareTo(b.itemName.toLowerCase()));
+      final expanded = _query.isNotEmpty || !_collapsed.contains(location);
+
+      children.add(CollapsibleSectionHeader(
+        title: location,
+        count: group.length,
+        expanded: expanded,
+        onTap: () => _toggleSection(location),
+      ));
+      if (expanded) {
+        children.add(_SectionCard(
+          children: [
+            for (final item in group)
+              _StockRow(
+                key: ValueKey('stock_${item.id}'),
+                item: item,
+                onTap: () => _openEditSheet(item),
+                onDelete: () =>
+                    _deleteItem(item, ScaffoldMessenger.of(context)),
+                onAddToGrocery: () =>
+                    _addToGrocery(item, ScaffoldMessenger.of(context)),
+              ),
+          ],
+        ));
+      }
+    }
+
+    return ListView(
+      padding: const EdgeInsets.only(bottom: 16),
+      keyboardDismissBehavior: ScrollViewKeyboardDismissBehavior.onDrag,
+      children: children,
+    );
+  }
+}
+
+// ─── Section card ─────────────────────────────────────────────────────────────
+
+class _SectionCard extends StatelessWidget {
+  const _SectionCard({required this.children});
+
+  final List<Widget> children;
+
+  @override
+  Widget build(BuildContext context) {
+    final p = AppPalette.of(context);
+    return Container(
+      margin: const EdgeInsets.fromLTRB(12, 0, 12, 4),
+      decoration: BoxDecoration(
+        color: p.surface,
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(color: p.border),
+      ),
+      child: ClipRRect(
+        borderRadius: BorderRadius.circular(11),
+        child: Column(
+          children: [
+            for (var i = 0; i < children.length; i++) ...[
+              if (i > 0) Divider(height: 1, indent: 16, color: p.border),
+              children[i],
+            ],
+          ],
+        ),
       ),
     );
   }
 }
 
-// ─── Inventory tile ───────────────────────────────────────────────────────────
+// ─── Stock row ────────────────────────────────────────────────────────────────
 
-class _InventoryTile extends StatelessWidget {
-  const _InventoryTile({
+class _StockRow extends StatelessWidget {
+  const _StockRow({
+    super.key,
     required this.item,
     required this.onTap,
-    required this.onDismissed,
+    required this.onDelete,
+    required this.onAddToGrocery,
   });
 
   final InventoryItem item;
   final VoidCallback onTap;
-  final VoidCallback onDismissed;
+  final VoidCallback onDelete;
+  final VoidCallback onAddToGrocery;
 
   @override
   Widget build(BuildContext context) {
-    final subtitle = [
-      if (item.quantity != null && item.quantity!.isNotEmpty) item.quantity!,
-      if (item.notes != null && item.notes!.isNotEmpty) item.notes!,
-    ].join(' · ');
+    final p = AppPalette.of(context);
+    final qty = formatQuantity(item.quantity);
 
     return Dismissible(
-      key: ValueKey(item.id),
-      direction: DismissDirection.endToStart,
-      background: Container(
-        alignment: Alignment.centerRight,
-        padding: const EdgeInsets.only(right: 20),
-        color: Theme.of(context).colorScheme.error,
-        child: Icon(Icons.delete_outline,
-            color: Theme.of(context).colorScheme.onError),
+      key: ValueKey('dismiss_${item.id}'),
+      // Swipe right: add to grocery list (row stays).
+      // Swipe left: remove (with undo).
+      background: _SwipeBackground(
+        color: p.primary,
+        foreground: p.onPrimary,
+        icon: Icons.add_shopping_cart_rounded,
+        label: 'Add to list',
+        alignment: Alignment.centerLeft,
       ),
-      onDismissed: (_) => onDismissed(),
-      child: ListTile(
-        title: Text(item.itemName),
-        subtitle: subtitle.isNotEmpty ? Text(subtitle) : null,
-        trailing: const Icon(Icons.chevron_right, size: 18),
-        onTap: onTap,
+      secondaryBackground: _SwipeBackground(
+        color: p.error,
+        foreground: Colors.white,
+        icon: Icons.delete_outline_rounded,
+        label: 'Remove',
+        alignment: Alignment.centerRight,
+      ),
+      confirmDismiss: (direction) async {
+        if (direction == DismissDirection.startToEnd) {
+          onAddToGrocery();
+          return false;
+        }
+        return true;
+      },
+      onDismissed: (_) => onDelete(),
+      child: Material(
+        color: p.surface,
+        child: InkWell(
+          onTap: onTap,
+          child: ConstrainedBox(
+            constraints: const BoxConstraints(minHeight: 48),
+            child: Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+              child: Row(
+                children: [
+                  Expanded(
+                    child: Text(
+                      item.itemName,
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      style: nsSans(
+                        fontSize: 15,
+                        fontWeight: FontWeight.w600,
+                        color: p.textPrimary,
+                      ),
+                    ),
+                  ),
+                  if (qty.isNotEmpty) ...[
+                    const SizedBox(width: 12),
+                    _QuantityPill(qty),
+                  ],
+                ],
+              ),
+            ),
+          ),
+        ),
       ),
     );
   }
 }
 
-// ─── Add item bottom sheet ────────────────────────────────────────────────────
+class _QuantityPill extends StatelessWidget {
+  const _QuantityPill(this.text);
 
-class _AddItemSheet extends StatelessWidget {
-  const _AddItemSheet({
+  final String text;
+
+  @override
+  Widget build(BuildContext context) {
+    final p = AppPalette.of(context);
+    return ConstrainedBox(
+      constraints: const BoxConstraints(maxWidth: 140),
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 3),
+        decoration: BoxDecoration(
+          color: p.background,
+          borderRadius: BorderRadius.circular(12),
+          border: Border.all(color: p.border),
+        ),
+        child: Text(
+          text,
+          maxLines: 1,
+          overflow: TextOverflow.ellipsis,
+          style: nsSans(
+            fontSize: 13,
+            fontWeight: FontWeight.w700,
+            color: p.textMuted,
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+class _SwipeBackground extends StatelessWidget {
+  const _SwipeBackground({
+    required this.color,
+    required this.foreground,
+    required this.icon,
+    required this.label,
+    required this.alignment,
+  });
+
+  final Color color;
+  final Color foreground;
+  final IconData icon;
+  final String label;
+  final Alignment alignment;
+
+  @override
+  Widget build(BuildContext context) {
+    final start = alignment == Alignment.centerLeft;
+    final text = Text(
+      label,
+      style: nsSans(fontSize: 13, fontWeight: FontWeight.w700, color: foreground),
+    );
+    return Container(
+      color: color,
+      alignment: alignment,
+      padding: const EdgeInsets.symmetric(horizontal: 20),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          if (!start) ...[text, const SizedBox(width: 8)],
+          Icon(icon, color: foreground, size: 22),
+          if (start) ...[const SizedBox(width: 8), text],
+        ],
+      ),
+    );
+  }
+}
+
+class _EmptyState extends StatelessWidget {
+  const _EmptyState({required this.icon, required this.message});
+
+  final IconData icon;
+  final String message;
+
+  @override
+  Widget build(BuildContext context) {
+    final p = AppPalette.of(context);
+    return Center(
+      child: Padding(
+        padding: const EdgeInsets.all(32),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            IconBadge(icon, size: 56),
+            const SizedBox(height: 16),
+            Text(
+              message,
+              textAlign: TextAlign.center,
+              style: nsSans(fontSize: 15, color: p.textMuted, height: 1.5),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+// ─── Add / edit sheet ─────────────────────────────────────────────────────────
+
+class _ItemSheetResult {
+  const _ItemSheetResult({
     required this.name,
-    required this.locations,
-    required this.initialLocation,
-    required this.initialQuantity,
-    required this.initialNotes,
-    required this.onSave,
+    required this.location,
+    required this.quantity,
+    required this.notes,
   });
 
   final String name;
-  final List<StorageLocation> locations;
-  final String initialLocation;
-  final String initialQuantity;
-  final String initialNotes;
-  final void Function(String location, String quantity, String notes) onSave;
-
-  @override
-  Widget build(BuildContext context) {
-    return _ItemSheet(
-      title: 'Add "$name"',
-      locations: locations,
-      initialLocation: initialLocation,
-      initialQuantity: initialQuantity,
-      initialNotes: initialNotes,
-      saveLabel: 'Add to stock',
-      onSave: onSave,
-    );
-  }
+  final String location;
+  final String quantity;
+  final String notes;
 }
 
-// ─── Edit item bottom sheet ───────────────────────────────────────────────────
-
-class _EditItemSheet extends StatelessWidget {
-  const _EditItemSheet({
-    required this.item,
-    required this.locations,
-    required this.initialLocation,
-    required this.initialQuantity,
-    required this.initialNotes,
-    required this.onSave,
-    this.onDelete,
-  });
-
-  final InventoryItem item;
-  final List<StorageLocation> locations;
-  final String initialLocation;
-  final String initialQuantity;
-  final String initialNotes;
-  final void Function(String location, String quantity, String notes) onSave;
-  final VoidCallback? onDelete;
-
-  @override
-  Widget build(BuildContext context) {
-    return _ItemSheet(
-      title: item.itemName,
-      locations: locations,
-      initialLocation: initialLocation,
-      initialQuantity: initialQuantity,
-      initialNotes: initialNotes,
-      saveLabel: 'Save',
-      onSave: onSave,
-      onDelete: onDelete,
-    );
-  }
-}
-
-// ─── Shared sheet body ────────────────────────────────────────────────────────
+/// Returns an error message for the name field, or null on success.
+/// Other failures should be thrown.
+typedef _ItemSheetSave = Future<String?> Function(_ItemSheetResult result);
 
 class _ItemSheet extends StatefulWidget {
   const _ItemSheet({
     required this.title,
+    required this.saveLabel,
+    required this.initialName,
     required this.locations,
     required this.initialLocation,
-    required this.initialQuantity,
-    required this.initialNotes,
-    required this.saveLabel,
+    this.initialQuantity = '',
+    this.initialNotes = '',
+    this.addedByName,
     required this.onSave,
+    this.onAddToGrocery,
     this.onDelete,
   });
 
   final String title;
-  final List<StorageLocation> locations;
+  final String saveLabel;
+  final String initialName;
+  final List<String> locations;
   final String initialLocation;
   final String initialQuantity;
   final String initialNotes;
-  final String saveLabel;
-  final void Function(String location, String quantity, String notes) onSave;
+  final String? addedByName;
+  final _ItemSheetSave onSave;
+  final VoidCallback? onAddToGrocery;
   final VoidCallback? onDelete;
 
   @override
@@ -641,120 +659,163 @@ class _ItemSheet extends StatefulWidget {
 }
 
 class _ItemSheetState extends State<_ItemSheet> {
-  late final TextEditingController _locationCtrl;
+  late final TextEditingController _nameCtrl;
   late final TextEditingController _quantityCtrl;
   late final TextEditingController _notesCtrl;
+  late String _location;
+  String? _nameError;
   bool _saving = false;
 
   @override
   void initState() {
     super.initState();
-    _locationCtrl = TextEditingController(text: widget.initialLocation);
+    _nameCtrl = TextEditingController(text: widget.initialName);
     _quantityCtrl = TextEditingController(text: widget.initialQuantity);
     _notesCtrl = TextEditingController(text: widget.initialNotes);
+    _location = widget.initialLocation;
   }
 
   @override
   void dispose() {
-    _locationCtrl.dispose();
+    _nameCtrl.dispose();
     _quantityCtrl.dispose();
     _notesCtrl.dispose();
     super.dispose();
   }
 
+  Future<void> _save() async {
+    final name = _nameCtrl.text.trim();
+    if (name.isEmpty) {
+      setState(() => _nameError = 'Give the item a name.');
+      return;
+    }
+    final messenger = ScaffoldMessenger.of(context);
+    setState(() {
+      _saving = true;
+      _nameError = null;
+    });
+    try {
+      final error = await widget.onSave(_ItemSheetResult(
+        name: name,
+        location: _location,
+        quantity: _quantityCtrl.text.trim(),
+        notes: _notesCtrl.text.trim(),
+      ));
+      if (mounted && error != null) setState(() => _nameError = error);
+    } catch (e, st) {
+      showErrorSnackBar(messenger, 'Could not save. Try again.', e, st);
+    } finally {
+      // Always re-enable the button, including after a failure.
+      if (mounted) setState(() => _saving = false);
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
-    final padding = MediaQuery.viewInsetsOf(context);
-    return Padding(
-      padding: EdgeInsets.fromLTRB(16, 16, 16, 16 + padding.bottom),
+    final p = AppPalette.of(context);
+    final locations = widget.locations.contains(_location)
+        ? widget.locations
+        : sortLocationNames([...widget.locations, _location]);
+
+    return AppSheet(
+      title: widget.title,
       child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
         mainAxisSize: MainAxisSize.min,
-        crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          // Handle
-          Center(
-            child: Container(
-              width: 40,
-              height: 4,
-              decoration: BoxDecoration(
-                color: Theme.of(context).dividerColor,
-                borderRadius: BorderRadius.circular(2),
-              ),
-            ),
-          ),
-          const SizedBox(height: 16),
-          Text(widget.title, style: Theme.of(context).textTheme.titleMedium),
-          const SizedBox(height: 16),
-
-          // Location chips
-          if (widget.locations.isNotEmpty) ...[
-            Text('Location', style: Theme.of(context).textTheme.labelMedium),
-            const SizedBox(height: 6),
-            _LocationChips(
-              locations: widget.locations,
-              controller: _locationCtrl,
-              onChanged: () => setState(() {}),
-            ),
-            const SizedBox(height: 12),
-          ],
-
-          // Quantity
           TextField(
-            controller: _quantityCtrl,
-            decoration: const InputDecoration(
-              labelText: 'Quantity',
-              hintText: 'e.g. 2, 500 ml, half a bag',
-              border: OutlineInputBorder(),
-            ),
+            controller: _nameCtrl,
             textCapitalization: TextCapitalization.sentences,
+            style: nsSans(fontSize: 15, color: p.textPrimary),
+            decoration: InputDecoration(
+              labelText: 'Name',
+              errorText: _nameError,
+              errorMaxLines: 2,
+            ),
+            onChanged: (_) {
+              if (_nameError != null) setState(() => _nameError = null);
+            },
           ),
-          const SizedBox(height: 12),
-
-          // Notes
+          const SizedBox(height: 16),
+          const _FieldLabel('Location'),
+          const SizedBox(height: 8),
+          Wrap(
+            spacing: 8,
+            runSpacing: 8,
+            children: [
+              for (final loc in locations)
+                ChoiceChip(
+                  label: Text(loc),
+                  selected: loc == _location,
+                  onSelected: (_) => setState(() => _location = loc),
+                ),
+            ],
+          ),
+          const SizedBox(height: 16),
+          _QuantityStepper(controller: _quantityCtrl),
+          const SizedBox(height: 16),
           TextField(
             controller: _notesCtrl,
-            decoration: const InputDecoration(
-              labelText: 'Notes (optional)',
-              border: OutlineInputBorder(),
-            ),
             textCapitalization: TextCapitalization.sentences,
-            maxLines: 2,
-          ),
-          const SizedBox(height: 20),
-
-          // Save button
-          SizedBox(
-            width: double.infinity,
-            child: FilledButton(
-              onPressed: _saving
-                  ? null
-                  : () {
-                      setState(() => _saving = true);
-                      widget.onSave(
-                        _locationCtrl.text.trim(),
-                        _quantityCtrl.text.trim(),
-                        _notesCtrl.text.trim(),
-                      );
-                    },
-              child: _saving
-                  ? const SizedBox(
-                      height: 18,
-                      width: 18,
-                      child: CircularProgressIndicator(strokeWidth: 2),
-                    )
-                  : Text(widget.saveLabel),
+            minLines: 1,
+            maxLines: 3,
+            style: nsSans(fontSize: 15, color: p.textPrimary),
+            decoration: const InputDecoration(
+              labelText: 'Notes',
+              hintText: 'Brand, size, anything useful',
             ),
           ),
-          if (widget.onDelete != null) ...[
-            const SizedBox(height: 8),
-            SizedBox(
-              width: double.infinity,
-              child: TextButton(
-                onPressed: widget.onDelete,
-                style: TextButton.styleFrom(
-                  foregroundColor: Theme.of(context).colorScheme.error,
+          if (widget.addedByName != null) ...[
+            const SizedBox(height: 12),
+            Row(
+              children: [
+                Icon(Icons.person_outline_rounded, size: 16, color: p.textMuted),
+                const SizedBox(width: 6),
+                Expanded(
+                  child: Text(
+                    'Added by ${widget.addedByName}',
+                    style: nsSans(fontSize: 13, color: p.textMuted),
+                  ),
                 ),
-                child: const Text('Delete item'),
+              ],
+            ),
+          ],
+          const SizedBox(height: 20),
+          FilledButton(
+            onPressed: _saving ? null : _save,
+            style: FilledButton.styleFrom(
+              minimumSize: const Size(double.infinity, 52),
+            ),
+            child: _saving
+                ? SizedBox(
+                    height: 20,
+                    width: 20,
+                    child: CircularProgressIndicator(
+                        strokeWidth: 2, color: p.onPrimary),
+                  )
+                : Text(widget.saveLabel),
+          ),
+          if (widget.onAddToGrocery != null) ...[
+            const SizedBox(height: 8),
+            OutlinedButton.icon(
+              onPressed: widget.onAddToGrocery,
+              icon: const Icon(Icons.add_shopping_cart_rounded, size: 20),
+              label: const Text('Add to grocery list'),
+              style: OutlinedButton.styleFrom(
+                minimumSize: const Size(double.infinity, 48),
+                foregroundColor: p.primary,
+              ),
+            ),
+          ],
+          if (widget.onDelete != null) ...[
+            const SizedBox(height: 4),
+            TextButton.icon(
+              onPressed: widget.onDelete,
+              icon: const Icon(Icons.delete_outline_rounded, size: 20),
+              label: const Text('Remove from stock'),
+              style: TextButton.styleFrom(
+                foregroundColor: p.error,
+                minimumSize: const Size(double.infinity, 48),
               ),
             ),
           ],
@@ -764,35 +825,126 @@ class _ItemSheetState extends State<_ItemSheet> {
   }
 }
 
-// ─── Location chips ───────────────────────────────────────────────────────────
+class _FieldLabel extends StatelessWidget {
+  const _FieldLabel(this.text);
 
-class _LocationChips extends StatelessWidget {
-  const _LocationChips({
-    required this.locations,
-    required this.controller,
-    required this.onChanged,
-  });
-
-  final List<StorageLocation> locations;
-  final TextEditingController controller;
-  final VoidCallback onChanged;
+  final String text;
 
   @override
   Widget build(BuildContext context) {
-    return Wrap(
-      spacing: 8,
-      runSpacing: 4,
-      children: locations.map((loc) {
-        final selected = controller.text == loc.name;
-        return ChoiceChip(
-          label: Text(loc.name),
-          selected: selected,
-          onSelected: (_) {
-            controller.text = loc.name;
-            onChanged();
-          },
-        );
-      }).toList(),
+    final p = AppPalette.of(context);
+    return Text(
+      text,
+      style: nsSans(
+        fontSize: 13,
+        fontWeight: FontWeight.w600,
+        color: p.textSecondary,
+      ),
+    );
+  }
+}
+
+/// Quantity input with −/+ buttons. The buttons work when the text is a
+/// number (or empty, for +); anything else ("500 ml") is edited as free text.
+class _QuantityStepper extends StatefulWidget {
+  const _QuantityStepper({required this.controller});
+
+  final TextEditingController controller;
+
+  @override
+  State<_QuantityStepper> createState() => _QuantityStepperState();
+}
+
+class _QuantityStepperState extends State<_QuantityStepper> {
+  @override
+  void initState() {
+    super.initState();
+    widget.controller.addListener(_onChanged);
+  }
+
+  @override
+  void dispose() {
+    widget.controller.removeListener(_onChanged);
+    super.dispose();
+  }
+
+  void _onChanged() => setState(() {});
+
+  void _set(double value) {
+    final text = serializeQuantity(value);
+    widget.controller.value = TextEditingValue(
+      text: text,
+      selection: TextSelection.collapsed(offset: text.length),
+    );
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final raw = widget.controller.text.trim();
+    final value = parseQuantity(raw);
+    final canDecrement = value != null && value - 1 > 0;
+    final canIncrement = raw.isEmpty || value != null;
+
+    return Row(
+      children: [
+        _StepButton(
+          icon: Icons.remove_rounded,
+          tooltip: 'Decrease quantity',
+          onPressed: canDecrement ? () => _set(value - 1) : null,
+        ),
+        const SizedBox(width: 8),
+        Expanded(
+          child: TextField(
+            controller: widget.controller,
+            textAlign: TextAlign.center,
+            style: nsSans(
+              fontSize: 16,
+              fontWeight: FontWeight.w600,
+              color: AppPalette.of(context).textPrimary,
+            ),
+            decoration: const InputDecoration(
+              labelText: 'Quantity',
+              hintText: 'e.g. 2, ½, 500 ml',
+              floatingLabelAlignment: FloatingLabelAlignment.center,
+            ),
+          ),
+        ),
+        const SizedBox(width: 8),
+        _StepButton(
+          icon: Icons.add_rounded,
+          tooltip: 'Increase quantity',
+          onPressed: canIncrement ? () => _set((value ?? 0) + 1) : null,
+        ),
+      ],
+    );
+  }
+}
+
+class _StepButton extends StatelessWidget {
+  const _StepButton({
+    required this.icon,
+    required this.tooltip,
+    required this.onPressed,
+  });
+
+  final IconData icon;
+  final String tooltip;
+  final VoidCallback? onPressed;
+
+  @override
+  Widget build(BuildContext context) {
+    final p = AppPalette.of(context);
+    return IconButton.outlined(
+      tooltip: tooltip,
+      onPressed: onPressed,
+      icon: Icon(icon),
+      iconSize: 22,
+      style: IconButton.styleFrom(
+        minimumSize: const Size(52, 52),
+        foregroundColor: p.primary,
+        side: BorderSide(color: p.border, width: 1.5),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+      ),
     );
   }
 }
