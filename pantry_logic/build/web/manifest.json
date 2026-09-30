@@ -1,23 +1,25 @@
 {
     "name": "Pantry Logic",
-    "short_name": "pantry_logic",
+    "short_name": "Pantry Logic",
     "start_url": ".",
     "display": "standalone",
-    "background_color": "#0175C2",
-    "theme_color": "#0175C2",
-    "description": "Pantry Logic is a shared household app that helps families manage groceries, track food inventory, and decide what to eat.",
+    "background_color": "#F7F7F4",
+    "theme_color": "#2D5A27",
+    "description": "Pantry Logic helps your household keep a shared grocery list, track what's in stock, and decide what to eat.",
     "orientation": "portrait-primary",
     "prefer_related_applications": false,
     "icons": [
         {
             "src": "icons/Icon-192.png",
             "sizes": "192x192",
-            "type": "image/png"
+            "type": "image/png",
+            "purpose": "any"
         },
         {
             "src": "icons/Icon-512.png",
             "sizes": "512x512",
-            "type": "image/png"
+            "type": "image/png",
+            "purpose": "any"
         },
         {
             "src": "icons/Icon-maskable-192.png",

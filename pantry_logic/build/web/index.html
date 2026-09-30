@@ -14,30 +14,88 @@
     This is a placeholder for base href that will be replaced by the value of
     the `--base-href` argument provided to `flutter build`.
   -->
-  <base href="/Pantrylogic/">
+  <base href="/pantry_logic/">
 
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
+  <!-- viewport-fit=cover lets env(safe-area-inset-*) report real values. -->
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, viewport-fit=cover">
   <meta content="IE=Edge" http-equiv="X-UA-Compatible">
-  <meta name="description" content="A new Flutter project.">
+  <meta name="description" content="Pantry Logic helps your household keep a shared grocery list, track what's in stock, and decide what to eat.">
+
+  <!-- Browser / Android status bar colour follows the app background. -->
+  <meta name="theme-color" content="#F7F7F4" media="(prefers-color-scheme: light)">
+  <meta name="theme-color" content="#1A1C1A" media="(prefers-color-scheme: dark)">
 
   <!-- iOS meta tags & icons -->
   <meta name="mobile-web-app-capable" content="yes">
-  <meta name="apple-mobile-web-app-status-bar-style" content="black">
-  <meta name="apple-mobile-web-app-title" content="pantry_logic">
-  <link rel="apple-touch-icon" href="icons/Icon-192.png">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta name="apple-mobile-web-app-title" content="Pantry Logic">
+  <link rel="apple-touch-icon" sizes="180x180" href="icons/apple-touch-icon.png">
 
   <!-- Favicon -->
-  <link rel="icon" type="image/svg+xml" href="icons/favicon.svg"/>
+  <link rel="icon" type="image/png" sizes="32x32" href="favicon.png">
+  <link rel="icon" type="image/png" sizes="192x192" href="icons/Icon-192.png">
 
-  <title>pantry_logic</title>
+  <title>Pantry Logic</title>
   <link rel="manifest" href="manifest.json">
+
+  <style>
+    /*
+      Flutter web reports zero safe-area padding, so with the
+      black-translucent status bar the app is embedded in #app, which is
+      inset by the device safe areas. The strips it leaves uncovered are
+      painted to match: the status-bar strip is dark so iOS's white status
+      text stays readable, and the bottom strip matches the nav bar.
+    */
+    html, body {
+      margin: 0;
+      height: 100%;
+      overflow: hidden;
+      background: #FFFFFF;
+    }
+    #status-bar-bg {
+      position: fixed;
+      top: 0;
+      left: 0;
+      right: 0;
+      height: env(safe-area-inset-top, 0px);
+      background: #2D5A27;
+    }
+    #app {
+      position: fixed;
+      top: env(safe-area-inset-top, 0px);
+      right: env(safe-area-inset-right, 0px);
+      bottom: env(safe-area-inset-bottom, 0px);
+      left: env(safe-area-inset-left, 0px);
+      background: #F7F7F4;
+    }
+    #loading {
+      position: absolute;
+      inset: 0;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+    #loading img {
+      width: 96px;
+      height: auto;
+    }
+    @media (prefers-color-scheme: dark) {
+      html, body { background: #252825; }
+      #status-bar-bg { background: #1A1C1A; }
+      #app { background: #1A1C1A; }
+    }
+  </style>
 </head>
 <body>
+  <div id="status-bar-bg"></div>
+  <div id="app">
+    <div id="loading"><img src="icons/Icon-192.png" alt="Pantry Logic"></div>
+  </div>
   <!--
-    You can customize the "flutter_bootstrap.js" script.
-    This is useful to provide a custom configuration to the Flutter loader
-    or to give the user feedback during the initialization process.
+    flutter_bootstrap.js is customised in web/flutter_bootstrap.js to render
+    into #app instead of the full page.
 
     For more details:
     * https://docs.flutter.dev/platform-integration/web/initialization
