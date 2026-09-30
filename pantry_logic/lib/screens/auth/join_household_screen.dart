@@ -4,6 +4,7 @@ import '../../services/auth_service.dart';
 import '../../widgets/auth_text_field.dart';
 import '../home/home_screen.dart';
 import 'sign_up_screen.dart';
+import '../../widgets/brand.dart';
 
 class JoinHouseholdScreen extends StatefulWidget {
   const JoinHouseholdScreen({super.key});
@@ -116,7 +117,7 @@ class _JoinHouseholdScreenState extends State<JoinHouseholdScreen> {
               ),
               const SizedBox(height: 32),
 
-              const Text('🏠', style: TextStyle(fontSize: 40)),
+              const IconBadge(Icons.group_add_rounded, size: 56),
               const SizedBox(height: 8),
 
               Text(

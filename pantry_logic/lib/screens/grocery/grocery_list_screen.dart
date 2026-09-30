@@ -3,6 +3,7 @@ import '../../core/theme.dart';
 import '../../models/grocery_item.dart';
 import '../../models/item.dart';
 import '../../services/grocery_service.dart';
+import '../../widgets/brand.dart';
 
 class GroceryListScreen extends StatefulWidget {
   const GroceryListScreen({super.key});
@@ -312,7 +313,7 @@ class _GroceryListScreenState extends State<GroceryListScreen> {
                       child: Column(
                         mainAxisSize: MainAxisSize.min,
                         children: [
-                          const Text('✅', style: TextStyle(fontSize: 40)),
+                          const IconBadge(Icons.check_rounded, size: 56),
                           const SizedBox(height: 12),
                           Text(
                             'Nothing to buy — nice!',

@@ -3,13 +3,12 @@ import 'package:google_fonts/google_fonts.dart';
 
 // ─── Font helper ─────────────────────────────────────────────────────────────
 //
-// Wraps GoogleFonts.nunitoSans and adds a system-font fallback chain so Flutter
-// never falls through to Noto (which may not be installed), eliminating the
-// "Could not find a set of Noto fonts" warning.
+// Wraps GoogleFonts.nunitoSans and adds a system-font fallback chain.
+// Emoji typed into item or meal names are rendered by Flutter web's
+// automatic font fallback, which downloads Noto Color Emoji on demand.
 
 /// Font fallback chain appended to every Nunito Sans style.
 const List<String> kFontFallback = [
-  'NotoColorEmoji',
   'Roboto',
   'Segoe UI',
   'sans-serif',

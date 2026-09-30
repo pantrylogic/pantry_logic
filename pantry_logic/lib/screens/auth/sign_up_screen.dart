@@ -5,6 +5,7 @@ import '../../widgets/auth_text_field.dart';
 import 'create_household_screen.dart';
 import 'join_household_screen.dart';
 import 'sign_in_screen.dart';
+import '../../widgets/brand.dart';
 
 class SignUpScreen extends StatefulWidget {
   const SignUpScreen({super.key});
@@ -94,7 +95,7 @@ class _SignUpScreenState extends State<SignUpScreen> {
             crossAxisAlignment: CrossAxisAlignment.center,
             children: [
               // Logo
-              const Text('🫙', style: TextStyle(fontSize: 40)),
+              const BrandLogo(size: 88),
               const SizedBox(height: 8),
 
               // App name

@@ -5,6 +5,7 @@ import '../../models/household.dart';
 import '../../services/auth_service.dart';
 import '../../widgets/auth_text_field.dart';
 import '../home/home_screen.dart';
+import '../../widgets/brand.dart';
 
 class CreateHouseholdScreen extends StatefulWidget {
   const CreateHouseholdScreen({super.key});
@@ -102,7 +103,7 @@ class _CreateHouseholdScreenState extends State<CreateHouseholdScreen> {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.center,
       children: [
-        const Text('🏠', style: TextStyle(fontSize: 40)),
+        const IconBadge(Icons.home_rounded, size: 56),
         const SizedBox(height: 8),
 
         Text(
@@ -189,7 +190,7 @@ class _CreateHouseholdScreenState extends State<CreateHouseholdScreen> {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.center,
       children: [
-        const Text('✅', style: TextStyle(fontSize: 40)),
+        const IconBadge(Icons.check_rounded, size: 56),
         const SizedBox(height: 8),
 
         Text(

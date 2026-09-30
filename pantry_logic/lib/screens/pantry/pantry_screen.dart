@@ -144,7 +144,7 @@ class _PantryScreenState extends State<PantryScreen> {
             if (ctx.mounted) {
               Navigator.pop(ctx);
               messenger.showSnackBar(
-                SnackBar(content: Text('$name is already in your pantry.')),
+                SnackBar(content: Text('$name is already in stock.')),
               );
             }
           } catch (e) {
@@ -203,7 +203,7 @@ class _PantryScreenState extends State<PantryScreen> {
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
-          content: Text('${item.itemName} removed from pantry.'),
+          content: Text('${item.itemName} removed from stock.'),
           action: SnackBarAction(
             label: 'Add to grocery list',
             onPressed: () async {
@@ -255,12 +255,12 @@ class _PantryScreenState extends State<PantryScreen> {
                   controller: _searchCtrl,
                   focusNode: _searchFocus,
                   decoration: const InputDecoration(
-                    hintText: 'Search pantry…',
+                    hintText: 'Search stock…',
                     border: InputBorder.none,
                   ),
                   style: Theme.of(context).textTheme.titleMedium,
                 )
-              : const Text('Pantry'),
+              : const Text('Stock'),
           actions: [
             if (_searching)
               IconButton(
@@ -307,7 +307,7 @@ class _PantryScreenState extends State<PantryScreen> {
                       child: Text(
                         _searchQuery.isNotEmpty
                             ? 'No items match "$_searchQuery".'
-                            : 'Your pantry is empty.\nAdd items below.',
+                            : 'Nothing in stock yet.\nAdd items below.',
                         textAlign: TextAlign.center,
                         style: Theme.of(context)
                             .textTheme
@@ -426,7 +426,7 @@ class _AddBar extends StatelessWidget {
         onTapOutside: onTapOutside,
         textCapitalization: TextCapitalization.sentences,
         decoration: InputDecoration(
-          hintText: 'Add to pantry…',
+          hintText: 'Add to stock…',
           prefixIcon: const Icon(Icons.add),
           border: OutlineInputBorder(
             borderRadius: BorderRadius.circular(12),
@@ -571,7 +571,7 @@ class _AddItemSheet extends StatelessWidget {
       initialLocation: initialLocation,
       initialQuantity: initialQuantity,
       initialNotes: initialNotes,
-      saveLabel: 'Add to Pantry',
+      saveLabel: 'Add to stock',
       onSave: onSave,
     );
   }

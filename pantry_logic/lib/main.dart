@@ -7,6 +7,7 @@ import 'services/auth_service.dart';
 import 'screens/auth/sign_up_screen.dart';
 import 'screens/auth/create_household_screen.dart';
 import 'screens/shell/main_shell.dart';
+import 'widgets/brand.dart';
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -30,13 +31,6 @@ class PantryLogicApp extends StatelessWidget {
       theme: AppTheme.light,
       darkTheme: AppTheme.dark,
       themeMode: ThemeMode.system,
-      // Inject NotoColorEmoji into the ambient DefaultTextStyle so every
-      // Text widget (including those with a bare TextStyle(fontSize:x)) can
-      // fall back to the bundled emoji font for emoji characters.
-      builder: (context, child) => DefaultTextStyle.merge(
-        style: const TextStyle(fontFamilyFallback: ['NotoColorEmoji']),
-        child: child!,
-      ),
       home: const _AuthGate(),
     );
   }
@@ -153,7 +147,7 @@ class _SplashScreen extends StatelessWidget {
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            const Text('🫙', style: TextStyle(fontSize: 48)),
+            const BrandLogo(size: 96),
             const SizedBox(height: 16),
             SizedBox(
               width: 24,

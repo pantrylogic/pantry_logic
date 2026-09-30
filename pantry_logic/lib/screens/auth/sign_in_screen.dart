@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import '../../core/theme.dart';
 import '../../services/auth_service.dart';
 import '../../widgets/auth_text_field.dart';
+import '../../widgets/brand.dart';
 
 class SignInScreen extends StatefulWidget {
   const SignInScreen({super.key});
@@ -90,7 +91,7 @@ class _SignInScreenState extends State<SignInScreen> {
               ),
               const SizedBox(height: 40),
 
-              const Text('🫙', style: TextStyle(fontSize: 40)),
+              const BrandLogo(size: 72),
               const SizedBox(height: 8),
 
               Text(

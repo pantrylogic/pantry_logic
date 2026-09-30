@@ -96,8 +96,22 @@ class _HomeScreenState extends State<HomeScreen> {
                             child: Column(
                               crossAxisAlignment: CrossAxisAlignment.start,
                               children: [
-                                Text(
-                                  'Hey, ${_profile?.displayName ?? 'there'} 👋',
+                                Text.rich(
+                                  TextSpan(
+                                    text:
+                                        'Hey, ${_profile?.displayName ?? 'there'} ',
+                                    children: [
+                                      WidgetSpan(
+                                        alignment:
+                                            PlaceholderAlignment.middle,
+                                        child: Icon(
+                                          Icons.waving_hand_rounded,
+                                          size: 22,
+                                          color: warning,
+                                        ),
+                                      ),
+                                    ],
+                                  ),
                                   style: nsSans(
                                     fontSize: 22,
                                     fontWeight: FontWeight.w700,
@@ -190,7 +204,7 @@ class _HomeScreenState extends State<HomeScreen> {
                             child: _StatCard(
                               icon: Icons.inventory_2_outlined,
                               count: _pantryCount,
-                              label: 'in pantry',
+                              label: 'in stock',
                               primary: primary,
                               surface: surface,
                               border: border,
@@ -253,9 +267,11 @@ class _HomeScreenState extends State<HomeScreen> {
                           ),
                           child: Row(
                             children: [
-                              Text(
-                                '🍽️',
-                                style: const TextStyle(fontSize: 28),
+                              Icon(
+                                Icons.restaurant_rounded,
+                                size: 28,
+                                color:
+                                    isDark ? background : AppColors.surface,
                               ),
                               const SizedBox(width: 14),
                               Expanded(
@@ -459,7 +475,7 @@ class _TonightCard extends StatelessWidget {
                   const SizedBox(width: 6),
                   Text(
                     entry!.allInPantry
-                        ? 'All ingredients in pantry'
+                        ? 'All ingredients in stock'
                         : '${entry!.missingCount} ingredient${entry!.missingCount == 1 ? '' : 's'} missing',
                     style: nsSans(
                       fontSize: 12,

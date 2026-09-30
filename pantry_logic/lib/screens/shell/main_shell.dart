@@ -74,7 +74,7 @@ class _MainShellState extends State<MainShell> {
                 _NavItem(
                   icon: Icons.inventory_2_outlined,
                   activeIcon: Icons.inventory_2_rounded,
-                  label: 'Pantry',
+                  label: 'Stock',
                   isActive: _currentIndex == 2,
                   primary: primary,
                   textMuted: textMuted,

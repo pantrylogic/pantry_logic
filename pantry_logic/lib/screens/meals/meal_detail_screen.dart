@@ -264,7 +264,7 @@ class _MealDetailScreenState extends State<MealDetailScreen> {
           style: nsSans(fontWeight: FontWeight.w700, fontSize: 17),
         ),
         content: Text(
-          'This will permanently delete "$_name" and its need list.',
+          'This will permanently delete "$_name" and its ingredients.',
           style: nsSans(fontSize: 14),
         ),
         actions: [
@@ -432,7 +432,7 @@ class _MealDetailScreenState extends State<MealDetailScreen> {
                   child: Row(
                     children: [
                       Text(
-                        'NEED LIST',
+                        'INGREDIENTS',
                         style: nsSans(
                           fontSize: 11,
                           fontWeight: FontWeight.w700,
@@ -460,7 +460,7 @@ class _MealDetailScreenState extends State<MealDetailScreen> {
                               child: Padding(
                                 padding: const EdgeInsets.all(32),
                                 child: Text(
-                                  'No ingredients added yet.\nUse the bar below to build the need list.',
+                                  'No ingredients added yet.\nUse the bar below to add some.',
                                   textAlign: TextAlign.center,
                                   style: nsSans(
                                     fontSize: 14,
@@ -529,7 +529,7 @@ class _MealDetailScreenState extends State<MealDetailScreen> {
                                               ),
                                               Text(
                                                 item.inPantry
-                                                    ? 'In pantry · ${item.inventoryLocation}'
+                                                    ? 'In stock · ${item.inventoryLocation}'
                                                     : 'Missing',
                                                 style: nsSans(
                                                   fontSize: 12,

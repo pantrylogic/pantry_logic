@@ -4,6 +4,7 @@ import '../../models/meal.dart';
 import '../../models/meal_category.dart';
 import '../../services/meal_service.dart';
 import 'meal_detail_screen.dart';
+import '../../widgets/brand.dart';
 
 class MealsScreen extends StatefulWidget {
   const MealsScreen({super.key});
@@ -143,11 +144,11 @@ class _MealsScreenState extends State<MealsScreen> {
           final IconData statusIcon;
           if (!meal.hasNeedList) {
             statusColor = textMuted;
-            statusText = 'No need list';
+            statusText = 'No ingredients';
             statusIcon = Icons.format_list_bulleted_rounded;
           } else if (meal.allInPantry) {
             statusColor = success;
-            statusText = 'All in pantry';
+            statusText = 'All in stock';
             statusIcon = Icons.check_circle_outline_rounded;
           } else {
             statusColor = warning;
@@ -251,10 +252,7 @@ class _MealsScreenState extends State<MealsScreen> {
                       child: Column(
                         mainAxisSize: MainAxisSize.min,
                         children: [
-                          const Text(
-                            '🍽️',
-                            style: TextStyle(fontSize: 48),
-                          ),
+                          const IconBadge(Icons.restaurant_menu_rounded),
                           const SizedBox(height: 16),
                           Text(
                             'Add meals your household likes',
@@ -267,7 +265,7 @@ class _MealsScreenState extends State<MealsScreen> {
                           ),
                           const SizedBox(height: 8),
                           Text(
-                            'Meals with need lists show you what\'s\nmissing and add it to your grocery list.',
+                            'Add ingredients to a meal to see what\'s\nmissing and add it to your grocery list.',
                             textAlign: TextAlign.center,
                             style: nsSans(
                               fontSize: 14,

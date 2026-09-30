@@ -188,7 +188,7 @@ class _RestockScreenState extends State<RestockScreen> {
                                       Text(
                                         item.reason == RestockReason.hitZero
                                             ? 'Ran out — add to grocery list?'
-                                            : 'Still in the pantry?',
+                                            : 'Still have some?',
                                         style: nsSans(
                                           fontSize: 13,
                                           color: textSecondary,

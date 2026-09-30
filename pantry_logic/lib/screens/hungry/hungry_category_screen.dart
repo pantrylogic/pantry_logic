@@ -3,6 +3,7 @@ import '../../core/theme.dart';
 import '../../models/meal_category.dart';
 import '../../services/hungry_service.dart';
 import 'hungry_suggestion_screen.dart';
+import '../../widgets/brand.dart';
 
 class HungryCategoryScreen extends StatefulWidget {
   const HungryCategoryScreen({super.key});
@@ -73,8 +74,7 @@ class _HungryCategoryScreenState extends State<HungryCategoryScreen> {
                       child: Column(
                         mainAxisSize: MainAxisSize.min,
                         children: [
-                          const Text('🍽️',
-                              style: TextStyle(fontSize: 48)),
+                          const IconBadge(Icons.restaurant_rounded),
                           const SizedBox(height: 16),
                           Text(
                             'No meal categories yet',

@@ -3,6 +3,7 @@ import '../../core/theme.dart';
 import '../../models/suggested_meal.dart';
 import '../../services/hungry_service.dart';
 import 'restock_screen.dart';
+import '../../widgets/brand.dart';
 
 class HungrySuggestionScreen extends StatefulWidget {
   final String categoryId;
@@ -61,7 +62,7 @@ class _HungrySuggestionScreenState extends State<HungrySuggestionScreen> {
         if (!mounted) return;
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text('Enjoy ${meal.name}! 🍽️'),
+            content: Text('Enjoy ${meal.name}!'),
             duration: const Duration(seconds: 2),
           ),
         );
@@ -128,8 +129,7 @@ class _HungrySuggestionScreenState extends State<HungrySuggestionScreen> {
                       child: Column(
                         mainAxisSize: MainAxisSize.min,
                         children: [
-                          const Text('🤔',
-                              style: TextStyle(fontSize: 48)),
+                          const IconBadge(Icons.search_off_rounded),
                           const SizedBox(height: 16),
                           Text(
                             'No meals in this category yet',
@@ -196,13 +196,13 @@ class _HungrySuggestionScreenState extends State<HungrySuggestionScreen> {
                                   _StatusRow(
                                     icon: Icons.format_list_bulleted_rounded,
                                     color: textMuted,
-                                    text: 'No need list',
+                                    text: 'No ingredients listed',
                                   )
                                 else if (meal.allInPantry)
                                   _StatusRow(
                                     icon: Icons.check_circle_rounded,
                                     color: success,
-                                    text: 'You have everything ✓',
+                                    text: 'You have everything',
                                   )
                                 else ...[
                                   _StatusRow(
@@ -309,12 +309,20 @@ class _HungrySuggestionScreenState extends State<HungrySuggestionScreen> {
                                     color: surface,
                                   ),
                                 )
-                              : Text(
-                                  'Eat This 🍽️',
-                                  style: nsSans(
-                                    fontSize: 16,
-                                    fontWeight: FontWeight.w700,
-                                  ),
+                              : Row(
+                                  mainAxisSize: MainAxisSize.min,
+                                  children: [
+                                    const Icon(Icons.restaurant_rounded,
+                                        size: 20),
+                                    const SizedBox(width: 8),
+                                    Text(
+                                      'Eat This',
+                                      style: nsSans(
+                                        fontSize: 16,
+                                        fontWeight: FontWeight.w700,
+                                      ),
+                                    ),
+                                  ],
                                 ),
                         ),
                         const SizedBox(height: 12),
