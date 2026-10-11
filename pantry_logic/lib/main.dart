@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
 import 'core/theme.dart';
+import 'core/web_safe_area.dart';
 import 'models/profile.dart';
 import 'services/auth_service.dart';
 import 'screens/auth/sign_up_screen.dart';
@@ -31,6 +32,7 @@ class PantryLogicApp extends StatelessWidget {
       theme: AppTheme.light,
       darkTheme: AppTheme.dark,
       themeMode: ThemeMode.system,
+      builder: (context, child) => WebSafeArea(child: child!),
       home: const _AuthGate(),
     );
   }
