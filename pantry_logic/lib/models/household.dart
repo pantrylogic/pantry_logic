@@ -2,7 +2,8 @@ class Household {
   final String id;
   final String name;
   final String inviteCode;
-  final String createdBy;
+  /// Null once the creator's account is deleted. Ownership is profiles.role.
+  final String? createdBy;
   final DateTime createdAt;
 
   const Household({
@@ -17,7 +18,7 @@ class Household {
     id: json['id'] as String,
     name: json['name'] as String,
     inviteCode: json['invite_code'] as String,
-    createdBy: json['created_by'] as String,
+    createdBy: json['created_by'] as String?,
     createdAt: DateTime.parse(json['created_at'] as String),
   );
 
