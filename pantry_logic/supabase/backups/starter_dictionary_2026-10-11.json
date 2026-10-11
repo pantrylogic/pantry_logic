@@ -1,0 +1,1730 @@
+[
+  {
+    "id": "8b19faee-cf85-4e7a-824c-abbd60ee7a64",
+    "name": "Active Dry Yeast",
+    "category": "Baking",
+    "default_location": "Pantry"
+  },
+  {
+    "id": "75f180c9-fb77-41f1-8231-ca14d7aa9589",
+    "name": "Baking Powder",
+    "category": "Baking",
+    "default_location": "Pantry"
+  },
+  {
+    "id": "3897287c-bc71-487f-91d4-a0da78a397e5",
+    "name": "Baking Soda",
+    "category": "Baking",
+    "default_location": "Pantry"
+  },
+  {
+    "id": "b136928a-5d0e-4305-82e9-d0175dbf4ec2",
+    "name": "Breadcrumbs",
+    "category": "Baking",
+    "default_location": "Pantry"
+  },
+  {
+    "id": "48485db1-a103-4e78-8386-a273e9e660dd",
+    "name": "Chocolate Chips",
+    "category": "Baking",
+    "default_location": "Pantry"
+  },
+  {
+    "id": "d1203913-ded8-48b8-8ab0-27682f00fe53",
+    "name": "Cocoa Powder",
+    "category": "Baking",
+    "default_location": "Pantry"
+  },
+  {
+    "id": "4e808c5b-66fa-4ad8-b501-7ecf8417fd7d",
+    "name": "Cornstarch",
+    "category": "Baking",
+    "default_location": "Pantry"
+  },
+  {
+    "id": "0b82c09a-3363-4ed5-8115-6108374ae52a",
+    "name": "Dark Chocolate",
+    "category": "Baking",
+    "default_location": "Pantry"
+  },
+  {
+    "id": "98142995-2efd-4776-9d7e-9dcfdca3ab5c",
+    "name": "Maple Syrup",
+    "category": "Baking",
+    "default_location": "Pantry"
+  },
+  {
+    "id": "b588c677-ec1b-45bc-a068-c195101f45ac",
+    "name": "Molasses",
+    "category": "Baking",
+    "default_location": "Pantry"
+  },
+  {
+    "id": "d7513683-45f8-4a44-a61d-972884c512d2",
+    "name": "Panko Breadcrumbs",
+    "category": "Baking",
+    "default_location": "Pantry"
+  },
+  {
+    "id": "0e6a9be3-fb6c-4739-803a-a890053552f7",
+    "name": "Vanilla Extract",
+    "category": "Baking",
+    "default_location": "Pantry"
+  },
+  {
+    "id": "e77a091e-f22f-44b2-9ce4-47b0447ec3e8",
+    "name": "Apple Juice",
+    "category": "Beverages",
+    "default_location": "Pantry"
+  },
+  {
+    "id": "bd6e25f9-fb1f-435f-8598-8650fafe2d20",
+    "name": "Black Tea",
+    "category": "Beverages",
+    "default_location": "Pantry"
+  },
+  {
+    "id": "bbc37299-014f-4012-8e75-bf5bc267d41e",
+    "name": "Coffee Beans",
+    "category": "Beverages",
+    "default_location": "Pantry"
+  },
+  {
+    "id": "ef32c0ca-6324-458d-9d3c-380f6c9016e1",
+    "name": "Green Tea",
+    "category": "Beverages",
+    "default_location": "Pantry"
+  },
+  {
+    "id": "ea8d7cdb-3e7d-46b8-9b4c-6d5e4add40ee",
+    "name": "Ground Coffee",
+    "category": "Beverages",
+    "default_location": "Pantry"
+  },
+  {
+    "id": "6305bc82-7b69-4251-ac83-49a454ac2a91",
+    "name": "Instant Coffee",
+    "category": "Beverages",
+    "default_location": "Pantry"
+  },
+  {
+    "id": "19c60473-88a3-484f-8132-1d74366e6289",
+    "name": "Orange Juice",
+    "category": "Beverages",
+    "default_location": "Fridge"
+  },
+  {
+    "id": "9f0181da-83d1-412a-8000-afcc97016e42",
+    "name": "Protein Powder",
+    "category": "Beverages",
+    "default_location": "Pantry"
+  },
+  {
+    "id": "1134c2c6-041c-4c07-9dc1-ab90cad91632",
+    "name": "Soda",
+    "category": "Beverages",
+    "default_location": "Pantry"
+  },
+  {
+    "id": "b8f0f051-9493-46f5-86b7-43d922844d1d",
+    "name": "Sparkling Water",
+    "category": "Beverages",
+    "default_location": "Pantry"
+  },
+  {
+    "id": "71480d0d-2f82-427a-b38a-16fabd4aa9e0",
+    "name": "Sports Drink",
+    "category": "Beverages",
+    "default_location": "Pantry"
+  },
+  {
+    "id": "1b7a8872-d299-4d50-98a8-86cda95ef190",
+    "name": "Tea",
+    "category": "Beverages",
+    "default_location": "Pantry"
+  },
+  {
+    "id": "08a6a68a-b349-484e-9161-39596075172b",
+    "name": "Bagels",
+    "category": "Bread",
+    "default_location": "Pantry"
+  },
+  {
+    "id": "4127fba7-b10e-4708-ae11-2496b40f3f99",
+    "name": "Bread",
+    "category": "Bread",
+    "default_location": "Pantry"
+  },
+  {
+    "id": "53462e07-a2ae-48f3-8679-c957d52cd39a",
+    "name": "Corn Tortillas",
+    "category": "Bread",
+    "default_location": "Pantry"
+  },
+  {
+    "id": "8cbe1469-2e3a-469d-9c69-db2fe022cc51",
+    "name": "Croissants",
+    "category": "Bread",
+    "default_location": "Pantry"
+  },
+  {
+    "id": "eb3921a5-3b47-4b02-a5fe-22ceb79a5c4a",
+    "name": "English Muffins",
+    "category": "Bread",
+    "default_location": "Pantry"
+  },
+  {
+    "id": "094ed443-e6e8-4b7a-acb5-b6cca91000bb",
+    "name": "Flour Tortillas",
+    "category": "Bread",
+    "default_location": "Pantry"
+  },
+  {
+    "id": "50da5d76-d27f-4433-83e9-debf37022464",
+    "name": "Hamburger Buns",
+    "category": "Bread",
+    "default_location": "Pantry"
+  },
+  {
+    "id": "f337b4d6-df94-42b6-a1ad-6894ae527ee7",
+    "name": "Hot Dog Buns",
+    "category": "Bread",
+    "default_location": "Pantry"
+  },
+  {
+    "id": "2aff0b64-1913-46cc-9375-5886aca853b3",
+    "name": "Pita Bread",
+    "category": "Bread",
+    "default_location": "Pantry"
+  },
+  {
+    "id": "68db0743-5ded-45c8-94a7-58ab01982e8d",
+    "name": "Sourdough Bread",
+    "category": "Bread",
+    "default_location": "Pantry"
+  },
+  {
+    "id": "42ebd07c-b6a0-4871-858c-b773a1e08e3d",
+    "name": "White Bread",
+    "category": "Bread",
+    "default_location": "Pantry"
+  },
+  {
+    "id": "a2168053-293f-4e37-a665-b811d30442c7",
+    "name": "Whole Wheat Bread",
+    "category": "Bread",
+    "default_location": "Pantry"
+  },
+  {
+    "id": "137daf31-2e4d-42df-9cd1-4509e7f390b9",
+    "name": "Canned Artichoke Hearts",
+    "category": "Canned Goods",
+    "default_location": "Pantry"
+  },
+  {
+    "id": "93f19282-ef0b-4b8d-b6de-1f83e0f33970",
+    "name": "Canned Black Beans",
+    "category": "Canned Goods",
+    "default_location": "Pantry"
+  },
+  {
+    "id": "4ce711d0-4b21-487a-ac12-51e300448458",
+    "name": "Canned Chickpeas",
+    "category": "Canned Goods",
+    "default_location": "Pantry"
+  },
+  {
+    "id": "44a85c12-06ab-48cd-8851-c5537e34dba3",
+    "name": "Canned Coconut Milk",
+    "category": "Canned Goods",
+    "default_location": "Pantry"
+  },
+  {
+    "id": "6f1d78b9-4f23-466f-a63d-a1646b6c389f",
+    "name": "Canned Corn",
+    "category": "Canned Goods",
+    "default_location": "Pantry"
+  },
+  {
+    "id": "6c90cb82-bd74-4d19-ba54-971e5b010f62",
+    "name": "Canned Green Chiles",
+    "category": "Canned Goods",
+    "default_location": "Pantry"
+  },
+  {
+    "id": "6cc0eb31-d724-4e00-8ec8-2609111bf648",
+    "name": "Canned Kidney Beans",
+    "category": "Canned Goods",
+    "default_location": "Pantry"
+  },
+  {
+    "id": "626f77fe-f1e7-49df-a437-cb229da9559d",
+    "name": "Canned Olives",
+    "category": "Canned Goods",
+    "default_location": "Pantry"
+  },
+  {
+    "id": "3665fdb3-ef5d-4c30-a622-8254791fb6d5",
+    "name": "Canned Peaches",
+    "category": "Canned Goods",
+    "default_location": "Pantry"
+  },
+  {
+    "id": "517ead9e-0816-4d65-afe6-98238a643c35",
+    "name": "Canned Peas",
+    "category": "Canned Goods",
+    "default_location": "Pantry"
+  },
+  {
+    "id": "f1f63be9-3358-49a3-a566-5245d9dd977f",
+    "name": "Canned Pineapple",
+    "category": "Canned Goods",
+    "default_location": "Pantry"
+  },
+  {
+    "id": "8006f187-58e4-43be-a4c1-ce5aac747e73",
+    "name": "Canned Pumpkin",
+    "category": "Canned Goods",
+    "default_location": "Pantry"
+  },
+  {
+    "id": "0d4ee9ef-51ba-47a6-930c-aec86a167728",
+    "name": "Canned Salmon",
+    "category": "Canned Goods",
+    "default_location": "Pantry"
+  },
+  {
+    "id": "956d1117-93f6-4be8-a6a9-dee8482aad39",
+    "name": "Canned Tomatoes",
+    "category": "Canned Goods",
+    "default_location": "Pantry"
+  },
+  {
+    "id": "11fe99e1-1fa0-4cba-b95c-f2dd88f843db",
+    "name": "Canned Tuna",
+    "category": "Canned Goods",
+    "default_location": "Pantry"
+  },
+  {
+    "id": "344e464a-552e-488c-9329-1ff6d1afc3df",
+    "name": "Chicken Noodle Soup",
+    "category": "Canned Goods",
+    "default_location": "Pantry"
+  },
+  {
+    "id": "d54835cd-d4d9-4ca7-889d-1796c18b43ae",
+    "name": "Cream of Mushroom Soup",
+    "category": "Canned Goods",
+    "default_location": "Pantry"
+  },
+  {
+    "id": "eb080780-c896-4055-9d64-ada0fe1cd028",
+    "name": "Crushed Tomatoes",
+    "category": "Canned Goods",
+    "default_location": "Pantry"
+  },
+  {
+    "id": "5e127b1c-5f98-411e-9c57-6a66cd663406",
+    "name": "Diced Tomatoes",
+    "category": "Canned Goods",
+    "default_location": "Pantry"
+  },
+  {
+    "id": "981e9424-4712-41cd-a3cf-3cc6cf6b4dae",
+    "name": "Tomato Paste",
+    "category": "Canned Goods",
+    "default_location": "Pantry"
+  },
+  {
+    "id": "ff9b9d0b-b587-463f-a327-d98d6cde411c",
+    "name": "Tomato Sauce",
+    "category": "Canned Goods",
+    "default_location": "Pantry"
+  },
+  {
+    "id": "2f63c602-5de2-4838-8741-c24c943135cd",
+    "name": "Tomato Soup",
+    "category": "Canned Goods",
+    "default_location": "Pantry"
+  },
+  {
+    "id": "114ea12c-4947-4efe-ac41-0854d2dfd969",
+    "name": "Balsamic Dressing",
+    "category": "Condiments",
+    "default_location": "Fridge"
+  },
+  {
+    "id": "01fcda52-6bb2-4800-80ce-276f882b50ef",
+    "name": "BBQ Sauce",
+    "category": "Condiments",
+    "default_location": "Fridge"
+  },
+  {
+    "id": "e78a307e-7663-41ee-b91f-b137176d2561",
+    "name": "Caesar Dressing",
+    "category": "Condiments",
+    "default_location": "Fridge"
+  },
+  {
+    "id": "93fa2bfe-f54a-4f5c-89d7-5eb6b9c855d3",
+    "name": "Dijon Mustard",
+    "category": "Condiments",
+    "default_location": "Fridge"
+  },
+  {
+    "id": "22a2c63c-4f52-4470-817e-f27c2ea35fc8",
+    "name": "Fish Sauce",
+    "category": "Condiments",
+    "default_location": "Pantry"
+  },
+  {
+    "id": "2dc5592e-2bfd-44d3-a486-8c78a586590f",
+    "name": "Hoisin Sauce",
+    "category": "Condiments",
+    "default_location": "Pantry"
+  },
+  {
+    "id": "9a13d48e-c161-4320-a969-7b64525db5b0",
+    "name": "Hot Sauce",
+    "category": "Condiments",
+    "default_location": "Fridge"
+  },
+  {
+    "id": "182b432e-6ca1-49d8-883e-0981bff75c65",
+    "name": "Hummus",
+    "category": "Condiments",
+    "default_location": "Fridge"
+  },
+  {
+    "id": "94c562f8-5e41-40d6-8004-68a14fb0338a",
+    "name": "Italian Dressing",
+    "category": "Condiments",
+    "default_location": "Fridge"
+  },
+  {
+    "id": "57207e6a-2254-4644-bc53-8bdb1d777ed8",
+    "name": "Ketchup",
+    "category": "Condiments",
+    "default_location": "Fridge"
+  },
+  {
+    "id": "59e02924-ac1a-4221-9cef-9289d108dee5",
+    "name": "Mayonnaise",
+    "category": "Condiments",
+    "default_location": "Fridge"
+  },
+  {
+    "id": "36ed1324-19fd-4078-a5c4-8d477c9e87b5",
+    "name": "Mustard",
+    "category": "Condiments",
+    "default_location": "Fridge"
+  },
+  {
+    "id": "ce59ed77-7fbd-424b-9d6f-75e5dec818ce",
+    "name": "Oyster Sauce",
+    "category": "Condiments",
+    "default_location": "Pantry"
+  },
+  {
+    "id": "226efda7-5c82-4522-bf1b-de6e9f6d34b0",
+    "name": "Ranch Dressing",
+    "category": "Condiments",
+    "default_location": "Fridge"
+  },
+  {
+    "id": "8037cc2f-d55c-48b7-aedd-fd9a992d5ea0",
+    "name": "Salsa",
+    "category": "Condiments",
+    "default_location": "Fridge"
+  },
+  {
+    "id": "125bc7f2-e96e-4c4a-86a4-4fc94ed32bbf",
+    "name": "Sriracha",
+    "category": "Condiments",
+    "default_location": "Fridge"
+  },
+  {
+    "id": "65676655-3622-4801-bbc3-1c570ee4f79f",
+    "name": "Tahini",
+    "category": "Condiments",
+    "default_location": "Pantry"
+  },
+  {
+    "id": "6b23f57e-2d6f-4266-ac10-d48fa8d10f83",
+    "name": "Teriyaki Sauce",
+    "category": "Condiments",
+    "default_location": "Fridge"
+  },
+  {
+    "id": "a76019ac-a4e1-4e42-9218-c8eed000e3ae",
+    "name": "Worcestershire Sauce",
+    "category": "Condiments",
+    "default_location": "Pantry"
+  },
+  {
+    "id": "f2a1b22f-a6f3-41c1-a372-0f0f6b4d95ff",
+    "name": "Yellow Mustard",
+    "category": "Condiments",
+    "default_location": "Fridge"
+  },
+  {
+    "id": "9b036924-ded8-4b82-b750-170a8720b0a1",
+    "name": "2% Milk",
+    "category": "Dairy",
+    "default_location": "Fridge"
+  },
+  {
+    "id": "f0c69aee-e0b1-441f-9ab9-0189a12b1856",
+    "name": "Almond Milk",
+    "category": "Dairy",
+    "default_location": "Fridge"
+  },
+  {
+    "id": "38eba2b5-908a-49ad-9b8c-6ecc14d6690a",
+    "name": "Brie",
+    "category": "Dairy",
+    "default_location": "Fridge"
+  },
+  {
+    "id": "ab52b5e0-a465-48fe-9a4f-004f4dacd2a9",
+    "name": "Butter",
+    "category": "Dairy",
+    "default_location": "Fridge"
+  },
+  {
+    "id": "4878841d-b132-4b9b-85cc-34fd0cecd30c",
+    "name": "Cheddar Cheese",
+    "category": "Dairy",
+    "default_location": "Fridge"
+  },
+  {
+    "id": "1c33e228-a6b1-431e-bec7-e8228fa641ba",
+    "name": "Cottage Cheese",
+    "category": "Dairy",
+    "default_location": "Fridge"
+  },
+  {
+    "id": "50b0a1f7-5f19-40df-b8a7-830de0a92528",
+    "name": "Cream",
+    "category": "Dairy",
+    "default_location": "Fridge"
+  },
+  {
+    "id": "ad0aa686-182d-48b9-af35-d938f3107e7e",
+    "name": "Cream Cheese",
+    "category": "Dairy",
+    "default_location": "Fridge"
+  },
+  {
+    "id": "86b5fa89-96f5-4eaf-93be-1edff7531e68",
+    "name": "Eggs",
+    "category": "Dairy",
+    "default_location": "Fridge"
+  },
+  {
+    "id": "962072b3-1b2a-4ab5-bd63-5fa75741aa9f",
+    "name": "Feta",
+    "category": "Dairy",
+    "default_location": "Fridge"
+  },
+  {
+    "id": "5b1013d2-d9b7-4633-ad11-aabe849190c4",
+    "name": "Greek Yogurt",
+    "category": "Dairy",
+    "default_location": "Fridge"
+  },
+  {
+    "id": "23631161-7efd-4a28-8273-494810055f59",
+    "name": "Half and Half",
+    "category": "Dairy",
+    "default_location": "Fridge"
+  },
+  {
+    "id": "9f741cb7-6bd7-4c35-b0fa-c00e66f26a01",
+    "name": "Heavy Cream",
+    "category": "Dairy",
+    "default_location": "Fridge"
+  },
+  {
+    "id": "713dc3f8-80fc-43a9-bc8f-8b5e4b953668",
+    "name": "Milk",
+    "category": "Dairy",
+    "default_location": "Fridge"
+  },
+  {
+    "id": "145cdd54-2d0b-4412-b190-f87bec70dce9",
+    "name": "Mozzarella",
+    "category": "Dairy",
+    "default_location": "Fridge"
+  },
+  {
+    "id": "8deb2310-771f-4787-9ce9-c0ddfc2557ca",
+    "name": "Oat Milk",
+    "category": "Dairy",
+    "default_location": "Fridge"
+  },
+  {
+    "id": "4576c96c-5496-434f-a937-b8da2815243e",
+    "name": "Parmesan",
+    "category": "Dairy",
+    "default_location": "Fridge"
+  },
+  {
+    "id": "d48c5bd8-8aea-400c-ba56-8d55953f0adb",
+    "name": "Provolone",
+    "category": "Dairy",
+    "default_location": "Fridge"
+  },
+  {
+    "id": "15f1c385-26ed-4f9d-a753-0551a1543bc8",
+    "name": "Ricotta",
+    "category": "Dairy",
+    "default_location": "Fridge"
+  },
+  {
+    "id": "60291b05-4ec6-45ab-b448-3fb00c1e322e",
+    "name": "Shredded Cheddar",
+    "category": "Dairy",
+    "default_location": "Fridge"
+  },
+  {
+    "id": "36e05d9e-985c-4d40-a34b-f62e6ecbb1d5",
+    "name": "Shredded Mozzarella",
+    "category": "Dairy",
+    "default_location": "Fridge"
+  },
+  {
+    "id": "23f95cf8-5529-44da-b72f-fd4d0d32c69b",
+    "name": "Skim Milk",
+    "category": "Dairy",
+    "default_location": "Fridge"
+  },
+  {
+    "id": "d011d122-cc4e-473e-ba52-2e2798419351",
+    "name": "Sour Cream",
+    "category": "Dairy",
+    "default_location": "Fridge"
+  },
+  {
+    "id": "c040ca4c-7ff8-4599-ace2-7aa4cb37bbec",
+    "name": "Soy Milk",
+    "category": "Dairy",
+    "default_location": "Fridge"
+  },
+  {
+    "id": "cb13a034-ceab-458b-a9b1-b10a1d4141d2",
+    "name": "String Cheese",
+    "category": "Dairy",
+    "default_location": "Fridge"
+  },
+  {
+    "id": "4bbac976-1c99-4148-a79e-fec7eb9d344c",
+    "name": "Swiss Cheese",
+    "category": "Dairy",
+    "default_location": "Fridge"
+  },
+  {
+    "id": "fef8769a-cbcc-4214-93e9-2a90e3688ce0",
+    "name": "Unsalted Butter",
+    "category": "Dairy",
+    "default_location": "Fridge"
+  },
+  {
+    "id": "d2934dd1-3163-4d17-a8f4-8bf99016f726",
+    "name": "Whipped Cream",
+    "category": "Dairy",
+    "default_location": "Fridge"
+  },
+  {
+    "id": "2df5496e-7d95-4256-a974-c31f5f585a9c",
+    "name": "Whole Milk",
+    "category": "Dairy",
+    "default_location": "Fridge"
+  },
+  {
+    "id": "65881347-34b4-45b1-93e8-22b8802061c2",
+    "name": "Yogurt",
+    "category": "Dairy",
+    "default_location": "Fridge"
+  },
+  {
+    "id": "f479e024-6261-4707-b43f-c9f3e4323e64",
+    "name": "All-Purpose Flour",
+    "category": "Dry Goods",
+    "default_location": "Pantry"
+  },
+  {
+    "id": "2a562dd8-a567-4c1e-8333-8b9dbe437969",
+    "name": "Apple Cider Vinegar",
+    "category": "Dry Goods",
+    "default_location": "Pantry"
+  },
+  {
+    "id": "9de516f3-56fd-40a6-94ee-f1ae919d3cde",
+    "name": "Balsamic Vinegar",
+    "category": "Dry Goods",
+    "default_location": "Pantry"
+  },
+  {
+    "id": "79cca997-53a0-42ea-a26a-f688ab12770e",
+    "name": "Basmati Rice",
+    "category": "Dry Goods",
+    "default_location": "Pantry"
+  },
+  {
+    "id": "7986a3bc-8fb9-4f09-8c54-70f85084ba19",
+    "name": "Beef Broth",
+    "category": "Dry Goods",
+    "default_location": "Pantry"
+  },
+  {
+    "id": "03dedadd-6b93-4d98-94d2-c3bb49197edd",
+    "name": "Black Beans",
+    "category": "Dry Goods",
+    "default_location": "Pantry"
+  },
+  {
+    "id": "68bdf25b-348c-4e43-a33b-7fb156ee7aa4",
+    "name": "Black Pepper",
+    "category": "Dry Goods",
+    "default_location": "Pantry"
+  },
+  {
+    "id": "6839b9de-8ba4-40a9-8a96-61ff1d199eec",
+    "name": "Brown Rice",
+    "category": "Dry Goods",
+    "default_location": "Pantry"
+  },
+  {
+    "id": "9308e0dc-06d2-48de-bbb0-8f79f15f8fec",
+    "name": "Brown Sugar",
+    "category": "Dry Goods",
+    "default_location": "Pantry"
+  },
+  {
+    "id": "ea377753-a07f-4901-8e1c-4c06461267c2",
+    "name": "Chicken Broth",
+    "category": "Dry Goods",
+    "default_location": "Pantry"
+  },
+  {
+    "id": "ceee4c02-6346-4bf6-a85d-371ed1c981a1",
+    "name": "Coconut Oil",
+    "category": "Dry Goods",
+    "default_location": "Pantry"
+  },
+  {
+    "id": "bedd5134-63c9-4c11-aae2-72bc27fe8612",
+    "name": "Couscous",
+    "category": "Dry Goods",
+    "default_location": "Pantry"
+  },
+  {
+    "id": "5d2c145d-3873-4485-8257-e5676b3dcbbf",
+    "name": "Fettuccine",
+    "category": "Dry Goods",
+    "default_location": "Pantry"
+  },
+  {
+    "id": "50b35f11-290e-408b-a2f8-c996c4866d48",
+    "name": "Flour",
+    "category": "Dry Goods",
+    "default_location": "Pantry"
+  },
+  {
+    "id": "74c74de0-7d3f-47ef-a8cb-baf0fd2e39bf",
+    "name": "Green Lentils",
+    "category": "Dry Goods",
+    "default_location": "Pantry"
+  },
+  {
+    "id": "2e7f4825-1cc4-48fc-8848-e216d735cf57",
+    "name": "Instant Oatmeal",
+    "category": "Dry Goods",
+    "default_location": "Pantry"
+  },
+  {
+    "id": "38b57f35-6c63-4e64-a43c-7289333523f2",
+    "name": "Jasmine Rice",
+    "category": "Dry Goods",
+    "default_location": "Pantry"
+  },
+  {
+    "id": "d7970671-59a2-4c13-bff4-b4003e506cc8",
+    "name": "Linguine",
+    "category": "Dry Goods",
+    "default_location": "Pantry"
+  },
+  {
+    "id": "97f15f29-12b7-4c1c-8928-b15bfb8b6c09",
+    "name": "Oats",
+    "category": "Dry Goods",
+    "default_location": "Pantry"
+  },
+  {
+    "id": "fab59e6b-44be-42cd-a100-add2b209e140",
+    "name": "Olive Oil",
+    "category": "Dry Goods",
+    "default_location": "Pantry"
+  },
+  {
+    "id": "1cb0cd2d-2730-4891-bbcc-996d3bc0f822",
+    "name": "Pasta",
+    "category": "Dry Goods",
+    "default_location": "Pantry"
+  },
+  {
+    "id": "f23a335a-d150-4876-b59d-6389c32a5244",
+    "name": "Penne",
+    "category": "Dry Goods",
+    "default_location": "Pantry"
+  },
+  {
+    "id": "b1dd1dbc-46fb-43f8-b73e-62c821cfe4c8",
+    "name": "Pinto Beans",
+    "category": "Dry Goods",
+    "default_location": "Pantry"
+  },
+  {
+    "id": "a8335898-81aa-462d-9fd4-b0ce192dd4b3",
+    "name": "Powdered Sugar",
+    "category": "Dry Goods",
+    "default_location": "Pantry"
+  },
+  {
+    "id": "431d83b3-7fff-44cc-b74f-b36ed0ccda9d",
+    "name": "Quinoa",
+    "category": "Dry Goods",
+    "default_location": "Pantry"
+  },
+  {
+    "id": "c9850665-94c9-4653-87da-95c80ae027d8",
+    "name": "Red Lentils",
+    "category": "Dry Goods",
+    "default_location": "Pantry"
+  },
+  {
+    "id": "d91233af-44bb-4728-b4ad-faac89daad11",
+    "name": "Rice",
+    "category": "Dry Goods",
+    "default_location": "Pantry"
+  },
+  {
+    "id": "21c13745-96aa-4116-8cc5-a68cd0fb141c",
+    "name": "Rice Vinegar",
+    "category": "Dry Goods",
+    "default_location": "Pantry"
+  },
+  {
+    "id": "27c0980c-3000-430a-b6d2-942c72087017",
+    "name": "Rolled Oats",
+    "category": "Dry Goods",
+    "default_location": "Pantry"
+  },
+  {
+    "id": "4dbf7a20-8332-45b3-82b6-cdbd36df6a9e",
+    "name": "Salt",
+    "category": "Dry Goods",
+    "default_location": "Pantry"
+  },
+  {
+    "id": "34e1ffba-6d3d-4552-bc2a-9f4563ce4c05",
+    "name": "Sesame Oil",
+    "category": "Dry Goods",
+    "default_location": "Pantry"
+  },
+  {
+    "id": "bdf38fc8-7fc0-4483-a175-d92d6034fe6e",
+    "name": "Soy Sauce",
+    "category": "Dry Goods",
+    "default_location": "Pantry"
+  },
+  {
+    "id": "ad269b30-1bd6-4c4a-9b43-a7e4d8fdc84d",
+    "name": "Spaghetti",
+    "category": "Dry Goods",
+    "default_location": "Pantry"
+  },
+  {
+    "id": "11f5670c-22a4-4b08-9ee1-53462f1f5721",
+    "name": "Sugar",
+    "category": "Dry Goods",
+    "default_location": "Pantry"
+  },
+  {
+    "id": "0f11dee4-aeca-444d-9dc0-d62c9023c639",
+    "name": "Vegetable Broth",
+    "category": "Dry Goods",
+    "default_location": "Pantry"
+  },
+  {
+    "id": "4d9d6959-a099-4170-92c7-9b49e91a836e",
+    "name": "Vegetable Oil",
+    "category": "Dry Goods",
+    "default_location": "Pantry"
+  },
+  {
+    "id": "d212697c-aa56-4d17-b11e-57624fadf92a",
+    "name": "Vinegar",
+    "category": "Dry Goods",
+    "default_location": "Pantry"
+  },
+  {
+    "id": "a6b72659-b54a-4d0a-b860-15e723530a28",
+    "name": "White Rice",
+    "category": "Dry Goods",
+    "default_location": "Pantry"
+  },
+  {
+    "id": "d6519884-bab2-4879-a400-22bf17464929",
+    "name": "Whole Wheat Flour",
+    "category": "Dry Goods",
+    "default_location": "Pantry"
+  },
+  {
+    "id": "e149394d-5643-490e-81f0-749ead4c3348",
+    "name": "Frozen Berries",
+    "category": "Frozen",
+    "default_location": "Freezer"
+  },
+  {
+    "id": "7101d4da-c161-4f20-a651-2159a016fbfb",
+    "name": "Frozen Broccoli",
+    "category": "Frozen",
+    "default_location": "Freezer"
+  },
+  {
+    "id": "07aedc9c-5084-4bd7-b772-fe31e12dad56",
+    "name": "Frozen Burritos",
+    "category": "Frozen",
+    "default_location": "Freezer"
+  },
+  {
+    "id": "fb96dfd6-8685-4a15-88db-cd8c4bacad84",
+    "name": "Frozen Chicken Nuggets",
+    "category": "Frozen",
+    "default_location": "Freezer"
+  },
+  {
+    "id": "5b845629-0067-4a3b-af7e-17efeb1cc5e6",
+    "name": "Frozen Corn",
+    "category": "Frozen",
+    "default_location": "Freezer"
+  },
+  {
+    "id": "13667d28-ab1d-4575-9dce-0857b548f51f",
+    "name": "Frozen Edamame",
+    "category": "Frozen",
+    "default_location": "Freezer"
+  },
+  {
+    "id": "be8999e8-292e-48d2-b225-01a3fc5ad8aa",
+    "name": "Frozen Fish Sticks",
+    "category": "Frozen",
+    "default_location": "Freezer"
+  },
+  {
+    "id": "a25c767f-5a2a-4473-bd2e-5730d7ddf3f6",
+    "name": "Frozen French Fries",
+    "category": "Frozen",
+    "default_location": "Freezer"
+  },
+  {
+    "id": "bc6f907f-a8ae-4cf1-a0a9-6003122c5d3b",
+    "name": "Frozen Peas",
+    "category": "Frozen",
+    "default_location": "Freezer"
+  },
+  {
+    "id": "6ca2c67c-6141-479b-ae16-8ca8b4a07a37",
+    "name": "Frozen Pizza",
+    "category": "Frozen",
+    "default_location": "Freezer"
+  },
+  {
+    "id": "283ddb58-2b45-4b29-80e1-b189873ea3e4",
+    "name": "Frozen Shrimp",
+    "category": "Frozen",
+    "default_location": "Freezer"
+  },
+  {
+    "id": "63e78b93-8e5d-4bbf-a44b-3040b8b7c87d",
+    "name": "Frozen Vegetables",
+    "category": "Frozen",
+    "default_location": "Freezer"
+  },
+  {
+    "id": "9c2b3879-35af-4b3e-879f-ed7aaf44a16f",
+    "name": "Frozen Waffles",
+    "category": "Frozen",
+    "default_location": "Freezer"
+  },
+  {
+    "id": "fdca4cc9-22d7-4130-87a9-d2882bf92bcc",
+    "name": "Frozen Wonton Soup",
+    "category": "Frozen",
+    "default_location": "Freezer"
+  },
+  {
+    "id": "108160e3-f5c8-4abb-b097-f108201196b8",
+    "name": "Ice Cream",
+    "category": "Frozen",
+    "default_location": "Freezer"
+  },
+  {
+    "id": "4483626f-12ac-4980-8fad-f1c50b0053a7",
+    "name": "Popsicles",
+    "category": "Frozen",
+    "default_location": "Freezer"
+  },
+  {
+    "id": "75a10f60-f9de-4b61-866e-754cc8de4197",
+    "name": "Tater Tots",
+    "category": "Frozen",
+    "default_location": "Freezer"
+  },
+  {
+    "id": "5ff27cd4-0dc5-4588-a25e-51131edb6dc8",
+    "name": "Bacon",
+    "category": "Meat",
+    "default_location": "Fridge"
+  },
+  {
+    "id": "97cae5e0-1ba3-43a6-a0c1-f132fc03f53b",
+    "name": "Beef Steak",
+    "category": "Meat",
+    "default_location": "Fridge"
+  },
+  {
+    "id": "65db06bf-9b4a-4855-a2b9-450985e99116",
+    "name": "Chicken Breast",
+    "category": "Meat",
+    "default_location": "Fridge"
+  },
+  {
+    "id": "00803486-2924-453c-9ba4-108af7e4539b",
+    "name": "Chicken Thighs",
+    "category": "Meat",
+    "default_location": "Fridge"
+  },
+  {
+    "id": "5cb63d29-9a7e-4d16-a2ec-b59705655b4f",
+    "name": "Deli Turkey",
+    "category": "Meat",
+    "default_location": "Fridge"
+  },
+  {
+    "id": "5d91a0da-10d0-4ed7-a282-3e1932c1c459",
+    "name": "Ground Beef",
+    "category": "Meat",
+    "default_location": "Fridge"
+  },
+  {
+    "id": "adc13676-b388-4efa-bbbc-aa95fec93c9f",
+    "name": "Ground Pork",
+    "category": "Meat",
+    "default_location": "Fridge"
+  },
+  {
+    "id": "b4e3a5d6-62bd-4452-9cd0-f72438b83b59",
+    "name": "Ground Turkey",
+    "category": "Meat",
+    "default_location": "Fridge"
+  },
+  {
+    "id": "a4917444-b05c-4a7f-b8c9-e5e8ad5978fa",
+    "name": "Ham",
+    "category": "Meat",
+    "default_location": "Fridge"
+  },
+  {
+    "id": "2d35cba0-e654-4c94-81ed-a91139237aae",
+    "name": "Hot Dogs",
+    "category": "Meat",
+    "default_location": "Fridge"
+  },
+  {
+    "id": "beaf6ec7-c260-400f-9ea0-5f8640654bab",
+    "name": "Italian Sausage",
+    "category": "Meat",
+    "default_location": "Fridge"
+  },
+  {
+    "id": "933df2b0-cb76-4aab-a4d9-f849d255a414",
+    "name": "Pepperoni",
+    "category": "Meat",
+    "default_location": "Fridge"
+  },
+  {
+    "id": "9504a326-7213-4570-bc78-4e01f0c50b17",
+    "name": "Pork Chops",
+    "category": "Meat",
+    "default_location": "Fridge"
+  },
+  {
+    "id": "3ece5b0f-8246-47c6-a30c-06d8f950416c",
+    "name": "Salami",
+    "category": "Meat",
+    "default_location": "Fridge"
+  },
+  {
+    "id": "a506bba5-6bae-4b7f-b948-5e4d91596922",
+    "name": "Sausage",
+    "category": "Meat",
+    "default_location": "Fridge"
+  },
+  {
+    "id": "2c70256a-5e18-46b0-9269-d5f59c490251",
+    "name": "Turkey Breast",
+    "category": "Meat",
+    "default_location": "Fridge"
+  },
+  {
+    "id": "0b2c3748-cd62-42b4-93b5-0e68e75d7335",
+    "name": "Whole Chicken",
+    "category": "Meat",
+    "default_location": "Fridge"
+  },
+  {
+    "id": "d82a8450-8e22-4642-9902-ab16f3dd5475",
+    "name": "Apples",
+    "category": "Produce",
+    "default_location": "Fridge"
+  },
+  {
+    "id": "981a1d75-bf22-499c-8287-66417942c55f",
+    "name": "Arugula",
+    "category": "Produce",
+    "default_location": "Fridge"
+  },
+  {
+    "id": "b10c7edf-934c-4fbe-ac4e-ce6b3313f4a2",
+    "name": "Asparagus",
+    "category": "Produce",
+    "default_location": "Fridge"
+  },
+  {
+    "id": "222c117b-f8cd-422b-9d60-e0ef0d43bf4b",
+    "name": "Avocado",
+    "category": "Produce",
+    "default_location": "Fridge"
+  },
+  {
+    "id": "d61d284c-fb79-4372-9f58-001a93dd3074",
+    "name": "Baby Bella Mushrooms",
+    "category": "Produce",
+    "default_location": "Fridge"
+  },
+  {
+    "id": "e83ce65e-8035-4a97-9831-bcf754a16621",
+    "name": "Baby Carrots",
+    "category": "Produce",
+    "default_location": "Fridge"
+  },
+  {
+    "id": "4eb96624-ae2a-4292-94c3-7b851f10fbfa",
+    "name": "Bananas",
+    "category": "Produce",
+    "default_location": "Fridge"
+  },
+  {
+    "id": "57a9dac3-a2b7-4eb0-a106-9140d18936a9",
+    "name": "Beets",
+    "category": "Produce",
+    "default_location": "Fridge"
+  },
+  {
+    "id": "6ef841d8-0827-49bf-87b2-581751cdaccb",
+    "name": "Bell Peppers",
+    "category": "Produce",
+    "default_location": "Fridge"
+  },
+  {
+    "id": "7bd2de46-abf4-41a2-9247-543764d94812",
+    "name": "Blackberries",
+    "category": "Produce",
+    "default_location": "Fridge"
+  },
+  {
+    "id": "018c7dcb-39be-4590-b30d-5fe9211d126b",
+    "name": "Blueberries",
+    "category": "Produce",
+    "default_location": "Fridge"
+  },
+  {
+    "id": "c296fea6-10b6-47e7-be94-bb7b34269a54",
+    "name": "Broccoli",
+    "category": "Produce",
+    "default_location": "Fridge"
+  },
+  {
+    "id": "65bfe85b-edc1-4e37-a100-9ce2492bd4c1",
+    "name": "Brussels Sprouts",
+    "category": "Produce",
+    "default_location": "Fridge"
+  },
+  {
+    "id": "3d04fcf5-97bf-4b83-b892-296be17a7443",
+    "name": "Cabbage",
+    "category": "Produce",
+    "default_location": "Fridge"
+  },
+  {
+    "id": "41fd2963-4a4a-49cc-967b-002c2efbd47b",
+    "name": "Cantaloupe",
+    "category": "Produce",
+    "default_location": "Fridge"
+  },
+  {
+    "id": "75b5b5b5-464d-45eb-870d-9b441cc21ca1",
+    "name": "Carrots",
+    "category": "Produce",
+    "default_location": "Fridge"
+  },
+  {
+    "id": "9051100b-1cf1-4c21-8913-410e5243a16b",
+    "name": "Cauliflower",
+    "category": "Produce",
+    "default_location": "Fridge"
+  },
+  {
+    "id": "06652acb-f1c5-496c-b298-3b7cbf14e56c",
+    "name": "Celery",
+    "category": "Produce",
+    "default_location": "Fridge"
+  },
+  {
+    "id": "d66b1929-0139-4500-9c44-cd9a4feb750f",
+    "name": "Cherry Tomatoes",
+    "category": "Produce",
+    "default_location": "Fridge"
+  },
+  {
+    "id": "f83af6ec-6470-4f29-b4ec-3c57e1dee4da",
+    "name": "Cilantro",
+    "category": "Produce",
+    "default_location": "Fridge"
+  },
+  {
+    "id": "9ba29cfd-b614-42c1-bfff-299b3e3cced0",
+    "name": "Corn",
+    "category": "Produce",
+    "default_location": "Fridge"
+  },
+  {
+    "id": "e114a39f-b3d9-42b6-8a1a-de9f79317aed",
+    "name": "Cucumber",
+    "category": "Produce",
+    "default_location": "Fridge"
+  },
+  {
+    "id": "472a3ec9-d385-4d9e-af91-8ebee8193671",
+    "name": "Fresh Ginger",
+    "category": "Produce",
+    "default_location": "Fridge"
+  },
+  {
+    "id": "240cf562-0e9c-450b-9820-ef1c8e845d67",
+    "name": "Garlic",
+    "category": "Produce",
+    "default_location": "Fridge"
+  },
+  {
+    "id": "42162342-ec18-4493-a518-e74acfab7abf",
+    "name": "Grapes",
+    "category": "Produce",
+    "default_location": "Fridge"
+  },
+  {
+    "id": "31fd6d77-4799-4af6-a971-91eb2eaed312",
+    "name": "Green Beans",
+    "category": "Produce",
+    "default_location": "Fridge"
+  },
+  {
+    "id": "7781951c-8e90-411a-9d8f-efe634f714a9",
+    "name": "Green Bell Pepper",
+    "category": "Produce",
+    "default_location": "Fridge"
+  },
+  {
+    "id": "f379ba60-d496-46a3-80a6-d82d72d442c5",
+    "name": "Jalapeños",
+    "category": "Produce",
+    "default_location": "Fridge"
+  },
+  {
+    "id": "94df59d9-8110-4833-a849-67deb7959673",
+    "name": "Kale",
+    "category": "Produce",
+    "default_location": "Fridge"
+  },
+  {
+    "id": "6f3a091f-cccc-485a-bf0f-70872fe35236",
+    "name": "Lemons",
+    "category": "Produce",
+    "default_location": "Fridge"
+  },
+  {
+    "id": "882b8f07-16b9-4488-8b59-a9966b67faa7",
+    "name": "Lettuce",
+    "category": "Produce",
+    "default_location": "Fridge"
+  },
+  {
+    "id": "71934436-f963-4001-9dad-8326fdbb0c73",
+    "name": "Limes",
+    "category": "Produce",
+    "default_location": "Fridge"
+  },
+  {
+    "id": "1532bbfc-1d63-4ce5-b30a-c569ae98021d",
+    "name": "Mango",
+    "category": "Produce",
+    "default_location": "Fridge"
+  },
+  {
+    "id": "8baa53f2-fd3d-4d76-8fd3-3b49577aa586",
+    "name": "Mixed Greens",
+    "category": "Produce",
+    "default_location": "Fridge"
+  },
+  {
+    "id": "20008eac-a52d-4de2-9318-1e4a76247700",
+    "name": "Mushrooms",
+    "category": "Produce",
+    "default_location": "Fridge"
+  },
+  {
+    "id": "2ccb00cd-235d-41b8-80ac-84ed5c5d9c40",
+    "name": "Onions",
+    "category": "Produce",
+    "default_location": "Fridge"
+  },
+  {
+    "id": "5e9d8d48-997f-403b-a2bf-58ffc69911ec",
+    "name": "Oranges",
+    "category": "Produce",
+    "default_location": "Fridge"
+  },
+  {
+    "id": "ba064e12-2898-4ae2-83f5-66a65816236b",
+    "name": "Parsley",
+    "category": "Produce",
+    "default_location": "Fridge"
+  },
+  {
+    "id": "c202082c-22b6-4729-bc61-fee986e4ea52",
+    "name": "Peaches",
+    "category": "Produce",
+    "default_location": "Fridge"
+  },
+  {
+    "id": "ee830f64-888b-444e-bf29-31b65902eb18",
+    "name": "Pineapple",
+    "category": "Produce",
+    "default_location": "Fridge"
+  },
+  {
+    "id": "782617ed-03b9-4ab4-b551-1bbf54f729f4",
+    "name": "Potatoes",
+    "category": "Produce",
+    "default_location": "Fridge"
+  },
+  {
+    "id": "5951b315-ba9e-46a1-b622-1f382c27f46f",
+    "name": "Raspberries",
+    "category": "Produce",
+    "default_location": "Fridge"
+  },
+  {
+    "id": "530777f3-c44b-413d-a4ed-f980e9783b2b",
+    "name": "Red Bell Pepper",
+    "category": "Produce",
+    "default_location": "Fridge"
+  },
+  {
+    "id": "9effdc20-a4fc-4add-ad8d-f8e07c1ada99",
+    "name": "Red Onion",
+    "category": "Produce",
+    "default_location": "Fridge"
+  },
+  {
+    "id": "fb36e1cf-97ff-4760-a68c-66648e40997c",
+    "name": "Roma Tomatoes",
+    "category": "Produce",
+    "default_location": "Fridge"
+  },
+  {
+    "id": "c720bca1-8b31-4d5e-9d0f-97c3dc35629e",
+    "name": "Romaine Lettuce",
+    "category": "Produce",
+    "default_location": "Fridge"
+  },
+  {
+    "id": "4e2bbe67-4d50-459f-8ea6-a336574afa89",
+    "name": "Scallions",
+    "category": "Produce",
+    "default_location": "Fridge"
+  },
+  {
+    "id": "cd807cb0-a321-4b9d-97d7-284d9d599edf",
+    "name": "Spinach",
+    "category": "Produce",
+    "default_location": "Fridge"
+  },
+  {
+    "id": "406411d8-b289-44a6-8423-3f7e4a42a403",
+    "name": "Strawberries",
+    "category": "Produce",
+    "default_location": "Fridge"
+  },
+  {
+    "id": "083801a3-fb08-4089-9d07-ba84cad66e77",
+    "name": "Sweet Potatoes",
+    "category": "Produce",
+    "default_location": "Fridge"
+  },
+  {
+    "id": "8afdc460-1cb9-4189-aa94-6cf8c9b78651",
+    "name": "Tomatoes",
+    "category": "Produce",
+    "default_location": "Fridge"
+  },
+  {
+    "id": "9d6d8df2-4f11-4250-bd62-bac54e000749",
+    "name": "Watermelon",
+    "category": "Produce",
+    "default_location": "Fridge"
+  },
+  {
+    "id": "74055f61-2eed-44de-84a1-3ae89de6e6ea",
+    "name": "Yellow Onion",
+    "category": "Produce",
+    "default_location": "Fridge"
+  },
+  {
+    "id": "5d579dac-9fb8-409b-a13b-446f765769a2",
+    "name": "Zucchini",
+    "category": "Produce",
+    "default_location": "Fridge"
+  },
+  {
+    "id": "f86e9cf1-6796-4d0a-b64f-a3855245d44c",
+    "name": "Cod",
+    "category": "Seafood",
+    "default_location": "Fridge"
+  },
+  {
+    "id": "4d44bea5-bb11-441b-91f8-94c1f2fb8bd7",
+    "name": "Halibut",
+    "category": "Seafood",
+    "default_location": "Fridge"
+  },
+  {
+    "id": "149486db-cbc8-412c-838c-8aedc0de8191",
+    "name": "Mahi Mahi",
+    "category": "Seafood",
+    "default_location": "Fridge"
+  },
+  {
+    "id": "dce7d23d-e329-4776-a971-e4bb92537bde",
+    "name": "Salmon",
+    "category": "Seafood",
+    "default_location": "Fridge"
+  },
+  {
+    "id": "35eb457d-89b2-4733-b096-bb4f9e21a1ea",
+    "name": "Scallops",
+    "category": "Seafood",
+    "default_location": "Fridge"
+  },
+  {
+    "id": "0e213136-b16e-4b99-a76e-ff71b3ebdfc7",
+    "name": "Shrimp",
+    "category": "Seafood",
+    "default_location": "Fridge"
+  },
+  {
+    "id": "3aede1bf-d863-4ad2-b4ea-d593dcc05ed8",
+    "name": "Tilapia",
+    "category": "Seafood",
+    "default_location": "Fridge"
+  },
+  {
+    "id": "f15fe7d9-e404-4124-89be-a50a248aaa9e",
+    "name": "Tuna Steak",
+    "category": "Seafood",
+    "default_location": "Fridge"
+  },
+  {
+    "id": "89868631-c179-42c7-a2ab-9df768fa9983",
+    "name": "Almond Butter",
+    "category": "Snacks",
+    "default_location": "Pantry"
+  },
+  {
+    "id": "d1a4e04e-fcea-4f72-9332-44a221b055e6",
+    "name": "Almonds",
+    "category": "Snacks",
+    "default_location": "Pantry"
+  },
+  {
+    "id": "c86539a0-4ad8-4f1d-8441-96f0f892a76c",
+    "name": "Cashews",
+    "category": "Snacks",
+    "default_location": "Pantry"
+  },
+  {
+    "id": "68e2fe91-ca0a-4cd9-8311-832a84510b7c",
+    "name": "Cereal",
+    "category": "Snacks",
+    "default_location": "Pantry"
+  },
+  {
+    "id": "ee47d278-7372-469e-832c-565ecb928ab9",
+    "name": "Chips",
+    "category": "Snacks",
+    "default_location": "Pantry"
+  },
+  {
+    "id": "06bc1da6-f780-4e8d-ba50-298974e9fa40",
+    "name": "Crackers",
+    "category": "Snacks",
+    "default_location": "Pantry"
+  },
+  {
+    "id": "9de296c3-20ca-4c75-848d-d710be9fa5fd",
+    "name": "Fruit Snacks",
+    "category": "Snacks",
+    "default_location": "Pantry"
+  },
+  {
+    "id": "563a222c-c66a-4551-9157-8cae36569dcf",
+    "name": "Graham Crackers",
+    "category": "Snacks",
+    "default_location": "Pantry"
+  },
+  {
+    "id": "7c06e329-3e4f-49e7-904e-f47261998c08",
+    "name": "Granola",
+    "category": "Snacks",
+    "default_location": "Pantry"
+  },
+  {
+    "id": "91306348-d798-4ac6-88e2-eb23b778f16d",
+    "name": "Granola Bars",
+    "category": "Snacks",
+    "default_location": "Pantry"
+  },
+  {
+    "id": "f6bec423-1c29-437f-9b05-b9df0f696008",
+    "name": "Honey",
+    "category": "Snacks",
+    "default_location": "Pantry"
+  },
+  {
+    "id": "66a0698a-3209-4947-aac7-b9b7004e4264",
+    "name": "Jam",
+    "category": "Snacks",
+    "default_location": "Pantry"
+  },
+  {
+    "id": "ce7dae85-67b7-473f-9dac-f2aa51a036be",
+    "name": "Jelly",
+    "category": "Snacks",
+    "default_location": "Pantry"
+  },
+  {
+    "id": "d7cd74db-fdf2-4dc7-ab01-ac7e98a9ee18",
+    "name": "Mixed Nuts",
+    "category": "Snacks",
+    "default_location": "Pantry"
+  },
+  {
+    "id": "1111d368-bcfd-48ca-8ec4-5e57c00aed8d",
+    "name": "Nutella",
+    "category": "Snacks",
+    "default_location": "Pantry"
+  },
+  {
+    "id": "6e3bc2a1-39ea-4aba-bbfd-3c2b6a30d9d6",
+    "name": "Peanut Butter",
+    "category": "Snacks",
+    "default_location": "Pantry"
+  },
+  {
+    "id": "cda80aad-4c30-405d-beb0-c3c2a5048e1e",
+    "name": "Peanuts",
+    "category": "Snacks",
+    "default_location": "Pantry"
+  },
+  {
+    "id": "876adcd3-540a-4cd4-a66a-9b5c499bcfb7",
+    "name": "Popcorn",
+    "category": "Snacks",
+    "default_location": "Pantry"
+  },
+  {
+    "id": "a2cb0322-cab7-45f5-8a67-fadf92078e96",
+    "name": "Pretzels",
+    "category": "Snacks",
+    "default_location": "Pantry"
+  },
+  {
+    "id": "430c1ff1-6266-4064-b05c-176d2de26a27",
+    "name": "Protein Bars",
+    "category": "Snacks",
+    "default_location": "Pantry"
+  },
+  {
+    "id": "9f70d9ab-02c0-439f-a62b-dac7723c3a1f",
+    "name": "Rice Cakes",
+    "category": "Snacks",
+    "default_location": "Pantry"
+  },
+  {
+    "id": "e0fad40f-c546-4ff5-a606-bd8e85dacc9f",
+    "name": "Tortilla Chips",
+    "category": "Snacks",
+    "default_location": "Pantry"
+  },
+  {
+    "id": "8c51e4ef-0dde-41a6-9c67-238b9561781a",
+    "name": "Trail Mix",
+    "category": "Snacks",
+    "default_location": "Pantry"
+  },
+  {
+    "id": "0229d549-56dc-4536-a13f-2fd970ddcc6f",
+    "name": "Basil",
+    "category": "Spices",
+    "default_location": "Pantry"
+  },
+  {
+    "id": "f925a1f6-e8aa-4f24-86de-832f51a9cc90",
+    "name": "Bay Leaves",
+    "category": "Spices",
+    "default_location": "Pantry"
+  },
+  {
+    "id": "9680c76c-2d74-4350-931e-da2dc6b3b187",
+    "name": "Cayenne Pepper",
+    "category": "Spices",
+    "default_location": "Pantry"
+  },
+  {
+    "id": "0e9d90c3-adc3-4214-91aa-7bc4ce57075a",
+    "name": "Chili Powder",
+    "category": "Spices",
+    "default_location": "Pantry"
+  },
+  {
+    "id": "2cdd26a5-142b-4c58-8e4d-0d813f355681",
+    "name": "Cinnamon",
+    "category": "Spices",
+    "default_location": "Pantry"
+  },
+  {
+    "id": "bc93de6e-3dbb-4b32-b215-259cc181dedc",
+    "name": "Coriander",
+    "category": "Spices",
+    "default_location": "Pantry"
+  },
+  {
+    "id": "51df19a9-0f5d-4e59-b4f1-1090f435d5f3",
+    "name": "Cumin",
+    "category": "Spices",
+    "default_location": "Pantry"
+  },
+  {
+    "id": "2281b610-667e-439e-9fc3-0259883e2aed",
+    "name": "Curry Powder",
+    "category": "Spices",
+    "default_location": "Pantry"
+  },
+  {
+    "id": "0c79d92c-cf2f-4650-8b38-270220be5a8d",
+    "name": "Everything Bagel Seasoning",
+    "category": "Spices",
+    "default_location": "Pantry"
+  },
+  {
+    "id": "6e69371a-60e1-4d3d-86fe-ebcf767bb473",
+    "name": "Garlic Powder",
+    "category": "Spices",
+    "default_location": "Pantry"
+  },
+  {
+    "id": "6c5498c8-db16-4eba-8a3a-bc07f1743792",
+    "name": "Ginger Powder",
+    "category": "Spices",
+    "default_location": "Pantry"
+  },
+  {
+    "id": "453f89ec-b0ec-495a-991a-4951511d7241",
+    "name": "Italian Seasoning",
+    "category": "Spices",
+    "default_location": "Pantry"
+  },
+  {
+    "id": "b1da039e-6411-4912-83ca-894f48d6478c",
+    "name": "Nutmeg",
+    "category": "Spices",
+    "default_location": "Pantry"
+  },
+  {
+    "id": "fcc560ce-1223-4a09-9141-b07ce1b6bfca",
+    "name": "Onion Powder",
+    "category": "Spices",
+    "default_location": "Pantry"
+  },
+  {
+    "id": "6a7d2ae5-6b59-4c52-8e22-12649e6b0857",
+    "name": "Oregano",
+    "category": "Spices",
+    "default_location": "Pantry"
+  },
+  {
+    "id": "e435bd98-ed8d-4daf-9139-f19f90b703b3",
+    "name": "Paprika",
+    "category": "Spices",
+    "default_location": "Pantry"
+  },
+  {
+    "id": "809e4e50-f5f7-4a50-b028-427c3dc1c0d5",
+    "name": "Red Pepper Flakes",
+    "category": "Spices",
+    "default_location": "Pantry"
+  },
+  {
+    "id": "11ffe867-d921-40fd-b982-2d2de58cebb2",
+    "name": "Rosemary",
+    "category": "Spices",
+    "default_location": "Pantry"
+  },
+  {
+    "id": "a05d4638-3070-42d7-87d2-5f009bc5b7c3",
+    "name": "Smoked Paprika",
+    "category": "Spices",
+    "default_location": "Pantry"
+  },
+  {
+    "id": "27e35a37-e8dd-43c1-abc2-8b47b4ef075f",
+    "name": "Taco Seasoning",
+    "category": "Spices",
+    "default_location": "Pantry"
+  },
+  {
+    "id": "2a54dd51-b49a-400a-872b-8817dcd7aeaa",
+    "name": "Thyme",
+    "category": "Spices",
+    "default_location": "Pantry"
+  },
+  {
+    "id": "adb726d0-54bc-4c08-8505-33df8f1d37e2",
+    "name": "Turmeric",
+    "category": "Spices",
+    "default_location": "Pantry"
+  }
+]

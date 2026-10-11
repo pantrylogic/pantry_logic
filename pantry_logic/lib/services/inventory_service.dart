@@ -5,6 +5,7 @@ import '../models/inventory_item.dart';
 import '../models/item.dart';
 import '../models/storage_location.dart';
 import '../core/like.dart';
+import '../core/item_name.dart';
 
 class InventoryService {
   static final _client = Supabase.instance.client;
@@ -43,7 +44,7 @@ class InventoryService {
   // ─── Autocomplete ────────────────────────────────────────────────────────────
 
   Future<List<AutocompleteSuggestion>> searchAutocomplete(String query) async {
-    final trimmed = query.trim();
+    final trimmed = normalizeItemName(query);
     if (trimmed.isEmpty) return [];
 
     final pattern = '%${escapeLike(trimmed)}%';
@@ -55,7 +56,7 @@ class InventoryService {
         .order('name')
         .limit(8);
 
-    final householdSuggestions = itemRows
+    return itemRows
         .map((r) => AutocompleteSuggestion(
               itemId: r['id'] as String,
               name: r['name'] as String,
@@ -63,30 +64,6 @@ class InventoryService {
               defaultLocation: r['default_location'] as String? ?? 'Pantry',
             ))
         .toList();
-
-    final householdNames =
-        householdSuggestions.map((s) => s.name.toLowerCase()).toSet();
-
-    final dictRows = await _client
-        .from('starter_dictionary')
-        .select('name, category, default_location')
-        .ilike('name', pattern)
-        .order('name')
-        .limit(10);
-
-    final dictSuggestions = dictRows
-        .where((r) =>
-            !householdNames.contains((r['name'] as String).toLowerCase()))
-        .take(8 - householdSuggestions.length)
-        .map((r) => AutocompleteSuggestion(
-              itemId: null,
-              name: r['name'] as String,
-              category: r['category'] as String?,
-              defaultLocation: r['default_location'] as String? ?? 'Pantry',
-            ))
-        .toList();
-
-    return [...householdSuggestions, ...dictSuggestions];
   }
 
   // ─── Inventory stream ─────────────────────────────────────────────────────────
@@ -139,7 +116,7 @@ class InventoryService {
     String? category,
     String? defaultLocation,
   }) async {
-    final trimmed = name.trim();
+    final trimmed = normalizeItemName(name);
 
     final existing = await _client
         .from('items')
@@ -204,6 +181,11 @@ class InventoryService {
       if (e.code == '23505') throw AlreadyInPantryException(itemName);
       rethrow;
     }
+
+    // Learn the location: last-used wins.
+    await _client
+        .from('items')
+        .update({'default_location': location}).eq('id', itemId);
   }
 
   Future<void> updateInventoryItem(

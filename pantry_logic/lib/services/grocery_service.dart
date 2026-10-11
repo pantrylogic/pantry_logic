@@ -5,6 +5,7 @@ import '../models/grocery_item.dart';
 import '../models/item.dart';
 import '../core/quantity.dart';
 import '../core/like.dart';
+import '../core/item_name.dart';
 
 class GroceryService {
   static final _client = Supabase.instance.client;
@@ -34,15 +35,14 @@ class GroceryService {
 
   // ─── Autocomplete ────────────────────────────────────────────────────────────
 
-  /// Returns up to 8 suggestions merging the household's existing items
-  /// (highest priority) with the global starter dictionary.
+  /// Returns up to 8 suggestions from the household's own items (learned from
+  /// what users have added). Empty when nothing matches.
   Future<List<AutocompleteSuggestion>> searchAutocomplete(String query) async {
-    final trimmed = query.trim();
+    final trimmed = normalizeItemName(query);
     if (trimmed.isEmpty) return [];
 
     final pattern = '%${escapeLike(trimmed)}%';
 
-    // Household items (already in vocab for this household)
     final itemRows = await _client
         .from('items')
         .select('id, name, category, default_location')
@@ -50,7 +50,7 @@ class GroceryService {
         .order('name')
         .limit(8);
 
-    final householdSuggestions = itemRows
+    return itemRows
         .map((r) => AutocompleteSuggestion(
               itemId: r['id'] as String,
               name: r['name'] as String,
@@ -58,31 +58,6 @@ class GroceryService {
               defaultLocation: r['default_location'] as String? ?? 'Pantry',
             ))
         .toList();
-
-    final householdNames =
-        householdSuggestions.map((s) => s.name.toLowerCase()).toSet();
-
-    // Dictionary items not already in household vocab
-    final dictRows = await _client
-        .from('starter_dictionary')
-        .select('name, category, default_location')
-        .ilike('name', pattern)
-        .order('name')
-        .limit(10);
-
-    final dictSuggestions = dictRows
-        .where((r) =>
-            !householdNames.contains((r['name'] as String).toLowerCase()))
-        .take(8 - householdSuggestions.length)
-        .map((r) => AutocompleteSuggestion(
-              itemId: null,
-              name: r['name'] as String,
-              category: r['category'] as String?,
-              defaultLocation: r['default_location'] as String? ?? 'Pantry',
-            ))
-        .toList();
-
-    return [...householdSuggestions, ...dictSuggestions];
   }
 
   // ─── Items ───────────────────────────────────────────────────────────────────
@@ -93,7 +68,7 @@ class GroceryService {
     String? category,
     String? defaultLocation,
   }) async {
-    final trimmed = name.trim();
+    final trimmed = normalizeItemName(name);
 
     // Look for existing item in this household (RLS scopes to current household)
     final existing = await _client
@@ -257,6 +232,11 @@ class GroceryService {
       },
       onConflict: 'household_id,item_id',
     );
+
+    // Learn the location: last-used wins.
+    await _client
+        .from('items')
+        .update({'default_location': location}).eq('id', item.itemId);
   }
 
   /// Unchecks a purchased grocery item (does not remove from inventory).

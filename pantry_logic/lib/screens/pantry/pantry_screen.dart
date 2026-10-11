@@ -138,7 +138,7 @@ class _PantryScreenState extends State<PantryScreen> with TabActivation {
                 : (await _service.getOrCreateItem(
                     name: r.name,
                     category: sameName ? category : null,
-                    defaultLocation: defaultLocation,
+                    defaultLocation: r.location,
                   ))
                     .id;
             await _service.addInventoryItem(

@@ -6,6 +6,7 @@ import '../models/meal.dart';
 import '../models/meal_need_item.dart';
 import '../models/item.dart';
 import '../core/like.dart';
+import '../core/item_name.dart';
 
 class MealService {
   static final _client = Supabase.instance.client;
@@ -331,7 +332,7 @@ class MealService {
   // ─── Item autocomplete / get-or-create ───────────────────────────────────────
 
   Future<List<AutocompleteSuggestion>> searchAutocomplete(String query) async {
-    final trimmed = query.trim();
+    final trimmed = normalizeItemName(query);
     if (trimmed.isEmpty) return [];
 
     final pattern = '%${escapeLike(trimmed)}%';
@@ -343,7 +344,7 @@ class MealService {
         .order('name')
         .limit(8);
 
-    final suggestions = itemRows
+    return itemRows
         .map((r) => AutocompleteSuggestion(
               itemId: r['id'] as String,
               name: r['name'] as String,
@@ -351,30 +352,6 @@ class MealService {
               defaultLocation: r['default_location'] as String? ?? 'Pantry',
             ))
         .toList();
-
-    final existingNames =
-        suggestions.map((s) => s.name.toLowerCase()).toSet();
-
-    final dictRows = await _client
-        .from('starter_dictionary')
-        .select('name, category, default_location')
-        .ilike('name', pattern)
-        .order('name')
-        .limit(10);
-
-    final dictSuggestions = dictRows
-        .where((r) =>
-            !existingNames.contains((r['name'] as String).toLowerCase()))
-        .take(8 - suggestions.length)
-        .map((r) => AutocompleteSuggestion(
-              itemId: null,
-              name: r['name'] as String,
-              category: r['category'] as String?,
-              defaultLocation: r['default_location'] as String? ?? 'Pantry',
-            ))
-        .toList();
-
-    return [...suggestions, ...dictSuggestions];
   }
 
   Future<Item> getOrCreateItem({
@@ -382,7 +359,7 @@ class MealService {
     String? category,
     String? defaultLocation,
   }) async {
-    final trimmed = name.trim();
+    final trimmed = normalizeItemName(name);
     final existing = await _client
         .from('items')
         .select()

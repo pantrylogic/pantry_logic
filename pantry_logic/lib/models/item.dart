@@ -23,7 +23,7 @@ class Item {
 }
 
 /// A suggestion returned by autocomplete search.
-/// May come from the household's existing items table or the global dictionary.
+/// Comes from the household's items table (learned from user input).
 class AutocompleteSuggestion {
   /// Non-null when this item already exists in the household's items table.
   final String? itemId;

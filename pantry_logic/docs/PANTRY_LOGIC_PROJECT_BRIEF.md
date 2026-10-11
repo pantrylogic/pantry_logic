@@ -126,21 +126,21 @@ Shared list editable by all household members.
 - Purchased status (checked/unchecked)
 
 **Functions:**
-- Add item via text-first input (type → autocomplete from starter dictionary + household items → enter to add)
-- Check off item → auto-adds to inventory with category-based default location
+- Add item via text-first input (type → autocomplete from household items → enter to add)
+- Check off item → auto-adds to inventory with the item's last-used location
 - Edit item
 - Delete item (any user)
 - "Clear completed" button to remove checked-off items
 
 **Autocomplete behavior:**
-- Suggests from starter item dictionary AND household's custom items
-- Typing "chi" shows: Chicken breast, Chili powder, Chips
+- Suggests only from items the household has entered before (no pre-seeded list; empty on a fresh install)
+- Typing "chi" shows previously entered matches, e.g. Chicken breast, Chips
 - Tapping a suggestion adds it instantly
 - Typing something new and hitting enter creates a new item
 
 **Checkoff → Inventory flow:**
 - Item auto-adds to inventory
-- Location assigned by category default (from starter dictionary or household override)
+- Location: existing stock location, else the item's last-used location (default Pantry)
 - If item already exists in inventory: merge and add quantities together
 - Notes carry over from grocery to inventory
 
@@ -313,21 +313,16 @@ Per item, two behaviors:
 
 ---
 
-## Starter Item Dictionary
+## Item Dictionary (learned)
 
-A preloaded table of ~200-300 common grocery items. Each entry has:
-- Name (e.g., "Milk")
-- Category (e.g., "Dairy") — invisible to user in V1
-- Default location (e.g., "Fridge")
+There is no pre-seeded dictionary. (The original 288-item `starter_dictionary` seed was emptied on 2026-10-11; backup in `supabase/backups/`.) The household's `items` table is the dictionary and is built only from what users enter:
+- Name (normalized: trimmed, inner whitespace collapsed; unique per household, case-insensitive)
+- Default location: last-used location from a stock add or grocery check-off (grocery add leaves it alone). Unknown items default to Pantry.
 
 **Purpose:**
 - Powers autocomplete across grocery list, inventory, and meal need lists
-- Auto-assigns category and default location when items are added
-- Makes the app feel smart on day one
-
-**Household overrides:**
-- If a user changes an item's location, the app remembers that preference for the household
-- Custom items added by the household join the autocomplete pool permanently
+- Prefills location when an item is added to stock
+- An empty dictionary is a valid state: no suggestions, and typing still works normally
 
 **Category → Default Location mapping:**
 - Dairy → Fridge
