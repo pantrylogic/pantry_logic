@@ -517,6 +517,12 @@ Do not build any of these:
 - Multiple meals per day (breakfast/lunch/dinner)
 - Social sign-in (Apple/Google) — email + password only for V1
 
+### Deferred (security hardening)
+
+Household creation and joining go through the `create_household` / `join_household` RPCs; clients can't write `profiles.household_id` / `role` or read other households (2026-10-11). Still to do:
+- `rotate_invite_code()` RPC for owners (owners can't update `invite_code` directly)
+- Rate-limiting on `join_household` / `create_household` before public launch (anonymous sign-in is open, so invite codes can otherwise be brute-forced)
+
 ---
 
 ## Branding & Visual Design

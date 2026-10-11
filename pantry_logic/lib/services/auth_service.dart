@@ -1,4 +1,3 @@
-import 'dart:math';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import '../models/household.dart';
 import '../models/profile.dart';
@@ -83,24 +82,14 @@ class AuthService {
 
   // ─── Create household (owner) ─────────────────────────────────────────────────
 
+  /// Creates the household and makes the caller its owner in one server-side
+  /// transaction (create_household RPC). The invite code is generated there.
   Future<Household> createHousehold(String name) async {
-    final userId = _client.auth.currentUser?.id;
-    if (userId == null) throw Exception('Not signed in.');
-
-    final code = _generateInviteCode();
+    if (_client.auth.currentUser == null) throw Exception('Not signed in.');
 
     final data = await _client
-        .from('households')
-        .insert({'name': name.trim(), 'invite_code': code, 'created_by': userId})
-        .select()
-        .single();
-
-    final household = Household.fromJson(data);
-
-    await _client
-        .from('profiles')
-        .update({'household_id': household.id, 'role': 'owner'})
-        .eq('id', userId);
+        .rpc('create_household', params: {'p_name': name.trim()});
+    final household = Household.fromJson(data as Map<String, dynamic>);
 
     // Refresh the JWT so the hook re-runs and embeds the new household_id
     // into app_metadata. RLS policies read from the token, not the DB.
@@ -111,26 +100,26 @@ class AuthService {
 
   // ─── Join household (member via invite code) ──────────────────────────────────
 
+  /// Joins via invite code (join_household RPC, case-insensitive). The caller
+  /// can't read other households, so the lookup happens server-side.
   Future<Household> joinHousehold(String inviteCode) async {
-    final userId = _client.auth.currentUser?.id;
-    if (userId == null) throw Exception('Not signed in.');
+    if (_client.auth.currentUser == null) throw Exception('Not signed in.');
 
-    final data = await _client
-        .from('households')
-        .select()
-        .eq('invite_code', inviteCode.toUpperCase().trim())
-        .maybeSingle();
-
-    if (data == null) {
-      throw Exception('No household found with that code. Double-check and try again.');
+    final Household household;
+    try {
+      final data = await _client
+          .rpc('join_household', params: {'p_code': inviteCode.trim()});
+      household = Household.fromJson(data as Map<String, dynamic>);
+    } on PostgrestException catch (e) {
+      if (e.message == 'invalid code') {
+        throw Exception(
+            'No household found with that code. Double-check and try again.');
+      }
+      if (e.message == 'already in a household') {
+        throw Exception('You are already in a household.');
+      }
+      rethrow;
     }
-
-    final household = Household.fromJson(data);
-
-    await _client
-        .from('profiles')
-        .update({'household_id': household.id, 'role': 'member'})
-        .eq('id', userId);
 
     // Refresh the JWT so the hook re-runs and embeds the new household_id
     // into app_metadata. RLS policies read from the token, not the DB.
@@ -162,14 +151,5 @@ class AuthService {
 
   Future<void> signOut() async {
     await _client.auth.signOut();
-  }
-
-  // ─── Helpers ─────────────────────────────────────────────────────────────────
-
-  // 6-char uppercase code — skips visually ambiguous characters
-  String _generateInviteCode() {
-    const chars = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
-    final rng = Random.secure();
-    return List.generate(6, (_) => chars[rng.nextInt(chars.length)]).join();
   }
 }
