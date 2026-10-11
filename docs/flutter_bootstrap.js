@@ -40,7 +40,7 @@ _flutter.buildConfig = {"engineRevision":"a10d8ac38de835021c8d2f920dbf50a920ccc0
 // insets are applied inside the app, see lib/core/web_safe_area.dart.
 _flutter.loader.load({
   serviceWorkerSettings: {
-    serviceWorkerVersion: "3554597793" /* Flutter's service worker is deprecated and will be removed in a future Flutter release. */,
+    serviceWorkerVersion: "3141339377" /* Flutter's service worker is deprecated and will be removed in a future Flutter release. */,
   },
   onEntrypointLoaded: async function (engineInitializer) {
     const appRunner = await engineInitializer.initializeEngine();

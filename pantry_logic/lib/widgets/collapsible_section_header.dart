@@ -33,35 +33,44 @@ class CollapsibleSectionHeader extends StatelessWidget {
           padding: const EdgeInsets.fromLTRB(16, 14, 12, 8),
           child: Row(
             children: [
-              Flexible(
-                child: Text(
-                  title,
-                  overflow: TextOverflow.ellipsis,
-                  style: nsSans(
-                    fontSize: 15,
-                    fontWeight: FontWeight.w700,
-                    color: p.textPrimary,
-                  ),
+              // Title + count take all remaining width so the chevron is
+              // always pinned to the right edge, whatever the title length.
+              Expanded(
+                child: Row(
+                  children: [
+                    Flexible(
+                      child: Text(
+                        title,
+                        overflow: TextOverflow.ellipsis,
+                        style: nsSans(
+                          fontSize: 15,
+                          fontWeight: FontWeight.w700,
+                          color: p.textPrimary,
+                        ),
+                      ),
+                    ),
+                    const SizedBox(width: 8),
+                    Container(
+                      padding: const EdgeInsets.symmetric(
+                          horizontal: 8, vertical: 1),
+                      decoration: BoxDecoration(
+                        color: p.accentLight
+                            .withValues(alpha: p.isDark ? 1 : 0.6),
+                        borderRadius: BorderRadius.circular(10),
+                      ),
+                      child: Text(
+                        '$count',
+                        style: nsSans(
+                          fontSize: 12,
+                          fontWeight: FontWeight.w700,
+                          color: p.isDark ? p.textPrimary : p.primary,
+                        ),
+                      ),
+                    ),
+                  ],
                 ),
               ),
               const SizedBox(width: 8),
-              Container(
-                padding:
-                    const EdgeInsets.symmetric(horizontal: 8, vertical: 1),
-                decoration: BoxDecoration(
-                  color: p.accentLight.withValues(alpha: p.isDark ? 1 : 0.6),
-                  borderRadius: BorderRadius.circular(10),
-                ),
-                child: Text(
-                  '$count',
-                  style: nsSans(
-                    fontSize: 12,
-                    fontWeight: FontWeight.w700,
-                    color: p.isDark ? p.textPrimary : p.primary,
-                  ),
-                ),
-              ),
-              const Spacer(),
               AnimatedRotation(
                 turns: expanded ? 0 : -0.25,
                 duration: const Duration(milliseconds: 180),
