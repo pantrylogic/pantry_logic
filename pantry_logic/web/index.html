@@ -43,22 +43,35 @@
 
   <style>
     /*
-      The app draws edge to edge, under the black-translucent iOS status
-      bar. Page background matches the app background for the current
-      scheme (AppColors.background / backgroundDm) so there is no flash
-      before Flutter paints.
+      Flutter web reports zero safe-area padding, so with the
+      black-translucent status bar the app is embedded in #app, which is
+      inset by the device safe areas. The strips it leaves uncovered are
+      painted to match the current scheme.
     */
     html, body {
       margin: 0;
       height: 100%;
       overflow: hidden;
-      background-color: #F7F7F4;
+      background: #F7F7F4;
     }
-    @media (prefers-color-scheme: dark) {
-      html, body { background-color: #1A1C1A; }
+    #status-bar-bg {
+      position: fixed;
+      top: 0;
+      left: 0;
+      right: 0;
+      height: env(safe-area-inset-top, 0px);
+      background: #2D5A27;
+    }
+    #app {
+      position: fixed;
+      top: env(safe-area-inset-top, 0px);
+      right: env(safe-area-inset-right, 0px);
+      bottom: env(safe-area-inset-bottom, 0px);
+      left: env(safe-area-inset-left, 0px);
+      background: #F7F7F4;
     }
     #loading {
-      position: fixed;
+      position: absolute;
       inset: 0;
       display: flex;
       align-items: center;
@@ -68,36 +81,21 @@
       width: 96px;
       height: auto;
     }
-    /* Resolves env(safe-area-inset-*) to px for pantryLogicSafeArea(). */
-    #safe-area-probe {
-      position: fixed;
-      top: 0;
-      left: 0;
-      visibility: hidden;
-      pointer-events: none;
-      padding: env(safe-area-inset-top, 0px) env(safe-area-inset-right, 0px)
-               env(safe-area-inset-bottom, 0px) env(safe-area-inset-left, 0px);
+    @media (prefers-color-scheme: dark) {
+      html, body { background: #1A1C1A; }
+      #status-bar-bg { background: #7FB87A; }
+      #app { background: #1A1C1A; }
     }
   </style>
-  <script>
-    // Flutter web reports zero safe-area padding, so the app reads the
-    // device insets from here (lib/core/web_safe_area.dart) and feeds them
-    // into MediaQuery. Returns [top, right, bottom, left] in CSS px.
-    window.pantryLogicSafeArea = function () {
-      var probe = document.getElementById('safe-area-probe');
-      if (!probe) return [0, 0, 0, 0];
-      var s = getComputedStyle(probe);
-      return [s.paddingTop, s.paddingRight, s.paddingBottom, s.paddingLeft]
-        .map(function (v) { return parseFloat(v) || 0; });
-    };
-  </script>
 </head>
 <body>
-  <div id="safe-area-probe"></div>
-  <div id="loading"><img src="icons/Icon-192.png" alt="Pantry Logic"></div>
+  <div id="status-bar-bg"></div>
+  <div id="app">
+    <div id="loading"><img src="icons/Icon-192.png" alt="Pantry Logic"></div>
+  </div>
   <!--
-    flutter_bootstrap.js is customised in web/flutter_bootstrap.js to remove
-    the loading logo once the engine is up.
+    flutter_bootstrap.js is customised in web/flutter_bootstrap.js to render
+    into #app instead of the full page.
 
     For more details:
     * https://docs.flutter.dev/platform-integration/web/initialization

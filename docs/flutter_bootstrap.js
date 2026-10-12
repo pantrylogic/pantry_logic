@@ -36,14 +36,17 @@ if (!window._flutter) {
 _flutter.buildConfig = {"engineRevision":"a10d8ac38de835021c8d2f920dbf50a920ccc030","builds":[{"compileTarget":"dart2js","renderer":"canvaskit","mainJsPath":"main.dart.js"},{}]};
 
 
-// Full-page render (edge to edge, under the iOS status bar). Safe-area
-// insets are applied inside the app, see lib/core/web_safe_area.dart.
+// Render into #app (inset by the device safe areas, see index.html) rather
+// than the full page, so nothing is drawn under the iOS status bar.
 _flutter.loader.load({
   serviceWorkerSettings: {
-    serviceWorkerVersion: "3141339377" /* Flutter's service worker is deprecated and will be removed in a future Flutter release. */,
+    serviceWorkerVersion: "3342515068" /* Flutter's service worker is deprecated and will be removed in a future Flutter release. */,
   },
   onEntrypointLoaded: async function (engineInitializer) {
-    const appRunner = await engineInitializer.initializeEngine();
+    const host = document.querySelector('#app');
+    const appRunner = await engineInitializer.initializeEngine({
+      hostElement: host,
+    });
     const loading = document.querySelector('#loading');
     if (loading) loading.remove();
     await appRunner.runApp();
