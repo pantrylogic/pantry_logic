@@ -6,6 +6,12 @@
 set -euo pipefail
 cd "$(dirname "$0")/.."
 
+# The temporary viewport debug overlay must never ship.
+if grep -q "DEBUG-OVERLAY" web/index.html; then
+  echo "web/index.html still contains the DEBUG-OVERLAY block; remove it before deploying." >&2
+  exit 1
+fi
+
 # MSYS_NO_PATHCONV stops Git Bash rewriting /pantry_logic/ into a Windows path.
 MSYS_NO_PATHCONV=1 flutter build web --release --base-href /pantry_logic/
 

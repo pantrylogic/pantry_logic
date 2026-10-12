@@ -17,20 +17,19 @@
   <base href="/pantry_logic/">
 
   <meta charset="UTF-8">
-  <!-- viewport-fit=cover lets env(safe-area-inset-*) report real values. -->
-  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, viewport-fit=cover">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
   <meta content="IE=Edge" http-equiv="X-UA-Compatible">
   <meta name="description" content="Pantry Logic helps your household keep a shared grocery list, track what's in stock, and decide what to eat.">
 
-  <!-- Browser / Android status bar colour matches the in-app status-bar band
-       and the "I'm Hungry" button (AppPalette.primary). -->
+  <!-- Browser / Android toolbar colour (AppPalette.primary, the "I'm Hungry"
+       button). -->
   <meta name="theme-color" content="#2D5A27" media="(prefers-color-scheme: light)">
   <meta name="theme-color" content="#7FB87A" media="(prefers-color-scheme: dark)">
 
   <!-- iOS meta tags & icons -->
   <meta name="mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-capable" content="yes">
-  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta name="apple-mobile-web-app-status-bar-style" content="default">
   <meta name="apple-mobile-web-app-title" content="Pantry Logic">
   <link rel="apple-touch-icon" sizes="180x180" href="icons/apple-touch-icon.png">
 
@@ -43,43 +42,13 @@
 
   <style>
     /*
-      Flutter web reports zero safe-area padding, so with the
-      black-translucent status bar the app is embedded in #app, which is
-      inset by the device safe areas. The strips it leaves uncovered are
-      painted to match the current scheme.
+      Page background matches the app background for the current scheme
+      (AppColors.background / backgroundDm) so there is no flash before
+      Flutter paints. Flutter's full-page mode owns the page layout.
     */
-    html, body {
-      margin: 0;
-      height: 100%;
-      overflow: hidden;
-      background: #F7F7F4;
-    }
-    #status-bar-bg {
-      position: fixed;
-      top: 0;
-      left: 0;
-      right: 0;
-      height: env(safe-area-inset-top, 0px);
-      background: #2D5A27;
-    }
-    #bottom-bar-bg {
-      position: fixed;
-      left: 0;
-      right: 0;
-      bottom: 0;
-      height: env(safe-area-inset-bottom, 0px);
-      background: #FFFFFF;
-    }
-    #app {
-      position: fixed;
-      top: env(safe-area-inset-top, 0px);
-      right: env(safe-area-inset-right, 0px);
-      bottom: env(safe-area-inset-bottom, 0px);
-      left: env(safe-area-inset-left, 0px);
-      background: #F7F7F4;
-    }
+    html, body { background: #F7F7F4; }
     #loading {
-      position: absolute;
+      position: fixed;
       inset: 0;
       display: flex;
       align-items: center;
@@ -91,21 +60,14 @@
     }
     @media (prefers-color-scheme: dark) {
       html, body { background: #1A1C1A; }
-      #status-bar-bg { background: #7FB87A; }
-      #bottom-bar-bg { background: #252825; }
-      #app { background: #1A1C1A; }
     }
   </style>
 </head>
 <body>
-  <div id="status-bar-bg"></div>
-  <div id="bottom-bar-bg"></div>
-  <div id="app">
-    <div id="loading"><img src="icons/Icon-192.png" alt="Pantry Logic"></div>
-  </div>
+  <div id="loading"><img src="icons/Icon-192.png" alt="Pantry Logic"></div>
   <!--
-    flutter_bootstrap.js is customised in web/flutter_bootstrap.js to render
-    into #app instead of the full page.
+    flutter_bootstrap.js is customised in web/flutter_bootstrap.js to remove
+    the loading logo once the engine is up.
 
     For more details:
     * https://docs.flutter.dev/platform-integration/web/initialization

@@ -36,17 +36,14 @@ if (!window._flutter) {
 _flutter.buildConfig = {"engineRevision":"a10d8ac38de835021c8d2f920dbf50a920ccc030","builds":[{"compileTarget":"dart2js","renderer":"canvaskit","mainJsPath":"main.dart.js"},{}]};
 
 
-// Render into #app (inset by the device safe areas, see index.html) rather
-// than the full page, so nothing is drawn under the iOS status bar.
+// Full-page render; the only customisation is removing the loading logo
+// (#loading in index.html) once the engine is up.
 _flutter.loader.load({
   serviceWorkerSettings: {
-    serviceWorkerVersion: "2919993161" /* Flutter's service worker is deprecated and will be removed in a future Flutter release. */,
+    serviceWorkerVersion: "3532912590" /* Flutter's service worker is deprecated and will be removed in a future Flutter release. */,
   },
   onEntrypointLoaded: async function (engineInitializer) {
-    const host = document.querySelector('#app');
-    const appRunner = await engineInitializer.initializeEngine({
-      hostElement: host,
-    });
+    const appRunner = await engineInitializer.initializeEngine();
     const loading = document.querySelector('#loading');
     if (loading) loading.remove();
     await appRunner.runApp();
