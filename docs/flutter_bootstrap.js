@@ -40,7 +40,7 @@ _flutter.buildConfig = {"engineRevision":"a10d8ac38de835021c8d2f920dbf50a920ccc0
 // than the full page, so nothing is drawn under the iOS status bar.
 _flutter.loader.load({
   serviceWorkerSettings: {
-    serviceWorkerVersion: "3342515068" /* Flutter's service worker is deprecated and will be removed in a future Flutter release. */,
+    serviceWorkerVersion: "2919993161" /* Flutter's service worker is deprecated and will be removed in a future Flutter release. */,
   },
   onEntrypointLoaded: async function (engineInitializer) {
     const host = document.querySelector('#app');
