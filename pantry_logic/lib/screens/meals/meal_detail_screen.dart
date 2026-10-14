@@ -426,7 +426,10 @@ class _MealDetailScreenState extends State<MealDetailScreen> {
             onRemove: () => _removeIngredient(items[i]),
           ),
         ],
+        // Keyed so the field (and its focus) survives the rows above
+        // it appearing/disappearing.
         _InlineAddRow(
+          key: const ValueKey('add_ingredient'),
           child: AddBar(
             framed: false,
             hintText: 'Add ingredient…',
@@ -465,7 +468,10 @@ class _MealDetailScreenState extends State<MealDetailScreen> {
               color: p.error)
         else if (steps.isEmpty)
           const _QuietLine('No steps needed? That\'s fine.'),
+        // Keyed so the field (and its focus) survives the rows above
+        // it appearing/disappearing.
         _InlineAddRow(
+          key: const ValueKey('add_step'),
           child: AddBar(
             framed: false,
             hintText: 'Add step…',
@@ -860,7 +866,7 @@ class _StepRow extends StatelessWidget {
 
 /// Padding for the "+ Add…" field that ends each tab's list.
 class _InlineAddRow extends StatelessWidget {
-  const _InlineAddRow({required this.child});
+  const _InlineAddRow({super.key, required this.child});
 
   final Widget child;
 

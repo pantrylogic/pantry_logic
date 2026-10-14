@@ -285,8 +285,9 @@ class MealService {
             .from('meal_steps')
             .select()
             .eq('meal_id', mealId)
-            .order('position')
-            .order('created_at');
+            // postgrest-dart's order() defaults to descending.
+            .order('position', ascending: true)
+            .order('created_at', ascending: true);
         if (!ctrl.isClosed) ctrl.add(rows.map(MealStep.fromJson).toList());
       } catch (e) {
         if (!ctrl.isClosed) ctrl.addError(e);

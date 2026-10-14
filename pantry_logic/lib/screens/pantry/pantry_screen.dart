@@ -842,7 +842,9 @@ class _QuantityButton extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final p = AppPalette.of(context);
+    // container: its own node, not merged into the row's "edit item" button.
     return Semantics(
+      container: true,
       button: true,
       label: semanticLabel,
       excludeSemantics: true,
