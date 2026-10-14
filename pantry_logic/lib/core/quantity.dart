@@ -120,3 +120,14 @@ String? mergeQuantities(String? existing, String? incoming) {
   // Non-numeric: keep existing (item was already in stock with a label).
   return ex;
 }
+
+final RegExp _plainDecimal = RegExp(r'^\d*\.?\d+$');
+
+/// Whether the +/− stepper can adjust this stored quantity: empty, or a
+/// plain non-negative decimal ("2", "1.5"). Fractions and text with units
+/// are edited from the item sheet instead. Must match the parsing in the
+/// `adjust_quantity` SQL function.
+bool isSteppableQuantity(String? raw) {
+  final s = raw?.trim() ?? '';
+  return s.isEmpty || _plainDecimal.hasMatch(s);
+}

@@ -7,7 +7,9 @@ import 'app_snack_bar.dart';
 /// The text-input "add" bar pinned to the bottom of list screens, with an
 /// optional autocomplete dropdown that opens above it.
 ///
-/// Place it as the last child of a screen's body [Column].
+/// Place it as the last child of a screen's body [Column]. With
+/// `framed: false` it is a bare field for use inside a sheet or as the last
+/// row of a list.
 class AddBar extends StatefulWidget {
   const AddBar({
     super.key,
@@ -18,7 +20,11 @@ class AddBar extends StatefulWidget {
     this.suggestionTrailing = SuggestionTrailing.category,
     this.textCapitalization = TextCapitalization.sentences,
     this.keepFocusAfterSubmit = true,
-    this.onSuggestionsVisibilityChanged,
+    this.onChanged,
+    this.autofocus = false,
+    this.framed = true,
+    this.suggestionsBelow = false,
+    this.splitLines = false,
   });
 
   final String hintText;
@@ -43,7 +49,20 @@ class AddBar extends StatefulWidget {
   /// false when submitting opens a sheet.
   final bool keepFocusAfterSubmit;
 
-  final ValueChanged<bool>? onSuggestionsVisibilityChanged;
+  /// Called with the raw text on every change.
+  final ValueChanged<String>? onChanged;
+
+  final bool autofocus;
+
+  /// Draw the pinned-bar chrome (surface, top border, bottom safe area).
+  final bool framed;
+
+  /// Show the autocomplete dropdown under the field instead of above it.
+  final bool suggestionsBelow;
+
+  /// Accept multi-line text (e.g. a pasted list): a line break submits the
+  /// whole text, so [onSubmit] may receive newlines.
+  final bool splitLines;
 
   @override
   State<AddBar> createState() => _AddBarState();
@@ -74,14 +93,22 @@ class _AddBarState extends State<AddBar> {
   }
 
   void _setSuggestions(List<AutocompleteSuggestion> list) {
-    final wasShowing = _showing;
     setState(() => _suggestions = list);
-    if (wasShowing != _showing) {
-      widget.onSuggestionsVisibilityChanged?.call(_showing);
-    }
   }
 
+  String _lastText = '';
+
   Future<void> _onChanged() async {
+    // The listener also fires for selection changes; only react to edits.
+    if (_ctrl.text == _lastText) return;
+    _lastText = _ctrl.text;
+    widget.onChanged?.call(_ctrl.text);
+    // A typed or pasted line break submits (multi-line mode only).
+    if (widget.splitLines && _ctrl.text.contains('\n')) {
+      // A bare Enter on an empty field just clears it (keyboard stays up).
+      _ctrl.text.trim().isEmpty ? _ctrl.clear() : _submit();
+      return;
+    }
     // Rebuild so the trailing add button tracks whether there's text.
     setState(() {});
     final search = widget.search;
@@ -155,47 +182,62 @@ class _AddBarState extends State<AddBar> {
       );
     }
 
-    return Column(
-      mainAxisSize: MainAxisSize.min,
-      children: [
-        if (_showing)
-          TextFieldTapRegion(
+    final field = TextField(
+      controller: _ctrl,
+      focusNode: _focus,
+      autofocus: widget.autofocus,
+      textCapitalization: widget.textCapitalization,
+      textInputAction: TextInputAction.done,
+      minLines: 1,
+      maxLines: widget.splitLines ? 4 : 1,
+      onSubmitted: (_) => _submit(),
+      // Without this, the "done" action unfocuses the field (closing the
+      // keyboard) before onSubmitted runs.
+      onEditingComplete: widget.keepFocusAfterSubmit ? () {} : null,
+      onTapOutside: (_) {
+        _hide();
+        _focus.unfocus();
+      },
+      style: nsSans(fontSize: 15, color: p.textPrimary),
+      decoration: InputDecoration(
+        hintText: widget.hintText,
+        prefixIcon: Icon(Icons.add_rounded, color: p.primary, size: 22),
+        suffixIcon: suffix,
+      ),
+    );
+
+    final suggestions = _showing
+        ? TextFieldTapRegion(
             child: _SuggestionList(
               suggestions: _suggestions,
               trailing: widget.suggestionTrailing,
               onTap: _pick,
             ),
-          ),
-        Container(
-          decoration: BoxDecoration(
-            color: p.surface,
-            border: Border(top: BorderSide(color: p.border, width: 0.5)),
-          ),
-          child: SafeArea(
-            top: false,
-            child: Padding(
-              padding: const EdgeInsets.fromLTRB(12, 8, 12, 8),
-              child: TextField(
-                controller: _ctrl,
-                focusNode: _focus,
-                textCapitalization: widget.textCapitalization,
-                textInputAction: TextInputAction.done,
-                onSubmitted: (_) => _submit(),
-                onTapOutside: (_) {
-                  _hide();
-                  _focus.unfocus();
-                },
-                style: nsSans(fontSize: 15, color: p.textPrimary),
-                decoration: InputDecoration(
-                  hintText: widget.hintText,
-                  prefixIcon:
-                      Icon(Icons.add_rounded, color: p.primary, size: 22),
-                  suffixIcon: suffix,
-                ),
+          )
+        : null;
+
+    return Column(
+      mainAxisSize: MainAxisSize.min,
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        if (suggestions != null && !widget.suggestionsBelow) suggestions,
+        if (widget.framed)
+          Container(
+            decoration: BoxDecoration(
+              color: p.surface,
+              border: Border(top: BorderSide(color: p.border, width: 0.5)),
+            ),
+            child: SafeArea(
+              top: false,
+              child: Padding(
+                padding: const EdgeInsets.fromLTRB(12, 8, 12, 8),
+                child: field,
               ),
             ),
-          ),
-        ),
+          )
+        else
+          field,
+        if (suggestions != null && widget.suggestionsBelow) suggestions,
       ],
     );
   }

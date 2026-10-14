@@ -1,4 +1,7 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 
 import '../../core/locations.dart';
 import '../../core/quantity.dart';
@@ -7,12 +10,12 @@ import '../../core/ui_prefs.dart';
 import '../../models/inventory_item.dart';
 import '../../models/storage_location.dart';
 import '../../services/inventory_service.dart';
-import '../../widgets/add_bar.dart';
 import '../../widgets/app_sheet.dart';
 import '../../widgets/app_snack_bar.dart';
 import '../../widgets/brand.dart';
 import '../../widgets/collapsible_section_header.dart';
 import '../shell/shell_controller.dart';
+import 'stock_entry_sheet.dart';
 
 /// The Stock tab: everything in the house, grouped by storage location.
 class PantryScreen extends StatefulWidget {
@@ -34,6 +37,21 @@ class _PantryScreenState extends State<PantryScreen> with TabActivation {
   /// Rows removed optimistically (swipe/delete) before the stream catches up.
   final Set<String> _hiddenIds = {};
 
+  // Inline quantity stepper state, keyed by stock row id. Taps update
+  // [_qtyOverride] at once; the summed delta is written ~400ms after the
+  // last tap via the atomic adjust_quantity RPC. The override is dropped
+  // once the stream shows the server value (or after a timeout). Writes
+  // for one item run one after another (see [_serialized]).
+  static const _stepDebounce = Duration(milliseconds: 400);
+  static const _overrideTimeout = Duration(seconds: 5);
+  final Map<String, double> _qtyOverride = {};
+  final Map<String, int> _pendingDelta = {};
+  final Map<String, Timer> _debounce = {};
+  final Map<String, int> _inFlight = {};
+  final Map<String, Timer> _overrideExpiry = {};
+  final Map<String, Future<void>> _writes = {};
+  StreamSubscription<List<InventoryItem>>? _reconcileSub;
+
   bool _searching = false;
   final _searchCtrl = TextEditingController();
   final _searchFocus = FocusNode();
@@ -49,6 +67,7 @@ class _PantryScreenState extends State<PantryScreen> with TabActivation {
   void initState() {
     super.initState();
     _stream = _service.streamInventoryItems().asBroadcastStream();
+    _reconcileSub = _stream.listen(_reconcile, onError: (_) {});
     _loadLocations();
     _loadCollapsed();
     _searchCtrl.addListener(() {
@@ -58,6 +77,22 @@ class _PantryScreenState extends State<PantryScreen> with TabActivation {
 
   @override
   void dispose() {
+    // Write any taps still waiting on the debounce before leaving.
+    for (final id in _debounce.keys.toList()) {
+      _debounce.remove(id)?.cancel();
+      final delta = _pendingDelta.remove(id);
+      if (delta != null && delta != 0) {
+        _serialized(id, () => _service.adjustQuantity(id, delta))
+            .catchError((Object e, st) {
+          logError('Flush quantity on dispose', e, st);
+          return 0.0;
+        });
+      }
+    }
+    for (final t in _overrideExpiry.values) {
+      t.cancel();
+    }
+    _reconcileSub?.cancel();
     _searchCtrl.dispose();
     _searchFocus.dispose();
     super.dispose();
@@ -109,54 +144,8 @@ class _PantryScreenState extends State<PantryScreen> with TabActivation {
 
   // ─── Add ───────────────────────────────────────────────────────────────────
 
-  Future<void> _openAddSheet({
-    required String name,
-    String? itemId,
-    String? category,
-    String? defaultLocation,
-  }) async {
-    final messenger = ScaffoldMessenger.of(context);
-    final names = _locationNames(defaultLocation);
-    final initialLocation = defaultLocation ??
-        (names.contains('Pantry')
-            ? 'Pantry'
-            : (names.isNotEmpty ? names.first : 'Pantry'));
-
-    await showAppSheet<void>(
-      context: context,
-      builder: (ctx) => _ItemSheet(
-        title: 'Add to stock',
-        saveLabel: 'Add to stock',
-        initialName: name,
-        locations: names,
-        initialLocation: initialLocation,
-        onSave: (r) async {
-          final sameName = r.name.toLowerCase() == name.toLowerCase();
-          try {
-            final resolvedId = sameName && itemId != null
-                ? itemId
-                : (await _service.getOrCreateItem(
-                    name: r.name,
-                    category: sameName ? category : null,
-                    defaultLocation: r.location,
-                  ))
-                    .id;
-            await _service.addInventoryItem(
-              itemId: resolvedId,
-              itemName: r.name,
-              location: r.location,
-              quantity: r.quantity,
-              notes: r.notes,
-            );
-          } on AlreadyInPantryException {
-            showAppSnackBar(messenger, '${r.name} is already in stock.');
-          }
-          if (ctx.mounted) Navigator.pop(ctx);
-          return null;
-        },
-      ),
-    );
-  }
+  Future<void> _openAddSheet() =>
+      showStockEntrySheet(context, locations: _locationNames());
 
   // ─── Edit ──────────────────────────────────────────────────────────────────
 
@@ -164,9 +153,7 @@ class _PantryScreenState extends State<PantryScreen> with TabActivation {
     final messenger = ScaffoldMessenger.of(context);
     await showAppSheet<void>(
       context: context,
-      builder: (ctx) => _ItemSheet(
-        title: 'Edit item',
-        saveLabel: 'Save',
+      builder: (ctx) => _EditItemSheet(
         initialName: item.itemName,
         locations: _locationNames(item.location),
         initialLocation: item.location,
@@ -218,10 +205,16 @@ class _PantryScreenState extends State<PantryScreen> with TabActivation {
     }
   }
 
+  /// Swipe/delete: removes a stock row with the same undo snackbar as
+  /// "used up" (Undo + Add to list).
   Future<void> _deleteItem(
     InventoryItem item,
     ScaffoldMessengerState messenger,
   ) async {
+    final override = _qtyOverride[item.id];
+    final restoreQty =
+        override != null ? serializeQuantity(override) : item.quantity;
+    _cancelStepping(item.id);
     setState(() => _hiddenIds.add(item.id));
     try {
       await _service.deleteInventoryItem(item.id);
@@ -233,20 +226,23 @@ class _PantryScreenState extends State<PantryScreen> with TabActivation {
     showUndoSnackBar(
       messenger,
       '${item.itemName} removed from stock.',
-      onUndo: () => _restoreItem(item, messenger),
+      onUndo: () => _restoreItem(item, messenger, quantity: restoreQty),
+      secondaryLabel: 'Add to list',
+      onSecondary: () => _addToGrocery(item, messenger),
     );
   }
 
   Future<void> _restoreItem(
     InventoryItem item,
-    ScaffoldMessengerState messenger,
-  ) async {
+    ScaffoldMessengerState messenger, {
+    String? quantity,
+  }) async {
     try {
       await _service.addInventoryItem(
         itemId: item.itemId,
         itemName: item.itemName,
         location: item.location,
-        quantity: item.quantity,
+        quantity: quantity,
         notes: item.notes,
         addedBy: item.addedBy,
       );
@@ -254,6 +250,230 @@ class _PantryScreenState extends State<PantryScreen> with TabActivation {
       // Someone re-added it in the meantime — nothing to restore.
     } catch (e, st) {
       showErrorSnackBar(messenger, 'Could not restore ${item.itemName}.', e, st);
+    }
+  }
+
+  // ─── Quantity stepper ──────────────────────────────────────────────────────
+
+  double? _displayQty(InventoryItem item) =>
+      _qtyOverride[item.id] ?? parseQuantity(item.quantity);
+
+  bool _isBusy(String id) =>
+      _pendingDelta.containsKey(id) || (_inFlight[id] ?? 0) > 0;
+
+  /// Runs [write] after any earlier write for the same item has finished,
+  /// so the server sees taps, exact sets and "used up" in order.
+  Future<T> _serialized<T>(String id, Future<T> Function() write) {
+    final result = (_writes[id] ?? Future<void>.value()).then((_) => write());
+    final done = result.then<void>((_) {}, onError: (_) {});
+    _writes[id] = done;
+    done.then((_) {
+      if (identical(_writes[id], done)) _writes.remove(id);
+    });
+    return result;
+  }
+
+  void _cancelStepping(String id) {
+    _debounce.remove(id)?.cancel();
+    _overrideExpiry.remove(id)?.cancel();
+    _pendingDelta.remove(id);
+    _qtyOverride.remove(id);
+  }
+
+  void _step(InventoryItem item, int delta) {
+    final current = _displayQty(item) ?? 0;
+    final next = current + delta;
+    if (delta < 0 && next <= 0) {
+      _consume(item, delta, restoreQuantity: serializeQuantity(current));
+      return;
+    }
+    _overrideExpiry.remove(item.id)?.cancel();
+    setState(() {
+      _qtyOverride[item.id] = next;
+      _pendingDelta[item.id] = (_pendingDelta[item.id] ?? 0) + delta;
+    });
+    _debounce.remove(item.id)?.cancel();
+    _debounce[item.id] = Timer(_stepDebounce, () => _flush(item));
+  }
+
+  Future<void> _flush(InventoryItem item) async {
+    final id = item.id;
+    _debounce.remove(id);
+    final delta = _pendingDelta.remove(id);
+    if (delta == null || delta == 0) {
+      _expireOverride(id);
+      return;
+    }
+    final messenger = ScaffoldMessenger.of(context);
+    _inFlight[id] = (_inFlight[id] ?? 0) + 1;
+    double? serverQty;
+    Object? error;
+    StackTrace? stack;
+    try {
+      serverQty =
+          await _serialized(id, () => _service.adjustQuantity(id, delta));
+    } catch (e, st) {
+      error = e;
+      stack = st;
+    }
+    _endInFlight(id);
+    // Deleted meanwhile (used up / swiped): nothing to reconcile.
+    if (!mounted || _hiddenIds.contains(id)) return;
+
+    if (error != null) {
+      setState(() => _cancelStepping(id));
+      showErrorSnackBar(
+          messenger, 'Could not update ${item.itemName}.', error, stack);
+      return;
+    }
+    // Later taps are still pending: keep showing their optimistic value.
+    if (!_isBusy(id)) setState(() => _qtyOverride[id] = serverQty!);
+    _expireOverride(id);
+  }
+
+  /// "Used up": sends [delta] (relative to what's shown) plus any taps
+  /// still waiting on the debounce to consume_item, which deletes the row
+  /// only if that takes it to 0 or below. Undo re-inserts the returned row
+  /// with [restoreQuantity] (what was shown before the last tap); null keeps
+  /// the row's own quantity.
+  Future<void> _consume(
+    InventoryItem item,
+    int delta, {
+    String? restoreQuantity,
+  }) async {
+    final messenger = ScaffoldMessenger.of(context);
+    final id = item.id;
+    final total = (_pendingDelta[id] ?? 0) + delta;
+    setState(() {
+      _cancelStepping(id);
+      _hiddenIds.add(id);
+    });
+
+    final Map<String, dynamic>? deleted;
+    try {
+      deleted = await _serialized(id, () => _service.consumeItem(id, total));
+    } on StockItemGoneException {
+      showAppSnackBar(messenger, '${item.itemName} was already removed.');
+      return;
+    } catch (e, st) {
+      if (mounted) setState(() => _hiddenIds.remove(id));
+      showErrorSnackBar(messenger, 'Could not update ${item.itemName}.', e, st);
+      return;
+    }
+
+    if (deleted == null) {
+      // Kept: someone added stock meanwhile. The stream shows the new value.
+      if (mounted) setState(() => _hiddenIds.remove(id));
+      showAppSnackBar(
+          messenger, '${item.itemName} wasn\'t used up: someone added more.');
+      return;
+    }
+    showUndoSnackBar(
+      messenger,
+      '${item.itemName} used up',
+      onUndo: () => _restoreConsumed(item, deleted!, restoreQuantity, messenger),
+      secondaryLabel: 'Add to list',
+      onSecondary: () => _addToGrocery(item, messenger),
+    );
+  }
+
+  Future<void> _restoreConsumed(
+    InventoryItem item,
+    Map<String, dynamic> row,
+    String? quantity,
+    ScaffoldMessengerState messenger,
+  ) async {
+    try {
+      await _service.restoreInventoryRow(
+        row,
+        itemName: item.itemName,
+        quantity: quantity,
+      );
+      // Same row id as before, so stop hiding it.
+      if (mounted) setState(() => _hiddenIds.remove(item.id));
+    } on AlreadyInPantryException {
+      // Someone re-added it in the meantime — nothing to restore.
+    } catch (e, st) {
+      showErrorSnackBar(messenger, 'Could not restore ${item.itemName}.', e, st);
+    }
+  }
+
+  void _endInFlight(String id) {
+    final left = (_inFlight[id] ?? 1) - 1;
+    if (left > 0) {
+      _inFlight[id] = left;
+    } else {
+      _inFlight.remove(id);
+    }
+  }
+
+  /// Drops the override after a while even if the stream never matches it
+  /// (e.g. realtime is disconnected).
+  void _expireOverride(String id) {
+    if (_isBusy(id) || !_qtyOverride.containsKey(id)) return;
+    _overrideExpiry.remove(id)?.cancel();
+    _overrideExpiry[id] = Timer(_overrideTimeout, () {
+      _overrideExpiry.remove(id);
+      if (mounted && !_isBusy(id)) setState(() => _qtyOverride.remove(id));
+    });
+  }
+
+  /// Drops overrides the stream has caught up with.
+  void _reconcile(List<InventoryItem> items) {
+    if (_qtyOverride.isEmpty || !mounted) return;
+    final byId = {for (final i in items) i.id: i};
+    final settled = _qtyOverride.keys.where((id) {
+      if (_isBusy(id)) return false;
+      final row = byId[id];
+      return row == null || parseQuantity(row.quantity) == _qtyOverride[id];
+    }).toList();
+    if (settled.isEmpty) return;
+    setState(() {
+      for (final id in settled) {
+        _qtyOverride.remove(id);
+        _overrideExpiry.remove(id)?.cancel();
+      }
+    });
+  }
+
+  /// Exact value from tapping the number. This is a plain set, not a
+  /// delta: the user is stating what's on the shelf.
+  Future<void> _editQuantity(InventoryItem item) async {
+    final messenger = ScaffoldMessenger.of(context);
+    final current = _displayQty(item);
+    final result = await showDialog<String>(
+      context: context,
+      builder: (_) => _QuantityDialog(
+        itemName: item.itemName,
+        initial: current == null ? '' : serializeQuantity(current),
+      ),
+    );
+    if (result == null || !mounted) return;
+    final text = result.trim();
+    final value = double.tryParse(text);
+    if (text.isNotEmpty && value == null) return;
+    if (value != null && value <= 0) {
+      // Whatever is shown, all of it: −ceil so 0.5 counts as used up too.
+      _consume(item, -(current ?? 0).ceil());
+      return;
+    }
+    setState(() {
+      _cancelStepping(item.id);
+      if (value != null) _qtyOverride[item.id] = value;
+    });
+    _inFlight[item.id] = (_inFlight[item.id] ?? 0) + 1;
+    try {
+      await _serialized(
+          item.id,
+          () => _service.setQuantity(
+              item.id, value == null ? null : serializeQuantity(value)));
+    } catch (e, st) {
+      if (mounted) setState(() => _qtyOverride.remove(item.id));
+      showErrorSnackBar(
+          messenger, 'Could not update ${item.itemName}.', e, st);
+    } finally {
+      _endInFlight(item.id);
+      _expireOverride(item.id);
     }
   }
 
@@ -308,19 +528,7 @@ class _PantryScreenState extends State<PantryScreen> with TabActivation {
               },
             ),
           ),
-          AddBar(
-            hintText: 'Add to stock…',
-            search: _service.searchAutocomplete,
-            suggestionTrailing: SuggestionTrailing.location,
-            keepFocusAfterSubmit: false,
-            onSubmit: (name) => _openAddSheet(name: name),
-            onSuggestion: (s) => _openAddSheet(
-              name: s.name,
-              itemId: s.itemId,
-              category: s.category,
-              defaultLocation: s.defaultLocation,
-            ),
-          ),
+          _AddStockBar(onTap: _openAddSheet),
         ],
       ),
     );
@@ -374,6 +582,10 @@ class _PantryScreenState extends State<PantryScreen> with TabActivation {
               _StockRow(
                 key: ValueKey('stock_${item.id}'),
                 item: item,
+                quantity: _displayQty(item),
+                steppable: isSteppableQuantity(item.quantity),
+                onStep: (d) => _step(item, d),
+                onQuantityTap: () => _editQuantity(item),
                 onTap: () => _openEditSheet(item),
                 onDelete: () =>
                     _deleteItem(item, ScaffoldMessenger.of(context)),
@@ -431,12 +643,24 @@ class _StockRow extends StatelessWidget {
   const _StockRow({
     super.key,
     required this.item,
+    required this.quantity,
+    required this.steppable,
+    required this.onStep,
+    required this.onQuantityTap,
     required this.onTap,
     required this.onDelete,
     required this.onAddToGrocery,
   });
 
   final InventoryItem item;
+
+  /// Numeric quantity to show (may be an optimistic value), null if none.
+  final double? quantity;
+
+  /// Whether the stored quantity can be stepped (empty or a plain number).
+  final bool steppable;
+  final ValueChanged<int> onStep;
+  final VoidCallback onQuantityTap;
   final VoidCallback onTap;
   final VoidCallback onDelete;
   final VoidCallback onAddToGrocery;
@@ -444,7 +668,42 @@ class _StockRow extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final p = AppPalette.of(context);
-    final qty = formatQuantity(item.quantity);
+
+    final Widget trailing;
+    if (!steppable) {
+      // Free text such as "500 ml": shown as-is, edited from the item sheet.
+      trailing = Padding(
+        padding: const EdgeInsets.only(left: 12, right: 12),
+        child: _QuantityPill(formatQuantity(item.quantity)),
+      );
+    } else if (quantity == null) {
+      trailing = _StepButton(
+        icon: Icons.add_rounded,
+        tooltip: 'Set quantity for ${item.itemName}',
+        onPressed: () => onStep(1),
+      );
+    } else {
+      trailing = Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          _StepButton(
+            icon: Icons.remove_rounded,
+            tooltip: 'One less ${item.itemName}',
+            onPressed: () => onStep(-1),
+          ),
+          _QuantityButton(
+            text: formatQuantity(serializeQuantity(quantity!)),
+            semanticLabel: 'Quantity of ${item.itemName}. Tap to edit.',
+            onPressed: onQuantityTap,
+          ),
+          _StepButton(
+            icon: Icons.add_rounded,
+            tooltip: 'One more ${item.itemName}',
+            onPressed: () => onStep(1),
+          ),
+        ],
+      );
+    }
 
     return Dismissible(
       key: ValueKey('dismiss_${item.id}'),
@@ -477,9 +736,9 @@ class _StockRow extends StatelessWidget {
         child: InkWell(
           onTap: onTap,
           child: ConstrainedBox(
-            constraints: const BoxConstraints(minHeight: 48),
+            constraints: const BoxConstraints(minHeight: 52),
             child: Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+              padding: const EdgeInsets.fromLTRB(16, 4, 4, 4),
               child: Row(
                 children: [
                   Expanded(
@@ -494,10 +753,8 @@ class _StockRow extends StatelessWidget {
                       ),
                     ),
                   ),
-                  if (qty.isNotEmpty) ...[
-                    const SizedBox(width: 12),
-                    _QuantityPill(qty),
-                  ],
+                  const SizedBox(width: 8),
+                  trailing,
                 ],
               ),
             ),
@@ -536,6 +793,186 @@ class _QuantityPill extends StatelessWidget {
           ),
         ),
       ),
+    );
+  }
+}
+
+/// 44×44 icon button for the row stepper.
+class _StepButton extends StatelessWidget {
+  const _StepButton({
+    required this.icon,
+    required this.tooltip,
+    required this.onPressed,
+  });
+
+  final IconData icon;
+  final String tooltip;
+  final VoidCallback onPressed;
+
+  @override
+  Widget build(BuildContext context) {
+    final p = AppPalette.of(context);
+    return IconButton(
+      tooltip: tooltip,
+      onPressed: onPressed,
+      icon: Icon(icon),
+      iconSize: 22,
+      color: p.primary,
+      style: IconButton.styleFrom(
+        minimumSize: const Size(44, 44),
+        fixedSize: const Size(44, 44),
+        padding: EdgeInsets.zero,
+      ),
+    );
+  }
+}
+
+/// The tappable number between − and +.
+class _QuantityButton extends StatelessWidget {
+  const _QuantityButton({
+    required this.text,
+    required this.semanticLabel,
+    required this.onPressed,
+  });
+
+  final String text;
+  final String semanticLabel;
+  final VoidCallback onPressed;
+
+  @override
+  Widget build(BuildContext context) {
+    final p = AppPalette.of(context);
+    return Semantics(
+      button: true,
+      label: semanticLabel,
+      excludeSemantics: true,
+      child: InkWell(
+        onTap: onPressed,
+        borderRadius: BorderRadius.circular(8),
+        child: ConstrainedBox(
+          constraints: const BoxConstraints(minWidth: 36, minHeight: 44),
+          child: Center(
+            child: Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 4),
+              child: Text(
+                text,
+                style: nsSans(
+                  fontSize: 15,
+                  fontWeight: FontWeight.w700,
+                  color: p.textPrimary,
+                ),
+              ),
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+/// Bottom bar on the Stock tab. Looks like the other screens' add bars but
+/// opens the batch-entry sheet, where the typing happens.
+class _AddStockBar extends StatelessWidget {
+  const _AddStockBar({required this.onTap});
+
+  final VoidCallback onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    final p = AppPalette.of(context);
+    return Container(
+      decoration: BoxDecoration(
+        color: p.surface,
+        border: Border(top: BorderSide(color: p.border, width: 0.5)),
+      ),
+      child: SafeArea(
+        top: false,
+        child: Padding(
+          padding: const EdgeInsets.fromLTRB(12, 8, 12, 8),
+          child: Semantics(
+            button: true,
+            label: 'Add to stock',
+            excludeSemantics: true,
+            child: InkWell(
+              onTap: onTap,
+              borderRadius: BorderRadius.circular(12),
+              child: InputDecorator(
+                isEmpty: true,
+                decoration: InputDecoration(
+                  hintText: 'Add to stock…',
+                  prefixIcon:
+                      Icon(Icons.add_rounded, color: p.primary, size: 22),
+                ),
+                child: const SizedBox.shrink(),
+              ),
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+/// Small numeric prompt for an exact quantity. Returns the typed text
+/// (possibly empty, meaning "no quantity"), or null if cancelled.
+class _QuantityDialog extends StatefulWidget {
+  const _QuantityDialog({required this.itemName, required this.initial});
+
+  final String itemName;
+  final String initial;
+
+  @override
+  State<_QuantityDialog> createState() => _QuantityDialogState();
+}
+
+class _QuantityDialogState extends State<_QuantityDialog> {
+  late final TextEditingController _ctrl = TextEditingController(
+    text: widget.initial,
+  )..selection =
+      TextSelection(baseOffset: 0, extentOffset: widget.initial.length);
+
+  @override
+  void dispose() {
+    _ctrl.dispose();
+    super.dispose();
+  }
+
+  void _done() => Navigator.of(context).pop(_ctrl.text);
+
+  @override
+  Widget build(BuildContext context) {
+    final p = AppPalette.of(context);
+    return AlertDialog(
+      title: Text(
+        widget.itemName,
+        maxLines: 2,
+        overflow: TextOverflow.ellipsis,
+        style: nsSans(
+            fontSize: 17, fontWeight: FontWeight.w700, color: p.textPrimary),
+      ),
+      content: TextField(
+        controller: _ctrl,
+        autofocus: true,
+        textAlign: TextAlign.center,
+        keyboardType: const TextInputType.numberWithOptions(decimal: true),
+        inputFormatters: [FilteringTextInputFormatter.allow(RegExp(r'[0-9.]'))],
+        textInputAction: TextInputAction.done,
+        onSubmitted: (_) => _done(),
+        style: nsSans(
+            fontSize: 20, fontWeight: FontWeight.w700, color: p.textPrimary),
+        decoration: const InputDecoration(
+          labelText: 'Quantity',
+          floatingLabelAlignment: FloatingLabelAlignment.center,
+        ),
+      ),
+      actions: [
+        TextButton(
+          onPressed: () => Navigator.of(context).pop(),
+          style: TextButton.styleFrom(foregroundColor: p.textPrimary),
+          child: const Text('Cancel'),
+        ),
+        TextButton(onPressed: _done, child: const Text('Set')),
+      ],
     );
   }
 }
@@ -607,10 +1044,10 @@ class _EmptyState extends StatelessWidget {
   }
 }
 
-// ─── Add / edit sheet ─────────────────────────────────────────────────────────
+// ─── Edit sheet ─────────────────────────────────────────────────────────
 
-class _ItemSheetResult {
-  const _ItemSheetResult({
+class _EditItemResult {
+  const _EditItemResult({
     required this.name,
     required this.location,
     required this.quantity,
@@ -625,40 +1062,36 @@ class _ItemSheetResult {
 
 /// Returns an error message for the name field, or null on success.
 /// Other failures should be thrown.
-typedef _ItemSheetSave = Future<String?> Function(_ItemSheetResult result);
+typedef _EditItemSave = Future<String?> Function(_EditItemResult result);
 
-class _ItemSheet extends StatefulWidget {
-  const _ItemSheet({
-    required this.title,
-    required this.saveLabel,
+class _EditItemSheet extends StatefulWidget {
+  const _EditItemSheet({
     required this.initialName,
     required this.locations,
     required this.initialLocation,
-    this.initialQuantity = '',
-    this.initialNotes = '',
+    required this.initialQuantity,
+    required this.initialNotes,
     this.addedByName,
     required this.onSave,
-    this.onAddToGrocery,
-    this.onDelete,
+    required this.onAddToGrocery,
+    required this.onDelete,
   });
 
-  final String title;
-  final String saveLabel;
   final String initialName;
   final List<String> locations;
   final String initialLocation;
   final String initialQuantity;
   final String initialNotes;
   final String? addedByName;
-  final _ItemSheetSave onSave;
-  final VoidCallback? onAddToGrocery;
-  final VoidCallback? onDelete;
+  final _EditItemSave onSave;
+  final VoidCallback onAddToGrocery;
+  final VoidCallback onDelete;
 
   @override
-  State<_ItemSheet> createState() => _ItemSheetState();
+  State<_EditItemSheet> createState() => _EditItemSheetState();
 }
 
-class _ItemSheetState extends State<_ItemSheet> {
+class _EditItemSheetState extends State<_EditItemSheet> {
   late final TextEditingController _nameCtrl;
   late final TextEditingController _quantityCtrl;
   late final TextEditingController _notesCtrl;
@@ -695,7 +1128,7 @@ class _ItemSheetState extends State<_ItemSheet> {
       _nameError = null;
     });
     try {
-      final error = await widget.onSave(_ItemSheetResult(
+      final error = await widget.onSave(_EditItemResult(
         name: name,
         location: _location,
         quantity: _quantityCtrl.text.trim(),
@@ -718,7 +1151,7 @@ class _ItemSheetState extends State<_ItemSheet> {
         : sortLocationNames([...widget.locations, _location]);
 
     return AppSheet(
-      title: widget.title,
+      title: 'Edit item',
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         mainAxisSize: MainAxisSize.min,
@@ -793,32 +1226,28 @@ class _ItemSheetState extends State<_ItemSheet> {
                     child: CircularProgressIndicator(
                         strokeWidth: 2, color: p.onPrimary),
                   )
-                : Text(widget.saveLabel),
+                : const Text('Save'),
           ),
-          if (widget.onAddToGrocery != null) ...[
-            const SizedBox(height: 8),
-            OutlinedButton.icon(
-              onPressed: widget.onAddToGrocery,
-              icon: const Icon(Icons.add_shopping_cart_rounded, size: 20),
-              label: const Text('Add to grocery list'),
-              style: OutlinedButton.styleFrom(
-                minimumSize: const Size(double.infinity, 48),
-                foregroundColor: p.primary,
-              ),
+          const SizedBox(height: 8),
+          OutlinedButton.icon(
+            onPressed: widget.onAddToGrocery,
+            icon: const Icon(Icons.add_shopping_cart_rounded, size: 20),
+            label: const Text('Add to grocery list'),
+            style: OutlinedButton.styleFrom(
+              minimumSize: const Size(double.infinity, 48),
+              foregroundColor: p.primary,
             ),
-          ],
-          if (widget.onDelete != null) ...[
-            const SizedBox(height: 4),
-            TextButton.icon(
-              onPressed: widget.onDelete,
-              icon: const Icon(Icons.delete_outline_rounded, size: 20),
-              label: const Text('Remove from stock'),
-              style: TextButton.styleFrom(
-                foregroundColor: p.error,
-                minimumSize: const Size(double.infinity, 48),
-              ),
+          ),
+          const SizedBox(height: 4),
+          TextButton.icon(
+            onPressed: widget.onDelete,
+            icon: const Icon(Icons.delete_outline_rounded, size: 20),
+            label: const Text('Remove from stock'),
+            style: TextButton.styleFrom(
+              foregroundColor: p.error,
+              minimumSize: const Size(double.infinity, 48),
             ),
-          ],
+          ),
         ],
       ),
     );
@@ -887,7 +1316,7 @@ class _QuantityStepperState extends State<_QuantityStepper> {
 
     return Row(
       children: [
-        _StepButton(
+        _SheetStepButton(
           icon: Icons.remove_rounded,
           tooltip: 'Decrease quantity',
           onPressed: canDecrement ? () => _set(value - 1) : null,
@@ -910,7 +1339,7 @@ class _QuantityStepperState extends State<_QuantityStepper> {
           ),
         ),
         const SizedBox(width: 8),
-        _StepButton(
+        _SheetStepButton(
           icon: Icons.add_rounded,
           tooltip: 'Increase quantity',
           onPressed: canIncrement ? () => _set((value ?? 0) + 1) : null,
@@ -920,8 +1349,8 @@ class _QuantityStepperState extends State<_QuantityStepper> {
   }
 }
 
-class _StepButton extends StatelessWidget {
-  const _StepButton({
+class _SheetStepButton extends StatelessWidget {
+  const _SheetStepButton({
     required this.icon,
     required this.tooltip,
     required this.onPressed,

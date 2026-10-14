@@ -10,6 +10,11 @@ class UiPrefs {
   static const stockCollapsedLocations = 'stock.collapsedLocations';
   static const homeUpcomingExpanded = 'home.upcomingExpanded';
 
+  /// Last location picked in the add-to-stock sheet. Suffixed with the user
+  /// id so people sharing a device keep their own.
+  static String stockLastLocation(String userId) =>
+      'stock.lastLocation.$userId';
+
   static Future<Set<String>> getStringSet(String key) async {
     try {
       final prefs = await SharedPreferences.getInstance();
@@ -43,6 +48,25 @@ class UiPrefs {
     try {
       final prefs = await SharedPreferences.getInstance();
       await prefs.setBool(key, value);
+    } catch (e, st) {
+      logError('UiPrefs write $key', e, st);
+    }
+  }
+
+  static Future<String?> getString(String key) async {
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      return prefs.getString(key);
+    } catch (e, st) {
+      logError('UiPrefs read $key', e, st);
+      return null;
+    }
+  }
+
+  static Future<void> setString(String key, String value) async {
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      await prefs.setString(key, value);
     } catch (e, st) {
       logError('UiPrefs write $key', e, st);
     }

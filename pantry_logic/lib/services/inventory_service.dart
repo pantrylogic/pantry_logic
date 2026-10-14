@@ -6,6 +6,7 @@ import '../models/item.dart';
 import '../models/storage_location.dart';
 import '../core/like.dart';
 import '../core/item_name.dart';
+import '../core/quantity.dart';
 
 class InventoryService {
   static final _client = Supabase.instance.client;
@@ -29,6 +30,8 @@ class InventoryService {
       return null;
     }
   }
+
+  String? get currentUserId => _client.auth.currentUser?.id;
 
   // ─── Storage locations ────────────────────────────────────────────────────────
 
@@ -202,6 +205,173 @@ class InventoryService {
         .from('inventory_items')
         .update(updates)
         .eq('id', inventoryItemId);
+  }
+
+  // ─── Quantity ─────────────────────────────────────────────────────────────────
+
+  /// Atomically adds [delta] to a stock row's quantity (clamped at 0) and
+  /// returns the new value. Only valid for [isSteppableQuantity] values.
+  Future<double> adjustQuantity(String inventoryItemId, int delta) async {
+    final result = await _client.rpc('adjust_quantity', params: {
+      'p_item_id': inventoryItemId,
+      'p_delta': delta,
+    });
+    return (result as num).toDouble();
+  }
+
+  /// Applies [delta] and deletes the stock row if the result is <= 0, in one
+  /// transaction (consume_item RPC). Returns the deleted row — pass it to
+  /// [restoreInventoryRow] to undo — or null if the row was kept because
+  /// the quantity is still above 0 (someone added stock meanwhile).
+  /// Throws [StockItemGoneException] if the row no longer exists.
+  Future<Map<String, dynamic>?> consumeItem(
+    String inventoryItemId,
+    int delta,
+  ) async {
+    try {
+      final rows = await _client.rpc('consume_item', params: {
+        'p_item_id': inventoryItemId,
+        'p_delta': delta,
+      }) as List<dynamic>;
+      return rows.isEmpty ? null : rows.first as Map<String, dynamic>;
+    } on PostgrestException catch (e) {
+      if (e.code == 'P0002') throw const StockItemGoneException();
+      rethrow;
+    }
+  }
+
+  /// Re-inserts a row returned by [consumeItem] (same id, location, notes,
+  /// added_by and created_at), optionally with a different [quantity].
+  /// Throws [AlreadyInPantryException] if the item was re-added meanwhile.
+  Future<void> restoreInventoryRow(
+    Map<String, dynamic> row, {
+    required String itemName,
+    String? quantity,
+  }) async {
+    try {
+      await _client.from('inventory_items').insert({
+        for (final key in const [
+          'id',
+          'household_id',
+          'item_id',
+          'location',
+          'notes',
+          'added_by',
+          'created_at',
+        ])
+          key: row[key],
+        'quantity': quantity ?? row['quantity'],
+      });
+    } on PostgrestException catch (e) {
+      if (e.code == '23505') throw AlreadyInPantryException(itemName);
+      rethrow;
+    }
+  }
+
+  /// Sets an exact quantity (empty/null clears it). Other fields untouched.
+  Future<void> setQuantity(String inventoryItemId, String? quantity) async {
+    final q = quantity?.trim() ?? '';
+    await _client
+        .from('inventory_items')
+        .update({'quantity': q.isEmpty ? null : q}).eq('id', inventoryItemId);
+  }
+
+  // ─── Batch stock entry ────────────────────────────────────────────────────────
+
+  /// Adds an item to stock, or merges into the existing stock row (one row
+  /// per item) using the same rules as grocery check-off: numeric
+  /// quantities are summed, otherwise the existing value wins, and the
+  /// existing location is kept. Numeric merges go through
+  /// [adjustQuantity] so concurrent edits aren't lost.
+  ///
+  /// Pass the result to [undoStockAdd] to reverse it.
+  Future<StockAddResult> addOrMergeStock({
+    required String itemId,
+    required String location,
+    int? quantity,
+  }) async {
+    final hid = _householdId;
+    if (hid == null) throw Exception('No household assigned.');
+
+    final existing = await _client
+        .from('inventory_items')
+        .select('id, location, quantity')
+        .eq('item_id', itemId)
+        .maybeSingle();
+
+    if (existing == null) {
+      final userId = _client.auth.currentUser?.id;
+      try {
+        final row = await _client
+            .from('inventory_items')
+            .insert({
+              'household_id': hid,
+              'item_id': itemId,
+              'location': location,
+              if (quantity != null) 'quantity': '$quantity',
+              if (userId != null) 'added_by': userId,
+            })
+            .select('id')
+            .single();
+        // Learn the location: last-used wins.
+        await _client
+            .from('items')
+            .update({'default_location': location}).eq('id', itemId);
+        return StockAddResult(
+          inventoryItemId: row['id'] as String,
+          location: location,
+          created: true,
+        );
+      } on PostgrestException catch (e) {
+        // Someone added it a moment ago: merge into their row instead.
+        if (e.code == '23505') {
+          return addOrMergeStock(
+              itemId: itemId, location: location, quantity: quantity);
+        }
+        rethrow;
+      }
+    }
+
+    final id = existing['id'] as String;
+    final existingLocation = existing['location'] as String? ?? location;
+    final existingQty = existing['quantity'] as String?;
+    if (quantity == null) {
+      return StockAddResult(inventoryItemId: id, location: existingLocation);
+    }
+    if (isSteppableQuantity(existingQty)) {
+      await adjustQuantity(id, quantity);
+      return StockAddResult(
+        inventoryItemId: id,
+        location: existingLocation,
+        addedDelta: quantity,
+        wasEmpty: existingQty?.trim().isNotEmpty != true,
+      );
+    }
+    // Fractions ("½") still sum; text with units keeps the existing value.
+    final merged = mergeQuantities(existingQty, '$quantity');
+    if (merged == existingQty) {
+      return StockAddResult(inventoryItemId: id, location: existingLocation);
+    }
+    await setQuantity(id, merged);
+    return StockAddResult(
+      inventoryItemId: id,
+      location: existingLocation,
+      replacedQuantity: existingQty,
+      replaced: true,
+    );
+  }
+
+  /// Reverses an [addOrMergeStock]: deletes a row it created, or takes back
+  /// the quantity it merged in.
+  Future<void> undoStockAdd(StockAddResult r) async {
+    if (r.created) {
+      await deleteInventoryItem(r.inventoryItemId);
+    } else if (r.addedDelta != null) {
+      final now = await adjustQuantity(r.inventoryItemId, -r.addedDelta!);
+      if (now == 0 && r.wasEmpty) await setQuantity(r.inventoryItemId, null);
+    } else if (r.replaced) {
+      await setQuantity(r.inventoryItemId, r.replacedQuantity);
+    }
   }
 
   Future<void> deleteInventoryItem(String inventoryItemId) async {

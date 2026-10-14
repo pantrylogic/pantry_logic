@@ -32,18 +32,67 @@ void showErrorSnackBar(
 }
 
 /// Shows [message] with an Undo action that runs [onUndo].
+///
+/// [secondaryLabel]/[onSecondary] add a second action (SnackBar only
+/// supports one), shown as a button before Undo.
 void showUndoSnackBar(
   ScaffoldMessengerState messenger,
   String message, {
   required VoidCallback onUndo,
+  String? secondaryLabel,
+  VoidCallback? onSecondary,
   Duration duration = const Duration(seconds: 5),
 }) {
-  showAppSnackBar(
-    messenger,
-    message,
-    duration: duration,
-    action: SnackBarAction(label: 'Undo', onPressed: onUndo),
-  );
+  if (secondaryLabel == null || onSecondary == null) {
+    showAppSnackBar(
+      messenger,
+      message,
+      duration: duration,
+      action: SnackBarAction(label: 'Undo', onPressed: onUndo),
+    );
+    return;
+  }
+  messenger
+    ..hideCurrentSnackBar()
+    ..showSnackBar(
+      SnackBar(
+        duration: duration,
+        content: LayoutBuilder(builder: (context, constraints) {
+          final color = Theme.of(context).snackBarTheme.actionTextColor;
+          Widget button(String label, VoidCallback onPressed) => TextButton(
+                onPressed: () {
+                  messenger.hideCurrentSnackBar();
+                  onPressed();
+                },
+                style: TextButton.styleFrom(
+                  foregroundColor: color,
+                  minimumSize: const Size(48, 40),
+                ),
+                child: Text(label),
+              );
+          final buttons = Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              button(secondaryLabel, onSecondary),
+              button('Undo', onUndo),
+            ],
+          );
+          // Phones: buttons under the message so nothing gets squeezed.
+          if (constraints.maxWidth < 400) {
+            return Column(
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Text(message),
+                Align(alignment: Alignment.centerRight, child: buttons),
+              ],
+            );
+          }
+          return Row(children: [Expanded(child: Text(message)), buttons]);
+        }),
+        padding: const EdgeInsets.fromLTRB(16, 6, 8, 2),
+      ),
+    );
 }
 
 /// Records an error in the developer log.

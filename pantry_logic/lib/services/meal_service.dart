@@ -4,6 +4,7 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 import '../models/meal_category.dart';
 import '../models/meal.dart';
 import '../models/meal_need_item.dart';
+import '../models/meal_step.dart';
 import '../models/item.dart';
 import '../core/like.dart';
 import '../core/item_name.dart';
@@ -226,8 +227,6 @@ class MealService {
     String? name,
     String? categoryId,
     bool clearCategory = false,
-    String? notes,
-    bool clearNotes = false,
   }) async {
     final updates = <String, dynamic>{};
     if (name != null && name.isNotEmpty) updates['name'] = name.trim();
@@ -235,11 +234,6 @@ class MealService {
       updates['category_id'] = null;
     } else if (categoryId != null) {
       updates['category_id'] = categoryId;
-    }
-    if (clearNotes) {
-      updates['notes'] = null;
-    } else if (notes != null) {
-      updates['notes'] = notes.isNotEmpty ? notes : null;
     }
     if (updates.isEmpty) return;
     await _client.from('meals').update(updates).eq('id', mealId);
@@ -275,6 +269,104 @@ class MealService {
         .delete()
         .eq('meal_id', mealId)
         .eq('item_id', itemId);
+  }
+
+  // ─── Directions (steps) ──────────────────────────────────────────────────────
+
+  /// Real-time stream of a meal's steps in display order.
+  Stream<List<MealStep>> streamSteps(String mealId) {
+    final ctrl = StreamController<List<MealStep>>();
+    RealtimeChannel? channel;
+
+    Future<void> fetchAndEmit() async {
+      if (ctrl.isClosed) return;
+      try {
+        final rows = await _client
+            .from('meal_steps')
+            .select()
+            .eq('meal_id', mealId)
+            .order('position')
+            .order('created_at');
+        if (!ctrl.isClosed) ctrl.add(rows.map(MealStep.fromJson).toList());
+      } catch (e) {
+        if (!ctrl.isClosed) ctrl.addError(e);
+      }
+    }
+
+    ctrl.onListen = () {
+      fetchAndEmit();
+      channel = _client
+          .channel('meal_steps_${mealId}_${DateTime.now().millisecondsSinceEpoch}')
+          .onPostgresChanges(
+            event: PostgresChangeEvent.all,
+            schema: 'public',
+            table: 'meal_steps',
+            callback: (_) => fetchAndEmit(),
+          )
+          .subscribe();
+    };
+
+    ctrl.onCancel = () {
+      if (channel != null) _client.removeChannel(channel!);
+      ctrl.close();
+    };
+
+    return ctrl.stream;
+  }
+
+  Future<MealStep> addStep({
+    required String mealId,
+    required String text,
+    required int position,
+  }) async {
+    final hid = _householdId;
+    if (hid == null) throw Exception('No household assigned.');
+    final row = await _client
+        .from('meal_steps')
+        .insert({
+          'household_id': hid,
+          'meal_id': mealId,
+          'text': text.trim(),
+          'position': position,
+        })
+        .select()
+        .single();
+    return MealStep.fromJson(row);
+  }
+
+  Future<void> updateStepText(String stepId, String text) async {
+    await _client
+        .from('meal_steps')
+        .update({'text': text.trim()}).eq('id', stepId);
+  }
+
+  Future<void> deleteStep(String stepId) async {
+    await _client.from('meal_steps').delete().eq('id', stepId);
+  }
+
+  /// Re-inserts a deleted step (undo) with its original id and position.
+  Future<void> restoreStep(MealStep step) async {
+    await _client.from('meal_steps').insert({
+      'id': step.id,
+      'household_id': step.householdId,
+      'meal_id': step.mealId,
+      'text': step.text,
+      'position': step.position,
+      'created_at': step.createdAt.toUtc().toIso8601String(),
+    });
+  }
+
+  /// Writes positions 0..n-1 in the given order. Only rows whose position
+  /// changed are updated (plain updates, so a step someone else just deleted
+  /// isn't recreated).
+  Future<void> reorderSteps(List<MealStep> ordered) async {
+    await Future.wait([
+      for (var i = 0; i < ordered.length; i++)
+        if (ordered[i].position != i)
+          _client
+              .from('meal_steps')
+              .update({'position': i}).eq('id', ordered[i].id),
+    ]);
   }
 
   // ─── Add missing to grocery list ─────────────────────────────────────────────

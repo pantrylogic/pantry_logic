@@ -41,10 +41,47 @@ class InventoryItem {
   }
 }
 
+/// What [InventoryService.addOrMergeStock] did, so it can be undone.
+class StockAddResult {
+  final String inventoryItemId;
+
+  /// Where the item is stored (an existing row keeps its location).
+  final String location;
+
+  /// A new stock row was inserted.
+  final bool created;
+
+  /// Quantity added to an existing numeric (or empty) quantity.
+  final int? addedDelta;
+
+  /// The existing quantity was empty before [addedDelta] was added.
+  final bool wasEmpty;
+
+  /// An existing non-plain quantity (e.g. "½") was overwritten with a
+  /// merged value; [replacedQuantity] is the old text.
+  final bool replaced;
+  final String? replacedQuantity;
+
+  const StockAddResult({
+    required this.inventoryItemId,
+    required this.location,
+    this.created = false,
+    this.addedDelta,
+    this.wasEmpty = false,
+    this.replaced = false,
+    this.replacedQuantity,
+  });
+}
+
 /// Thrown when attempting to add an item that's already in stock.
 class AlreadyInPantryException implements Exception {
   final String itemName;
   const AlreadyInPantryException(this.itemName);
+}
+
+/// Thrown when a stock row was already removed (e.g. by another member).
+class StockItemGoneException implements Exception {
+  const StockItemGoneException();
 }
 
 /// Thrown when renaming an item to a name the household already uses.
