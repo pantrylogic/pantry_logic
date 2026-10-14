@@ -56,7 +56,7 @@ class InventoryService {
         .from('items')
         .select('id, name, category, default_location')
         .ilike('name', pattern)
-        .order('name')
+        .order('name', ascending: true)
         .limit(8);
 
     return itemRows

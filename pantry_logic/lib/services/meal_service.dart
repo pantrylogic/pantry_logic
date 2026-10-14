@@ -38,8 +38,8 @@ class MealService {
     final rows = await _client
         .from('meal_categories')
         .select()
-        .order('sort_order')
-        .order('name');
+        .order('sort_order', ascending: true)
+        .order('name', ascending: true);
     return rows.map(MealCategory.fromJson).toList();
   }
 
@@ -434,7 +434,7 @@ class MealService {
         .from('items')
         .select('id, name, category, default_location')
         .ilike('name', pattern)
-        .order('name')
+        .order('name', ascending: true)
         .limit(8);
 
     return itemRows

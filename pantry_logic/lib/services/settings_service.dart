@@ -58,7 +58,7 @@ class SettingsService {
         .from('profiles')
         .select()
         .eq('household_id', hid)
-        .order('display_name');
+        .order('display_name', ascending: true);
     return rows.map(Profile.fromJson).toList();
   }
 
@@ -79,8 +79,8 @@ class SettingsService {
     final rows = await _client
         .from('storage_locations')
         .select()
-        .order('sort_order')
-        .order('name');
+        .order('sort_order', ascending: true)
+        .order('name', ascending: true);
     return rows.map(StorageLocation.fromJson).toList();
   }
 
@@ -115,8 +115,8 @@ class SettingsService {
     final rows = await _client
         .from('meal_categories')
         .select()
-        .order('sort_order')
-        .order('name');
+        .order('sort_order', ascending: true)
+        .order('name', ascending: true);
     return rows.map(MealCategory.fromJson).toList();
   }
 

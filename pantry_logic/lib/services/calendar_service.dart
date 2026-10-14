@@ -46,7 +46,7 @@ class CalendarService {
             .select('*, meals(id, name, meal_need_list(item_id))')
             .gte('date', start)
             .lte('date', end)
-            .order('date');
+            .order('date', ascending: true);
 
         final inventoryRows =
             await _client.from('inventory_items').select('item_id');
@@ -159,7 +159,7 @@ class CalendarService {
         .select('*, meals(id, name, meal_need_list(item_id))')
         .gte('date', start)
         .lte('date', end)
-        .order('date');
+        .order('date', ascending: true);
 
     final inventoryRows =
         await _client.from('inventory_items').select('item_id');
@@ -176,7 +176,7 @@ class CalendarService {
     final rows = await _client
         .from('meals')
         .select('*, meal_categories(name), meal_need_list(item_id)')
-        .order('name');
+        .order('name', ascending: true);
 
     final inventoryRows =
         await _client.from('inventory_items').select('item_id');

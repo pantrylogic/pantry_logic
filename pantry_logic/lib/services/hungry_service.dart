@@ -34,8 +34,8 @@ class HungryService {
     final rows = await _client
         .from('meal_categories')
         .select()
-        .order('sort_order')
-        .order('name');
+        .order('sort_order', ascending: true)
+        .order('name', ascending: true);
     return rows.map(MealCategory.fromJson).toList();
   }
 
