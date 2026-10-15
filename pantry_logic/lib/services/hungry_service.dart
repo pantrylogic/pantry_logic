@@ -1,35 +1,14 @@
-import 'dart:convert';
+import 'dart:math';
+
 import 'package:supabase_flutter/supabase_flutter.dart';
-import '../models/suggested_meal.dart';
-import '../models/restock_item.dart';
-import '../models/meal_category.dart';
-import '../core/quantity.dart';
+
 import '../core/ingredient_availability.dart';
+import '../models/meal_category.dart';
+import '../models/meal_consumption.dart';
+import '../models/suggested_meal.dart';
 
 class HungryService {
   static final _client = Supabase.instance.client;
-
-  // ─── JWT helpers ─────────────────────────────────────────────────────────────
-
-  String? get _householdId {
-    final token = _client.auth.currentSession?.accessToken;
-    if (token == null) return null;
-    final parts = token.split('.');
-    if (parts.length != 3) return null;
-    try {
-      var payload = parts[1];
-      final rem = payload.length % 4;
-      if (rem > 0) payload = payload.padRight(payload.length + (4 - rem), '=');
-      final decoded = utf8.decode(base64Url.decode(payload));
-      final map = jsonDecode(decoded) as Map<String, dynamic>;
-      return (map['app_metadata'] as Map<String, dynamic>?)?['household_id']
-          as String?;
-    } catch (_) {
-      return null;
-    }
-  }
-
-  // ─── Categories ───────────────────────────────────────────────────────────────
 
   Future<List<MealCategory>> getCategories() async {
     final rows = await _client
@@ -40,12 +19,6 @@ class HungryService {
     return rows.map(MealCategory.fromJson).toList();
   }
 
-  // ─── Suggestions ──────────────────────────────────────────────────────────────
-
-  /// Returns meals in the given category, sorted by priority:
-  /// - Pool A (shuffled): meals with all requirements satisfied, or no need
-  ///   list at all.
-  /// - Pool B (shuffled): meals with missing or unknown requirements.
   Future<List<SuggestedMeal>> getSuggestions(String categoryId) async {
     final mealRows = await _client
         .from('meals')
@@ -55,178 +28,124 @@ class HungryService {
         )
         .eq('category_id', categoryId)
         .order('name');
-
-    final invRows = await _client
+    final inventoryRows = await _client
         .from('inventory_items')
         .select('item_id, quantity');
-    final inventoryQuantities = {
-      for (final row in invRows)
+    final quantities = {
+      for (final row in inventoryRows)
         row['item_id'] as String: row['quantity'] as String?,
     };
-
-    final meals = mealRows.map((r) {
-      final needList = r['meal_need_list'] as List<dynamic>? ?? [];
-      final entries = needList.map((need) {
-        final itemId = need['item_id'] as String;
-        return (
-          need: need,
-          availability: calculateIngredientAvailability(
-            isInInventory: inventoryQuantities.containsKey(itemId),
-            requiredQuantity: need['required_quantity'] as int?,
-            inventoryQuantity: inventoryQuantities[itemId],
-          ),
-        );
-      }).toList();
+    final meals = mealRows.map((row) {
+      final needs = row['meal_need_list'] as List<dynamic>? ?? [];
+      final entries = needs
+          .map(
+            (need) => (
+              need: need,
+              availability: calculateIngredientAvailability(
+                isInInventory: quantities.containsKey(need['item_id']),
+                requiredQuantity: need['required_quantity'] as int?,
+                inventoryQuantity: quantities[need['item_id']],
+              ),
+            ),
+          )
+          .toList();
       final summary = MealAvailabilitySummary.fromIngredients(
         entries.map((entry) => entry.availability),
       );
-      final missingEntries = entries
-          .where((entry) => entry.availability.isMissing)
-          .toList();
-      final unknownEntries = entries
-          .where((entry) => entry.availability.isUnknown)
-          .toList();
-      final missingNames = missingEntries
-          .map(
-            (entry) =>
-                (entry.need['items'] as Map<String, dynamic>)['name'] as String,
-          )
-          .toList();
-      final unknownNames = unknownEntries
-          .map(
-            (entry) =>
-                (entry.need['items'] as Map<String, dynamic>)['name'] as String,
-          )
-          .toList();
       return SuggestedMeal(
-        id: r['id'] as String,
-        name: r['name'] as String,
-        categoryId: r['category_id'] as String?,
+        id: row['id'] as String,
+        name: row['name'] as String,
+        categoryId: row['category_id'] as String?,
         categoryName:
-            (r['meal_categories'] as Map<String, dynamic>?)?['name'] as String?,
+            (row['meal_categories'] as Map<String, dynamic>?)?['name']
+                as String?,
         needCount: summary.needCount,
         missingCount: summary.missingCount,
         unknownCount: summary.unknownCount,
-        missingItemNames: missingNames,
-        unknownItemNames: unknownNames,
+        missingItemNames: entries
+            .where((entry) => entry.availability.isMissing)
+            .map(
+              (entry) =>
+                  (entry.need['items'] as Map<String, dynamic>)['name']
+                      as String,
+            )
+            .toList(),
+        unknownItemNames: entries
+            .where((entry) => entry.availability.isUnknown)
+            .map(
+              (entry) =>
+                  (entry.need['items'] as Map<String, dynamic>)['name']
+                      as String,
+            )
+            .toList(),
       );
     }).toList();
-
-    final poolA =
+    final ready =
         meals.where((meal) => meal.allInPantry || !meal.hasNeedList).toList()
           ..shuffle();
-    final poolB =
+    final notReady =
         meals.where((meal) => !meal.allInPantry && meal.hasNeedList).toList()
           ..shuffle();
-    return [...poolA, ...poolB];
+    return [...ready, ...notReady];
   }
 
-  // ─── Restock ──────────────────────────────────────────────────────────────────
-
-  /// Executes the restock flow for a meal:
-  /// 1. Fetches all need-list items that are currently in inventory.
-  /// 2. Items with a parseable numeric quantity ≥ 1 are auto-reduced by 1;
-  ///    if the new quantity hits 0, the inventory entry is deleted.
-  /// 3. Returns the list of items requiring a user decision:
-  ///    - [RestockReason.hitZero]: had qty, now at 0 — inventory already deleted.
-  ///    - [RestockReason.noQuantity]: in inventory but no parseable numeric qty.
-  ///    Items that still have qty > 0 after auto-reduction are silently updated
-  ///    and do not appear in the returned list.
-  Future<List<RestockDecisionItem>> executeRestock(String mealId) async {
-    // 1. Fetch need list
-    final needRows = await _client
+  /// Builds a read-only consumption preview; it never changes inventory.
+  Future<MealConsumptionPreview> getConsumptionPreview(String mealId) async {
+    final needs = await _client
         .from('meal_need_list')
-        .select('item_id, items(name)')
+        .select('item_id, required_quantity, items(name)')
         .eq('meal_id', mealId);
-
-    final itemIds = needRows.map((r) => r['item_id'] as String).toList();
-    if (itemIds.isEmpty) return [];
-
-    // 2. Fetch inventory entries for those items
-    final invRows = await _client
+    final itemIds = needs.map((row) => row['item_id'] as String).toList();
+    if (itemIds.isEmpty) return const MealConsumptionPreview([]);
+    final inventoryRows = await _client
         .from('inventory_items')
-        .select('id, item_id, quantity')
+        .select('id, item_id, quantity, updated_at')
         .inFilter('item_id', itemIds);
-
-    // Build a map: item_id → {id, quantity}
-    final invMap = {
-      for (final r in invRows)
-        r['item_id'] as String: (
-          id: r['id'] as String,
-          quantity: r['quantity'] as String?,
-        ),
+    final inventory = {
+      for (final row in inventoryRows) row['item_id'] as String: row,
     };
-
-    // 3. Process each need-list item that's in inventory
-    final decisions = <RestockDecisionItem>[];
-
-    for (final needRow in needRows) {
-      final itemId = needRow['item_id'] as String;
-      final itemName =
-          (needRow['items'] as Map<String, dynamic>)['name'] as String;
-      final inv = invMap[itemId];
-      if (inv == null) continue; // not in inventory — skip
-
-      final parsedQty = parseQuantity(inv.quantity);
-
-      if (parsedQty != null) {
-        // Has numeric quantity — auto-reduce
-        final newQty = parsedQty - 1;
-        if (newQty <= 0) {
-          // Delete from inventory
-          await _client.from('inventory_items').delete().eq('id', inv.id);
-          decisions.add(
-            RestockDecisionItem(
-              itemId: itemId,
-              itemName: itemName,
-              reason: RestockReason.hitZero,
-            ),
-          );
-        } else {
-          // Silently update
-          await _client
-              .from('inventory_items')
-              .update({'quantity': serializeQuantity(newQty)})
-              .eq('id', inv.id);
-        }
-      } else {
-        // No parseable quantity — user must decide
-        decisions.add(
-          RestockDecisionItem(
-            itemId: itemId,
-            itemName: itemName,
-            reason: RestockReason.noQuantity,
-          ),
+    return MealConsumptionPreview(
+      needs.map((need) {
+        final stock = inventory[need['item_id'] as String];
+        return MealConsumptionItem.plan(
+          itemId: need['item_id'] as String,
+          itemName: (need['items'] as Map<String, dynamic>)['name'] as String,
+          requiredQuantity: need['required_quantity'] as int?,
+          inventoryId: stock?['id'] as String?,
+          inventoryQuantity: stock?['quantity'] as String?,
+          inventoryUpdatedAt: stock?['updated_at'] as String?,
         );
-      }
-    }
-
-    return decisions;
+      }).toList(),
+    );
   }
 
-  // ─── Post-restock user actions ────────────────────────────────────────────────
-
-  /// Adds an item to the household grocery list.
-  Future<void> addToGroceryList(String itemId) async {
-    final hid = _householdId;
-    if (hid == null) throw Exception('No household assigned.');
-    final userId = _client.auth.currentUser?.id;
-    try {
-      await _client.from('grocery_items').insert({
-        'household_id': hid,
-        'item_id': itemId,
-        if (userId != null) 'added_by': userId,
-      });
-    } on PostgrestException catch (e) {
-      if (e.code == '23505') return; // already on grocery list — ignore
-      rethrow;
-    }
+  Future<Map<String, dynamic>> consumeMeal(
+    String mealId,
+    MealConsumptionPreview preview, {
+    required String operationId,
+  }) async {
+    final result = await _client.rpc(
+      'consume_meal_ingredients',
+      params: {
+        'p_meal_id': mealId,
+        'p_operation_id': operationId,
+        'p_expected': preview.items
+            .where((item) => item.requiredQuantity != null)
+            .map((item) => item.expectation)
+            .toList(),
+      },
+    );
+    return Map<String, dynamic>.from(result as Map);
   }
 
-  /// Removes an item from inventory (by item_id within the household).
-  /// Used when the user chooses "Add to list" for a no-quantity item.
-  Future<void> removeFromInventoryByItemId(String itemId) async {
-    await _client.from('inventory_items').delete().eq('item_id', itemId);
-    // RLS restricts to the household, so no explicit household filter needed.
+  static String newConsumptionOperationId() {
+    final random = Random.secure();
+    final bytes = List<int>.generate(16, (_) => random.nextInt(256));
+    bytes[6] = (bytes[6] & 0x0f) | 0x40;
+    bytes[8] = (bytes[8] & 0x3f) | 0x80;
+    final hex = bytes
+        .map((byte) => byte.toRadixString(16).padLeft(2, '0'))
+        .join();
+    return '${hex.substring(0, 8)}-${hex.substring(8, 12)}-${hex.substring(12, 16)}-${hex.substring(16, 20)}-${hex.substring(20)}';
   }
 }
