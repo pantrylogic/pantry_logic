@@ -104,11 +104,6 @@ class _HomeScreenState extends State<HomeScreen> with TabActivation {
     }
   }
 
-  Future<void> _eatThis(CalendarEntry entry) async {
-    await DayPlanSheets.eatThis(context, entry);
-    _load();
-  }
-
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -170,7 +165,6 @@ class _HomeScreenState extends State<HomeScreen> with TabActivation {
                         upcomingExpanded: _upcomingExpanded,
                         onToggleUpcoming: _toggleUpcoming,
                         onDayTap: _onDayTap,
-                        onEatThis: _eatThis,
                         onOpenCalendar: () => goToTab(ShellTab.calendar),
                       ),
                     ),
@@ -361,7 +355,6 @@ class _PlanCard extends StatelessWidget {
     required this.upcomingExpanded,
     required this.onToggleUpcoming,
     required this.onDayTap,
-    required this.onEatThis,
     required this.onOpenCalendar,
   });
 
@@ -371,7 +364,6 @@ class _PlanCard extends StatelessWidget {
   final bool upcomingExpanded;
   final VoidCallback onToggleUpcoming;
   final ValueChanged<DateTime> onDayTap;
-  final ValueChanged<CalendarEntry> onEatThis;
   final VoidCallback onOpenCalendar;
 
   @override
@@ -422,7 +414,6 @@ class _PlanCard extends StatelessWidget {
             entry: entries[dateKey(days[0])],
             emphasized: true,
             onTap: () => onDayTap(days[0]),
-            onEatThis: onEatThis,
           ),
           divider(),
           _DayRow(
@@ -495,7 +486,6 @@ class _DayRow extends StatelessWidget {
     required this.entry,
     required this.onTap,
     this.emphasized = false,
-    this.onEatThis,
   });
 
   final DateTime day;
@@ -504,7 +494,6 @@ class _DayRow extends StatelessWidget {
   final CalendarEntry? entry;
   final VoidCallback onTap;
   final bool emphasized;
-  final ValueChanged<CalendarEntry>? onEatThis;
 
   @override
   Widget build(BuildContext context) {
@@ -595,24 +584,13 @@ class _DayRow extends StatelessWidget {
                     ),
             ),
             const SizedBox(width: 8),
-            if (hasMeal && onEatThis != null)
-              FilledButton(
-                onPressed: () => onEatThis!(e),
-                style: FilledButton.styleFrom(
-                  minimumSize: const Size(0, 36),
-                  padding: const EdgeInsets.symmetric(horizontal: 14),
-                  textStyle: nsSans(fontSize: 13, fontWeight: FontWeight.w700),
-                ),
-                child: const Text('Eat This'),
-              )
-            else
-              Icon(
-                hasMeal
-                    ? Icons.chevron_right_rounded
-                    : Icons.add_circle_outline_rounded,
-                size: hasMeal ? 20 : 22,
-                color: hasMeal ? p.textMuted : p.primary,
-              ),
+            Icon(
+              hasMeal
+                  ? Icons.chevron_right_rounded
+                  : Icons.add_circle_outline_rounded,
+              size: hasMeal ? 20 : 22,
+              color: hasMeal ? p.textMuted : p.primary,
+            ),
           ],
         ),
       ),

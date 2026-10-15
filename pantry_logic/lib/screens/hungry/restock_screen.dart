@@ -1,103 +1,111 @@
 import 'package:flutter/material.dart';
-import '../../core/theme.dart';
-import '../../models/restock_item.dart';
-import '../../services/hungry_service.dart';
+
 import '../../core/routes.dart';
+import '../../core/theme.dart';
+import '../../models/meal_consumption.dart';
+import '../../services/hungry_service.dart';
 import '../../widgets/app_snack_bar.dart';
 
 class RestockScreen extends StatefulWidget {
   final String mealId;
   final String mealName;
-
   const RestockScreen({
     super.key,
     required this.mealId,
     required this.mealName,
   });
-
   @override
   State<RestockScreen> createState() => _RestockScreenState();
 }
 
 class _RestockScreenState extends State<RestockScreen> {
   final _service = HungryService();
-  List<RestockDecisionItem>? _decisions;
+  MealConsumptionPreview? _preview;
+  String? _operationId;
   bool _loading = true;
-
-  // Track which items have been acted on (itemId → true = add to list, false = still have)
-  final Map<String, bool?> _choices = {};
-  final Set<String> _actionInProgress = {};
+  bool _submitting = false;
 
   @override
   void initState() {
     super.initState();
-    _executeRestock();
+    _loadPreview();
   }
 
-  Future<void> _executeRestock() async {
+  Future<void> _loadPreview() async {
+    setState(() => _loading = true);
     try {
-      final decisions = await _service.executeRestock(widget.mealId);
-      if (mounted) setState(() => _decisions = decisions);
-    } catch (e, st) {
+      final preview = await _service.getConsumptionPreview(widget.mealId);
       if (mounted) {
-        showErrorSnackBar(ScaffoldMessenger.of(context),
-            'Could not update stock for this meal.', e, st);
-        setState(() => _decisions = []);
+        setState(() {
+          _preview = preview;
+          _operationId = HungryService.newConsumptionOperationId();
+        });
+      }
+    } catch (error, stackTrace) {
+      if (mounted) {
+        showErrorSnackBar(
+          ScaffoldMessenger.of(context),
+          'Could not review stock for this meal.',
+          error,
+          stackTrace,
+        );
       }
     } finally {
-      if (mounted) setState(() => _loading = false);
+      if (mounted) {
+        setState(() => _loading = false);
+      }
     }
   }
 
-  Future<void> _addToList(RestockDecisionItem item) async {
-    if (_actionInProgress.contains(item.itemId)) return;
-    setState(() => _actionInProgress.add(item.itemId));
+  Future<void> _confirm() async {
+    final preview = _preview;
+    final operationId = _operationId;
+    if (_submitting || preview == null || operationId == null) return;
+    setState(() => _submitting = true);
     try {
-      await _service.addToGroceryList(item.itemId);
-      // For no-quantity items: also remove from inventory
-      if (item.reason == RestockReason.noQuantity) {
-        await _service.removeFromInventoryByItemId(item.itemId);
+      final result = await _service.consumeMeal(
+        widget.mealId,
+        preview,
+        operationId: operationId,
+      );
+      if (!mounted) return;
+      if (result['status'] == 'conflict') {
+        showAppSnackBar(
+          ScaffoldMessenger.of(context),
+          'Stock changed while you were reviewing. Please review it again.',
+        );
+        await _loadPreview();
+        return;
       }
-      if (mounted) setState(() => _choices[item.itemId] = true);
-    } catch (e, st) {
+      showAppSnackBar(ScaffoldMessenger.of(context), 'Stock updated.');
+      popToRestockOrigin(context);
+    } catch (error, stackTrace) {
       if (mounted) {
-        showErrorSnackBar(ScaffoldMessenger.of(context),
-            'Could not add to the grocery list.', e, st);
+        showErrorSnackBar(
+          ScaffoldMessenger.of(context),
+          'Could not update stock. Nothing was changed.',
+          error,
+          stackTrace,
+        );
       }
     } finally {
-      if (mounted) setState(() => _actionInProgress.remove(item.itemId));
+      if (mounted) {
+        setState(() => _submitting = false);
+      }
     }
-  }
-
-  void _stillHave(RestockDecisionItem item) {
-    setState(() => _choices[item.itemId] = false);
-  }
-
-  void _skip(RestockDecisionItem item) {
-    setState(() => _choices[item.itemId] = false);
   }
 
   @override
   Widget build(BuildContext context) {
-    final isDark = Theme.of(context).brightness == Brightness.dark;
-    final primary = isDark ? AppColors.primaryDm : AppColors.primary;
-    final textPrimary =
-        isDark ? AppColors.textPrimaryDm : AppColors.textPrimary;
-    final textSecondary =
-        isDark ? AppColors.textSecondaryDm : AppColors.textSecondary;
-    final textMuted = isDark ? AppColors.textMutedDm : AppColors.textMuted;
-    final surface = isDark ? AppColors.surfaceDm : AppColors.surface;
-    final border = isDark ? AppColors.borderDm : AppColors.border;
-    final success = isDark ? AppColors.successDm : AppColors.success;
-    final warning = isDark ? AppColors.warningDm : AppColors.warning;
-
-    final decisions = _decisions ?? [];
-    final hasDecisions = decisions.isNotEmpty;
-
+    final colors = Theme.of(context).brightness == Brightness.dark;
+    final surface = colors ? AppColors.surfaceDm : AppColors.surface;
+    final border = colors ? AppColors.borderDm : AppColors.border;
+    final secondary = colors
+        ? AppColors.textSecondaryDm
+        : AppColors.textSecondary;
     return Scaffold(
       appBar: AppBar(
-        title: Text('Enjoy!', style: nsSans(fontWeight: FontWeight.w700)),
-        automaticallyImplyLeading: false,
+        title: Text('Review stock', style: nsSans(fontWeight: FontWeight.w700)),
       ),
       body: SafeArea(
         child: Column(
@@ -105,212 +113,60 @@ class _RestockScreenState extends State<RestockScreen> {
             Expanded(
               child: _loading
                   ? const Center(child: CircularProgressIndicator())
-                  : SingleChildScrollView(
+                  : ListView(
                       padding: const EdgeInsets.all(24),
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          // ── Header ──────────────────────────────────────────
-                          Text(
-                            widget.mealName,
-                            style: nsSans(
-                              fontSize: 22,
-                              fontWeight: FontWeight.w700,
-                              color: textPrimary,
-                            ),
+                      children: [
+                        Text(
+                          widget.mealName,
+                          style: nsSans(
+                            fontSize: 22,
+                            fontWeight: FontWeight.w700,
                           ),
-                          const SizedBox(height: 6),
-                          Text(
-                            hasDecisions
-                                ? 'Need to restock anything?'
-                                : 'You\'re all set — nothing to restock.',
-                            style: nsSans(
-                                fontSize: 15, color: textSecondary),
+                        ),
+                        const SizedBox(height: 6),
+                        Text(
+                          'Review stock changes before confirming.',
+                          style: nsSans(fontSize: 15, color: secondary),
+                        ),
+                        const SizedBox(height: 20),
+                        ...?_preview?.items.map(
+                          (item) => _ConsumptionRow(
+                            item: item,
+                            surface: surface,
+                            border: border,
+                            secondary: secondary,
                           ),
-
-                          if (hasDecisions) ...[
-                            const SizedBox(height: 28),
-
-                            // ── Decision items ───────────────────────────────
-                            ...decisions.map((item) {
-                              final chosen = _choices[item.itemId];
-                              final inProgress =
-                                  _actionInProgress.contains(item.itemId);
-
-                              return Padding(
-                                padding: const EdgeInsets.only(bottom: 12),
-                                child: Container(
-                                  padding: const EdgeInsets.all(16),
-                                  decoration: BoxDecoration(
-                                    color: surface,
-                                    borderRadius: BorderRadius.circular(12),
-                                    border: Border.all(
-                                      color: chosen != null
-                                          ? (chosen
-                                              ? primary.withValues(alpha: 0.3)
-                                              : border)
-                                          : border,
-                                    ),
-                                  ),
-                                  child: Column(
-                                    crossAxisAlignment:
-                                        CrossAxisAlignment.start,
-                                    children: [
-                                      Row(
-                                        children: [
-                                          Icon(
-                                            item.reason ==
-                                                    RestockReason.hitZero
-                                                ? Icons
-                                                    .remove_circle_outline_rounded
-                                                : Icons
-                                                    .help_outline_rounded,
-                                            size: 18,
-                                            color: item.reason ==
-                                                    RestockReason.hitZero
-                                                ? warning
-                                                : textMuted,
-                                          ),
-                                          const SizedBox(width: 8),
-                                          Expanded(
-                                            child: Text(
-                                              item.itemName,
-                                              style: nsSans(
-                                                fontSize: 15,
-                                                fontWeight: FontWeight.w600,
-                                                color: textPrimary,
-                                              ),
-                                            ),
-                                          ),
-                                        ],
-                                      ),
-                                      const SizedBox(height: 4),
-                                      Text(
-                                        item.reason == RestockReason.hitZero
-                                            ? 'Ran out — add to grocery list?'
-                                            : 'Still have some?',
-                                        style: nsSans(
-                                          fontSize: 13,
-                                          color: textSecondary,
-                                        ),
-                                      ),
-                                      const SizedBox(height: 12),
-
-                                      // Action buttons or result
-                                      if (chosen != null)
-                                        Row(
-                                          children: [
-                                            Icon(
-                                              chosen
-                                                  ? Icons.check_circle_rounded
-                                                  : Icons
-                                                      .check_circle_outline_rounded,
-                                              size: 16,
-                                              color: success,
-                                            ),
-                                            const SizedBox(width: 6),
-                                            Text(
-                                              chosen
-                                                  ? 'Added to grocery list'
-                                                  : (item.reason ==
-                                                          RestockReason
-                                                              .hitZero
-                                                      ? 'Skipped'
-                                                      : 'Keeping it'),
-                                              style: nsSans(
-                                                fontSize: 13,
-                                                color: success,
-                                                fontWeight: FontWeight.w600,
-                                              ),
-                                            ),
-                                          ],
-                                        )
-                                      else if (inProgress)
-                                        const SizedBox(
-                                          width: 20,
-                                          height: 20,
-                                          child: CircularProgressIndicator(
-                                              strokeWidth: 2),
-                                        )
-                                      else
-                                        Row(
-                                          children: [
-                                            if (item.reason ==
-                                                RestockReason.hitZero) ...[
-                                              _ActionButton(
-                                                label: 'Add to list',
-                                                filled: true,
-                                                primary: primary,
-                                                surface: surface,
-                                                onTap: () =>
-                                                    _addToList(item),
-                                              ),
-                                              const SizedBox(width: 8),
-                                              _ActionButton(
-                                                label: 'Skip',
-                                                filled: false,
-                                                primary: primary,
-                                                surface: surface,
-                                                onTap: () => _skip(item),
-                                              ),
-                                            ] else ...[
-                                              _ActionButton(
-                                                label: 'Add to list',
-                                                filled: true,
-                                                primary: primary,
-                                                surface: surface,
-                                                onTap: () =>
-                                                    _addToList(item),
-                                              ),
-                                              const SizedBox(width: 8),
-                                              _ActionButton(
-                                                label: 'Still have some',
-                                                filled: false,
-                                                primary: primary,
-                                                surface: surface,
-                                                onTap: () =>
-                                                    _stillHave(item),
-                                              ),
-                                            ],
-                                          ],
-                                        ),
-                                    ],
-                                  ),
-                                ),
-                              );
-                            }),
-                          ],
-                        ],
-                      ),
+                        ),
+                      ],
                     ),
             ),
-
-            // ── Done button ───────────────────────────────────────────────────
             Container(
               decoration: BoxDecoration(
                 color: surface,
-                border: Border(top: BorderSide(color: border, width: 0.5)),
+                border: Border(top: BorderSide(color: border)),
               ),
               child: SafeArea(
                 top: false,
                 child: Padding(
-                  padding: const EdgeInsets.fromLTRB(24, 12, 24, 12),
+                  padding: const EdgeInsets.all(16),
                   child: FilledButton(
-                    onPressed:
-                        !_loading ? () => popToRestockOrigin(context) : null,
+                    onPressed: _loading || _submitting ? null : _confirm,
                     style: FilledButton.styleFrom(
                       minimumSize: const Size(double.infinity, 52),
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(12),
-                      ),
                     ),
-                    child: Text(
-                      'Done',
-                      style: nsSans(
-                        fontSize: 16,
-                        fontWeight: FontWeight.w700,
-                      ),
-                    ),
+                    child: _submitting
+                        ? const SizedBox(
+                            width: 20,
+                            height: 20,
+                            child: CircularProgressIndicator(strokeWidth: 2),
+                          )
+                        : Text(
+                            'Done - Update Stock',
+                            style: nsSans(
+                              fontSize: 16,
+                              fontWeight: FontWeight.w700,
+                            ),
+                          ),
                   ),
                 ),
               ),
@@ -322,40 +178,66 @@ class _RestockScreenState extends State<RestockScreen> {
   }
 }
 
-class _ActionButton extends StatelessWidget {
-  final String label;
-  final bool filled;
-  final Color primary;
+class _ConsumptionRow extends StatelessWidget {
+  final MealConsumptionItem item;
   final Color surface;
-  final VoidCallback onTap;
-
-  const _ActionButton({
-    required this.label,
-    required this.filled,
-    required this.primary,
+  final Color border;
+  final Color secondary;
+  const _ConsumptionRow({
+    required this.item,
     required this.surface,
-    required this.onTap,
+    required this.border,
+    required this.secondary,
   });
-
   @override
   Widget build(BuildContext context) {
-    return GestureDetector(
-      onTap: onTap,
-      child: Container(
-        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
-        decoration: BoxDecoration(
-          color: filled ? primary : Colors.transparent,
-          border: Border.all(color: primary),
-          borderRadius: BorderRadius.circular(8),
-        ),
-        child: Text(
-          label,
-          style: nsSans(
-            fontSize: 13,
-            fontWeight: FontWeight.w600,
-            color: filled ? surface : primary,
+    final (icon, text) = switch (item.disposition) {
+      MealConsumptionDisposition.deduct => (
+        Icons.remove_circle_outline_rounded,
+        '${item.inventoryQuantity} -> ${item.resultingQuantity == 0 ? 'removed' : item.resultingQuantity}',
+      ),
+      MealConsumptionDisposition.notTracked => (
+        Icons.inventory_2_outlined,
+        'Not tracked',
+      ),
+      MealConsumptionDisposition.checkQuantity => (
+        Icons.help_outline_rounded,
+        'Check quantity - deduction skipped',
+      ),
+      MealConsumptionDisposition.shortage => (
+        Icons.warning_amber_rounded,
+        'Shortage - deduction skipped',
+      ),
+      MealConsumptionDisposition.absent => (
+        Icons.remove_circle_outline_rounded,
+        'Not in stock - deduction skipped',
+      ),
+    };
+    return Container(
+      margin: const EdgeInsets.only(bottom: 10),
+      padding: const EdgeInsets.all(14),
+      decoration: BoxDecoration(
+        color: surface,
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(color: border),
+      ),
+      child: Row(
+        children: [
+          Icon(icon, size: 20),
+          const SizedBox(width: 10),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  item.itemName,
+                  style: nsSans(fontSize: 15, fontWeight: FontWeight.w700),
+                ),
+                Text(text, style: nsSans(fontSize: 13, color: secondary)),
+              ],
+            ),
           ),
-        ),
+        ],
       ),
     );
   }
