@@ -43,21 +43,30 @@ class CalendarService {
       try {
         final rows = await _client
             .from('calendar_entries')
-            .select('*, meals(id, name, meal_need_list(item_id))')
+            .select(
+              '*, meals(id, name, meal_need_list(item_id, required_quantity))',
+            )
             .gte('date', start)
             .lte('date', end)
             .order('date', ascending: true);
 
-        final inventoryRows =
-            await _client.from('inventory_items').select('item_id');
-        final inventoryIds =
-            inventoryRows.map((r) => r['item_id'] as String).toSet();
+        final inventoryRows = await _client
+            .from('inventory_items')
+            .select('item_id, quantity');
+        final inventoryQuantities = {
+          for (final row in inventoryRows)
+            row['item_id'] as String: row['quantity'] as String?,
+        };
 
         if (!ctrl.isClosed) {
           ctrl.add(
             rows
-                .map((r) =>
-                    CalendarEntry.fromJson(r, inventoryItemIds: inventoryIds))
+                .map(
+                  (r) => CalendarEntry.fromJson(
+                    r,
+                    inventoryQuantities: inventoryQuantities,
+                  ),
+                )
                 .toList(),
           );
         }
@@ -73,7 +82,7 @@ class CalendarService {
         'calendar_entries',
         'meals',
         'meal_need_list',
-        'inventory_items'
+        'inventory_items',
       ]) {
         final ch = _client
             .channel('cal_${table}_$ts')
@@ -107,15 +116,12 @@ class CalendarService {
   }) async {
     final hid = _householdId;
     if (hid == null) throw Exception('No household assigned.');
-    await _client.from('calendar_entries').upsert(
-      {
-        'household_id': hid,
-        'meal_id': mealId,
-        'date': _dateOnly(date),
-        'updated_at': DateTime.now().toIso8601String(),
-      },
-      onConflict: 'household_id,date',
-    );
+    await _client.from('calendar_entries').upsert({
+      'household_id': hid,
+      'meal_id': mealId,
+      'date': _dateOnly(date),
+      'updated_at': DateTime.now().toIso8601String(),
+    }, onConflict: 'household_id,date');
   }
 
   /// Remove the meal from [date] (sets meal_id to null).
@@ -135,18 +141,26 @@ class CalendarService {
   Future<CalendarEntry?> getEntryForDate(DateTime date) async {
     final rows = await _client
         .from('calendar_entries')
-        .select('*, meals(id, name, meal_need_list(item_id))')
+        .select(
+          '*, meals(id, name, meal_need_list(item_id, required_quantity))',
+        )
         .eq('date', _dateOnly(date))
         .limit(1);
 
     if (rows.isEmpty) return null;
 
-    final inventoryRows =
-        await _client.from('inventory_items').select('item_id');
-    final inventoryIds =
-        inventoryRows.map((r) => r['item_id'] as String).toSet();
+    final inventoryRows = await _client
+        .from('inventory_items')
+        .select('item_id, quantity');
+    final inventoryQuantities = {
+      for (final row in inventoryRows)
+        row['item_id'] as String: row['quantity'] as String?,
+    };
 
-    return CalendarEntry.fromJson(rows.first, inventoryItemIds: inventoryIds);
+    return CalendarEntry.fromJson(
+      rows.first,
+      inventoryQuantities: inventoryQuantities,
+    );
   }
 
   /// Fetch the week's entries (no stream) for the home dashboard week preview.
@@ -156,18 +170,28 @@ class CalendarService {
 
     final rows = await _client
         .from('calendar_entries')
-        .select('*, meals(id, name, meal_need_list(item_id))')
+        .select(
+          '*, meals(id, name, meal_need_list(item_id, required_quantity))',
+        )
         .gte('date', start)
         .lte('date', end)
         .order('date', ascending: true);
 
-    final inventoryRows =
-        await _client.from('inventory_items').select('item_id');
-    final inventoryIds =
-        inventoryRows.map((r) => r['item_id'] as String).toSet();
+    final inventoryRows = await _client
+        .from('inventory_items')
+        .select('item_id, quantity');
+    final inventoryQuantities = {
+      for (final row in inventoryRows)
+        row['item_id'] as String: row['quantity'] as String?,
+    };
 
     return rows
-        .map((r) => CalendarEntry.fromJson(r, inventoryItemIds: inventoryIds))
+        .map(
+          (r) => CalendarEntry.fromJson(
+            r,
+            inventoryQuantities: inventoryQuantities,
+          ),
+        )
         .toList();
   }
 
@@ -175,16 +199,22 @@ class CalendarService {
   Future<List<Meal>> getMeals() async {
     final rows = await _client
         .from('meals')
-        .select('*, meal_categories(name), meal_need_list(item_id)')
+        .select(
+          '*, meal_categories(name), '
+          'meal_need_list(item_id, required_quantity)',
+        )
         .order('name', ascending: true);
 
-    final inventoryRows =
-        await _client.from('inventory_items').select('item_id');
-    final inventoryIds =
-        inventoryRows.map((r) => r['item_id'] as String).toSet();
+    final inventoryRows = await _client
+        .from('inventory_items')
+        .select('item_id, quantity');
+    final inventoryQuantities = {
+      for (final row in inventoryRows)
+        row['item_id'] as String: row['quantity'] as String?,
+    };
 
     return rows
-        .map((r) => Meal.fromJson(r, inventoryItemIds: inventoryIds))
+        .map((r) => Meal.fromJson(r, inventoryQuantities: inventoryQuantities))
         .toList();
   }
 

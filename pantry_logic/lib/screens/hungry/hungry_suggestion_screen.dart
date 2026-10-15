@@ -18,8 +18,7 @@ class HungrySuggestionScreen extends StatefulWidget {
   });
 
   @override
-  State<HungrySuggestionScreen> createState() =>
-      _HungrySuggestionScreenState();
+  State<HungrySuggestionScreen> createState() => _HungrySuggestionScreenState();
 }
 
 class _HungrySuggestionScreenState extends State<HungrySuggestionScreen> {
@@ -41,8 +40,12 @@ class _HungrySuggestionScreenState extends State<HungrySuggestionScreen> {
       if (mounted) setState(() => _meals = meals);
     } catch (e, st) {
       if (mounted) {
-        showErrorSnackBar(ScaffoldMessenger.of(context),
-            'Could not load suggestions.', e, st);
+        showErrorSnackBar(
+          ScaffoldMessenger.of(context),
+          'Could not load suggestions.',
+          e,
+          st,
+        );
       }
     } finally {
       if (mounted) setState(() => _loading = false);
@@ -71,13 +74,12 @@ class _HungrySuggestionScreenState extends State<HungrySuggestionScreen> {
         return;
       }
       if (!mounted) return;
-      await Navigator.of(context).push(MaterialPageRoute(
-        settings: AppRoutes.settings(AppRoutes.restock),
-        builder: (_) => RestockScreen(
-          mealId: meal.id,
-          mealName: meal.name,
+      await Navigator.of(context).push(
+        MaterialPageRoute(
+          settings: AppRoutes.settings(AppRoutes.restock),
+          builder: (_) => RestockScreen(mealId: meal.id, mealName: meal.name),
         ),
-      ));
+      );
     } finally {
       if (mounted) setState(() => _eating = false);
     }
@@ -87,13 +89,16 @@ class _HungrySuggestionScreenState extends State<HungrySuggestionScreen> {
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
     final primary = isDark ? AppColors.primaryDm : AppColors.primary;
-    final accentLight =
-        isDark ? AppColors.accentLightDm : AppColors.accentLight;
+    final accentLight = isDark
+        ? AppColors.accentLightDm
+        : AppColors.accentLight;
     final accentSoft = isDark ? AppColors.accentSoftDm : AppColors.accentSoft;
-    final textPrimary =
-        isDark ? AppColors.textPrimaryDm : AppColors.textPrimary;
-    final textSecondary =
-        isDark ? AppColors.textSecondaryDm : AppColors.textSecondary;
+    final textPrimary = isDark
+        ? AppColors.textPrimaryDm
+        : AppColors.textPrimary;
+    final textSecondary = isDark
+        ? AppColors.textSecondaryDm
+        : AppColors.textSecondary;
     final textMuted = isDark ? AppColors.textMutedDm : AppColors.textMuted;
     final surface = isDark ? AppColors.surfaceDm : AppColors.surface;
     final border = isDark ? AppColors.borderDm : AppColors.border;
@@ -125,231 +130,276 @@ class _HungrySuggestionScreenState extends State<HungrySuggestionScreen> {
         child: _loading
             ? const Center(child: CircularProgressIndicator())
             : !hasMeals
-                ? Center(
-                    child: Padding(
-                      padding: const EdgeInsets.all(32),
-                      child: Column(
-                        mainAxisSize: MainAxisSize.min,
-                        children: [
-                          const IconBadge(Icons.search_off_rounded),
-                          const SizedBox(height: 16),
-                          Text(
-                            'No meals in this category yet',
-                            style: nsSans(
-                              fontSize: 17,
-                              fontWeight: FontWeight.w700,
-                              color: textPrimary,
+            ? Center(
+                child: Padding(
+                  padding: const EdgeInsets.all(32),
+                  child: Column(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      const IconBadge(Icons.search_off_rounded),
+                      const SizedBox(height: 16),
+                      Text(
+                        'No meals in this category yet',
+                        style: nsSans(
+                          fontSize: 17,
+                          fontWeight: FontWeight.w700,
+                          color: textPrimary,
+                        ),
+                      ),
+                      const SizedBox(height: 8),
+                      Text(
+                        'Add some meals to ${widget.categoryName} and they\'ll show up here.',
+                        textAlign: TextAlign.center,
+                        style: nsSans(
+                          fontSize: 14,
+                          color: textMuted,
+                          height: 1.5,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              )
+            : Padding(
+                padding: const EdgeInsets.all(24),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.stretch,
+                  children: [
+                    // ── Counter ──────────────────────────────────────────
+                    Text(
+                      '${_index + 1} of ${meals.length}',
+                      style: nsSans(fontSize: 12, color: textMuted),
+                      textAlign: TextAlign.center,
+                    ),
+                    const SizedBox(height: 16),
+
+                    // ── Suggestion card ───────────────────────────────────
+                    Expanded(
+                      child: Container(
+                        padding: const EdgeInsets.all(24),
+                        decoration: BoxDecoration(
+                          color: surface,
+                          borderRadius: BorderRadius.circular(16),
+                          border: Border.all(color: border),
+                        ),
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            // Meal name
+                            Text(
+                              meal!.name,
+                              style: nsSans(
+                                fontSize: 26,
+                                fontWeight: FontWeight.w700,
+                                color: textPrimary,
+                                height: 1.2,
+                              ),
                             ),
-                          ),
-                          const SizedBox(height: 8),
-                          Text(
-                            'Add some meals to ${widget.categoryName} and they\'ll show up here.',
-                            textAlign: TextAlign.center,
-                            style: nsSans(
-                              fontSize: 14,
-                              color: textMuted,
-                              height: 1.5,
-                            ),
-                          ),
-                        ],
+
+                            const SizedBox(height: 20),
+
+                            // Inventory status
+                            if (!meal.hasNeedList)
+                              _StatusRow(
+                                icon: Icons.format_list_bulleted_rounded,
+                                color: textMuted,
+                                text: 'No ingredients listed',
+                              )
+                            else if (meal.allInPantry)
+                              _StatusRow(
+                                icon: Icons.check_circle_rounded,
+                                color: success,
+                                text: 'You have everything',
+                              )
+                            else ...[
+                              _StatusRow(
+                                icon: meal.missingCount > 0
+                                    ? Icons.radio_button_unchecked_rounded
+                                    : Icons.help_outline_rounded,
+                                color: warning,
+                                text: meal.missingCount > 0
+                                    ? 'Missing ${meal.missingCount} item${meal.missingCount == 1 ? '' : 's'}'
+                                    : 'Check ${meal.unknownCount} ingredient quantit${meal.unknownCount == 1 ? 'y' : 'ies'}',
+                              ),
+                              if (meal.missingItemNames.isNotEmpty) ...[
+                                const SizedBox(height: 12),
+                                Wrap(
+                                  spacing: 6,
+                                  runSpacing: 6,
+                                  children: meal.missingItemNames
+                                      .map(
+                                        (name) => Container(
+                                          padding: const EdgeInsets.symmetric(
+                                            horizontal: 10,
+                                            vertical: 4,
+                                          ),
+                                          decoration: BoxDecoration(
+                                            color: warning.withValues(
+                                              alpha: 0.12,
+                                            ),
+                                            borderRadius: BorderRadius.circular(
+                                              20,
+                                            ),
+                                          ),
+                                          child: Text(
+                                            name,
+                                            style: nsSans(
+                                              fontSize: 12,
+                                              color: warning,
+                                              fontWeight: FontWeight.w600,
+                                            ),
+                                          ),
+                                        ),
+                                      )
+                                      .toList(),
+                                ),
+                              ],
+                              if (meal.unknownItemNames.isNotEmpty) ...[
+                                const SizedBox(height: 12),
+                                Text(
+                                  'Check quantity',
+                                  style: nsSans(
+                                    fontSize: 12,
+                                    color: warning,
+                                    fontWeight: FontWeight.w700,
+                                  ),
+                                ),
+                                const SizedBox(height: 6),
+                                Wrap(
+                                  spacing: 6,
+                                  runSpacing: 6,
+                                  children: meal.unknownItemNames
+                                      .map(
+                                        (name) => Container(
+                                          padding: const EdgeInsets.symmetric(
+                                            horizontal: 10,
+                                            vertical: 4,
+                                          ),
+                                          decoration: BoxDecoration(
+                                            color: warning.withValues(
+                                              alpha: 0.12,
+                                            ),
+                                            borderRadius: BorderRadius.circular(
+                                              20,
+                                            ),
+                                          ),
+                                          child: Text(
+                                            name,
+                                            style: nsSans(
+                                              fontSize: 12,
+                                              color: warning,
+                                              fontWeight: FontWeight.w600,
+                                            ),
+                                          ),
+                                        ),
+                                      )
+                                      .toList(),
+                                ),
+                              ],
+                            ],
+
+                            const Spacer(),
+
+                            // Pool indicator
+                            if (meal.allInPantry || !meal.hasNeedList)
+                              Container(
+                                padding: const EdgeInsets.symmetric(
+                                  horizontal: 10,
+                                  vertical: 5,
+                                ),
+                                decoration: BoxDecoration(
+                                  color: accentSoft.withValues(alpha: 0.5),
+                                  borderRadius: BorderRadius.circular(8),
+                                ),
+                                child: Text(
+                                  'Ready to make',
+                                  style: nsSans(
+                                    fontSize: 12,
+                                    fontWeight: FontWeight.w600,
+                                    color: primary,
+                                  ),
+                                ),
+                              )
+                            else
+                              Container(
+                                padding: const EdgeInsets.symmetric(
+                                  horizontal: 10,
+                                  vertical: 5,
+                                ),
+                                decoration: BoxDecoration(
+                                  color: accentLight,
+                                  borderRadius: BorderRadius.circular(8),
+                                ),
+                                child: Text(
+                                  'Missing a few things',
+                                  style: nsSans(
+                                    fontSize: 12,
+                                    fontWeight: FontWeight.w600,
+                                    color: textSecondary,
+                                  ),
+                                ),
+                              ),
+                          ],
+                        ),
                       ),
                     ),
-                  )
-                : Padding(
-                    padding: const EdgeInsets.all(24),
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.stretch,
-                      children: [
-                        // ── Counter ──────────────────────────────────────────
-                        Text(
-                          '${_index + 1} of ${meals.length}',
-                          style: nsSans(fontSize: 12, color: textMuted),
-                          textAlign: TextAlign.center,
-                        ),
-                        const SizedBox(height: 16),
 
-                        // ── Suggestion card ───────────────────────────────────
-                        Expanded(
-                          child: Container(
-                            padding: const EdgeInsets.all(24),
-                            decoration: BoxDecoration(
-                              color: surface,
-                              borderRadius: BorderRadius.circular(16),
-                              border: Border.all(color: border),
-                            ),
-                            child: Column(
-                              crossAxisAlignment: CrossAxisAlignment.start,
+                    const SizedBox(height: 20),
+
+                    // ── Actions ───────────────────────────────────────────
+                    FilledButton(
+                      onPressed: _eating ? null : () => _eatThis(meal),
+                      style: FilledButton.styleFrom(
+                        minimumSize: const Size(double.infinity, 52),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(12),
+                        ),
+                      ),
+                      child: _eating
+                          ? SizedBox(
+                              width: 20,
+                              height: 20,
+                              child: CircularProgressIndicator(
+                                strokeWidth: 2,
+                                color: surface,
+                              ),
+                            )
+                          : Row(
+                              mainAxisSize: MainAxisSize.min,
                               children: [
-                                // Meal name
+                                const Icon(Icons.restaurant_rounded, size: 20),
+                                const SizedBox(width: 8),
                                 Text(
-                                  meal!.name,
+                                  'Eat This',
                                   style: nsSans(
-                                    fontSize: 26,
+                                    fontSize: 16,
                                     fontWeight: FontWeight.w700,
-                                    color: textPrimary,
-                                    height: 1.2,
                                   ),
                                 ),
-
-                                const SizedBox(height: 20),
-
-                                // Inventory status
-                                if (!meal.hasNeedList)
-                                  _StatusRow(
-                                    icon: Icons.format_list_bulleted_rounded,
-                                    color: textMuted,
-                                    text: 'No ingredients listed',
-                                  )
-                                else if (meal.allInPantry)
-                                  _StatusRow(
-                                    icon: Icons.check_circle_rounded,
-                                    color: success,
-                                    text: 'You have everything',
-                                  )
-                                else ...[
-                                  _StatusRow(
-                                    icon:
-                                        Icons.radio_button_unchecked_rounded,
-                                    color: warning,
-                                    text:
-                                        'Missing ${meal.missingCount} item${meal.missingCount == 1 ? '' : 's'}',
-                                  ),
-                                  if (meal.missingItemNames.isNotEmpty) ...[
-                                    const SizedBox(height: 12),
-                                    Wrap(
-                                      spacing: 6,
-                                      runSpacing: 6,
-                                      children: meal.missingItemNames
-                                          .map(
-                                            (name) => Container(
-                                              padding:
-                                                  const EdgeInsets.symmetric(
-                                                horizontal: 10,
-                                                vertical: 4,
-                                              ),
-                                              decoration: BoxDecoration(
-                                                color: warning
-                                                    .withValues(alpha: 0.12),
-                                                borderRadius:
-                                                    BorderRadius.circular(20),
-                                              ),
-                                              child: Text(
-                                                name,
-                                                style: nsSans(
-                                                  fontSize: 12,
-                                                  color: warning,
-                                                  fontWeight: FontWeight.w600,
-                                                ),
-                                              ),
-                                            ),
-                                          )
-                                          .toList(),
-                                    ),
-                                  ],
-                                ],
-
-                                const Spacer(),
-
-                                // Pool indicator
-                                if (meal.allInPantry || !meal.hasNeedList)
-                                  Container(
-                                    padding: const EdgeInsets.symmetric(
-                                        horizontal: 10, vertical: 5),
-                                    decoration: BoxDecoration(
-                                      color: accentSoft
-                                          .withValues(alpha: 0.5),
-                                      borderRadius: BorderRadius.circular(8),
-                                    ),
-                                    child: Text(
-                                      'Ready to make',
-                                      style: nsSans(
-                                        fontSize: 12,
-                                        fontWeight: FontWeight.w600,
-                                        color: primary,
-                                      ),
-                                    ),
-                                  )
-                                else
-                                  Container(
-                                    padding: const EdgeInsets.symmetric(
-                                        horizontal: 10, vertical: 5),
-                                    decoration: BoxDecoration(
-                                      color: accentLight,
-                                      borderRadius: BorderRadius.circular(8),
-                                    ),
-                                    child: Text(
-                                      'Missing a few things',
-                                      style: nsSans(
-                                        fontSize: 12,
-                                        fontWeight: FontWeight.w600,
-                                        color: textSecondary,
-                                      ),
-                                    ),
-                                  ),
                               ],
                             ),
-                          ),
-                        ),
-
-                        const SizedBox(height: 20),
-
-                        // ── Actions ───────────────────────────────────────────
-                        FilledButton(
-                          onPressed: _eating ? null : () => _eatThis(meal),
-                          style: FilledButton.styleFrom(
-                            minimumSize: const Size(double.infinity, 52),
-                            shape: RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(12),
-                            ),
-                          ),
-                          child: _eating
-                              ? SizedBox(
-                                  width: 20,
-                                  height: 20,
-                                  child: CircularProgressIndicator(
-                                    strokeWidth: 2,
-                                    color: surface,
-                                  ),
-                                )
-                              : Row(
-                                  mainAxisSize: MainAxisSize.min,
-                                  children: [
-                                    const Icon(Icons.restaurant_rounded,
-                                        size: 20),
-                                    const SizedBox(width: 8),
-                                    Text(
-                                      'Eat This',
-                                      style: nsSans(
-                                        fontSize: 16,
-                                        fontWeight: FontWeight.w700,
-                                      ),
-                                    ),
-                                  ],
-                                ),
-                        ),
-                        const SizedBox(height: 12),
-                        OutlinedButton(
-                          onPressed: isLast ? null : _next,
-                          style: OutlinedButton.styleFrom(
-                            minimumSize: const Size(double.infinity, 48),
-                            shape: RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(12),
-                            ),
-                          ),
-                          child: Text(
-                            isLast
-                                ? 'No more suggestions'
-                                : 'Suggest Another',
-                            style: nsSans(
-                              fontSize: 15,
-                              fontWeight: FontWeight.w600,
-                              color: isLast ? textMuted : primary,
-                            ),
-                          ),
-                        ),
-                      ],
                     ),
-                  ),
+                    const SizedBox(height: 12),
+                    OutlinedButton(
+                      onPressed: isLast ? null : _next,
+                      style: OutlinedButton.styleFrom(
+                        minimumSize: const Size(double.infinity, 48),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(12),
+                        ),
+                      ),
+                      child: Text(
+                        isLast ? 'No more suggestions' : 'Suggest Another',
+                        style: nsSans(
+                          fontSize: 15,
+                          fontWeight: FontWeight.w600,
+                          color: isLast ? textMuted : primary,
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
       ),
     );
   }

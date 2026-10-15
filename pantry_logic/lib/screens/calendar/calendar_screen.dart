@@ -139,8 +139,12 @@ class _CalendarScreenState extends State<CalendarScreen> {
                 return ListView.separated(
                   padding: const EdgeInsets.only(bottom: 24),
                   itemCount: days.length,
-                  separatorBuilder: (ctx2, i2) =>
-                      Divider(height: 1, indent: 16, endIndent: 16, color: p.border),
+                  separatorBuilder: (ctx2, i2) => Divider(
+                    height: 1,
+                    indent: 16,
+                    endIndent: 16,
+                    color: p.border,
+                  ),
                   itemBuilder: (_, i) {
                     final day = days[i];
                     final entry = entries[dateKey(day)];
@@ -183,7 +187,11 @@ class _CalendarDayRow extends StatelessWidget {
     final e = entry;
     final hasMeal = e != null && e.hasMeal;
     final status = hasMeal
-        ? MealStatus(needCount: e.needCount, missingCount: e.missingCount)
+        ? MealStatus(
+            needCount: e.needCount,
+            missingCount: e.missingCount,
+            unknownCount: e.unknownCount,
+          )
         : null;
 
     final Widget content;
@@ -256,7 +264,10 @@ class _CalendarDayRow extends StatelessWidget {
                       height: 30,
                       alignment: Alignment.center,
                       decoration: isToday
-                          ? BoxDecoration(color: p.primary, shape: BoxShape.circle)
+                          ? BoxDecoration(
+                              color: p.primary,
+                              shape: BoxShape.circle,
+                            )
                           : null,
                       child: Text(
                         '${day.day}',

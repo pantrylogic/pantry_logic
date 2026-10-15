@@ -2,7 +2,8 @@ import 'dart:async';
 
 import 'package:flutter/material.dart';
 
-import '../../core/meal_status.dart';
+import '../../core/ingredient_availability.dart';
+import '../../core/quantity.dart';
 import '../../core/routes.dart';
 import '../../core/theme.dart';
 import '../../models/meal.dart';
@@ -59,20 +60,22 @@ class _MealDetailScreenState extends State<MealDetailScreen> {
     _categoryId = widget.meal.categoryId;
     _categoryName = widget.meal.categoryName;
     _stream = _service.streamNeedList(_mealId).asBroadcastStream();
-    _stepsSub = _service.streamSteps(_mealId).listen(
-      (steps) {
-        if (!mounted) return;
-        setState(() {
-          _steps = steps;
-          _stepsLoaded = true;
-          _stepsError = false;
-        });
-      },
-      onError: (Object e, StackTrace st) {
-        logError('Load meal steps', e, st);
-        if (mounted) setState(() => _stepsError = true);
-      },
-    );
+    _stepsSub = _service
+        .streamSteps(_mealId)
+        .listen(
+          (steps) {
+            if (!mounted) return;
+            setState(() {
+              _steps = steps;
+              _stepsLoaded = true;
+              _stepsError = false;
+            });
+          },
+          onError: (Object e, StackTrace st) {
+            logError('Load meal steps', e, st);
+            if (mounted) setState(() => _stepsError = true);
+          },
+        );
     _loadCategories();
   }
 
@@ -101,13 +104,13 @@ class _MealDetailScreenState extends State<MealDetailScreen> {
   }) async {
     final messenger = ScaffoldMessenger.of(context);
     try {
-      final resolvedId = itemId ??
+      final resolvedId =
+          itemId ??
           (await _service.getOrCreateItem(
             name: name,
             category: category,
             defaultLocation: defaultLocation,
-          ))
-              .id;
+          )).id;
       await _service.addNeedItem(mealId: _mealId, itemId: resolvedId);
       if (mounted) setState(() => _hiddenItemIds.remove(resolvedId));
     } catch (e, st) {
@@ -130,6 +133,44 @@ class _MealDetailScreenState extends State<MealDetailScreen> {
       '${item.itemName} removed from ingredients.',
       onUndo: () => _addIngredient(name: item.itemName, itemId: item.itemId),
     );
+  }
+
+  Future<void> _editIngredientQuantity(MealNeedItem item) async {
+    final messenger = ScaffoldMessenger.of(context);
+    final result = await showAppSheet<String>(
+      context: context,
+      builder: (_) => _TextEditSheet(
+        title: 'Ingredient requirement',
+        label: 'Optional count (blank = presence)',
+        initialText: item.requiredQuantity?.toString() ?? '',
+        keyboardType: TextInputType.number,
+      ),
+    );
+    if (result == null) return;
+    final trimmed = result.trim();
+    final quantity = trimmed.isEmpty ? null : int.tryParse(trimmed);
+    if (trimmed.isNotEmpty && (quantity == null || quantity <= 0)) {
+      showAppSnackBar(
+        messenger,
+        'Enter a positive whole number or leave it blank.',
+      );
+      return;
+    }
+    if (quantity == item.requiredQuantity) return;
+    try {
+      await _service.updateNeedItemRequiredQuantity(
+        mealId: _mealId,
+        itemId: item.itemId,
+        requiredQuantity: quantity,
+      );
+    } catch (e, st) {
+      showErrorSnackBar(
+        messenger,
+        'Could not save the ingredient requirement.',
+        e,
+        st,
+      );
+    }
   }
 
   Future<void> _addMissingToGrocery() async {
@@ -159,7 +200,10 @@ class _MealDetailScreenState extends State<MealDetailScreen> {
         : _steps.map((s) => s.position).reduce((a, b) => a > b ? a : b) + 1;
     try {
       final step = await _service.addStep(
-          mealId: _mealId, text: text, position: position);
+        mealId: _mealId,
+        text: text,
+        position: position,
+      );
       // Show it now; the stream may still be re-fetching.
       if (mounted && !_steps.any((s) => s.id == step.id)) {
         setState(() => _steps = [..._steps, step]);
@@ -201,7 +245,8 @@ class _MealDetailScreenState extends State<MealDetailScreen> {
     final before = _steps;
     setState(() {
       _steps = [
-        for (var i = 0; i < ordered.length; i++) ordered[i].copyWith(position: i),
+        for (var i = 0; i < ordered.length; i++)
+          ordered[i].copyWith(position: i),
         ..._steps.where((s) => _hiddenStepIds.contains(s.id)),
       ];
     });
@@ -301,10 +346,12 @@ class _MealDetailScreenState extends State<MealDetailScreen> {
   }
 
   void _eatThis() {
-    Navigator.of(context).push(MaterialPageRoute(
-      settings: AppRoutes.settings(AppRoutes.restock),
-      builder: (_) => RestockScreen(mealId: _mealId, mealName: _name),
-    ));
+    Navigator.of(context).push(
+      MaterialPageRoute(
+        settings: AppRoutes.settings(AppRoutes.restock),
+        builder: (_) => RestockScreen(mealId: _mealId, mealName: _name),
+      ),
+    );
   }
 
   // ── Build ───────────────────────────────────────────────────────────────
@@ -333,7 +380,9 @@ class _MealDetailScreenState extends State<MealDetailScreen> {
             itemBuilder: (_) => [
               const PopupMenuItem(value: 'rename', child: Text('Rename meal')),
               const PopupMenuItem(
-                  value: 'category', child: Text('Change category')),
+                value: 'category',
+                child: Text('Change category'),
+              ),
               const PopupMenuDivider(),
               PopupMenuItem(
                 value: 'delete',
@@ -368,9 +417,10 @@ class _MealDetailScreenState extends State<MealDetailScreen> {
               ),
               Expanded(
                 child: switch (_tab) {
-                  _DetailTab.ingredients => loading
-                      ? const Center(child: CircularProgressIndicator())
-                      : _buildIngredients(items),
+                  _DetailTab.ingredients =>
+                    loading
+                        ? const Center(child: CircularProgressIndicator())
+                        : _buildIngredients(items),
                   _DetailTab.directions => _buildDirections(),
                 },
               ),
@@ -381,7 +431,9 @@ class _MealDetailScreenState extends State<MealDetailScreen> {
                   padding: const EdgeInsets.fromLTRB(16, 10, 16, 10),
                   decoration: BoxDecoration(
                     color: p.surface,
-                    border: Border(top: BorderSide(color: p.border, width: 0.5)),
+                    border: Border(
+                      top: BorderSide(color: p.border, width: 0.5),
+                    ),
                   ),
                   child: SafeArea(
                     top: false,
@@ -404,7 +456,12 @@ class _MealDetailScreenState extends State<MealDetailScreen> {
 
   Widget _buildIngredients(List<MealNeedItem> items) {
     final p = AppPalette.of(context);
-    final missingCount = items.where((i) => !i.inPantry).length;
+    final missingCount = items
+        .where((item) => item.availability.isMissing)
+        .length;
+    final unknownCount = items
+        .where((item) => item.availability.isUnknown)
+        .length;
 
     return ListView(
       padding: const EdgeInsets.only(bottom: 16),
@@ -416,6 +473,8 @@ class _MealDetailScreenState extends State<MealDetailScreen> {
                   missingCount: missingCount,
                   onAddMissing: _addMissingToGrocery,
                 )
+              : unknownCount > 0
+              ? const _QuantityCheckLine()
               : const _AllInStockLine(),
         for (var i = 0; i < items.length; i++) ...[
           if (i > 0)
@@ -424,6 +483,7 @@ class _MealDetailScreenState extends State<MealDetailScreen> {
             key: ValueKey(items[i].itemId),
             item: items[i],
             onRemove: () => _removeIngredient(items[i]),
+            onTap: () => _editIngredientQuantity(items[i]),
           ),
         ],
         // Keyed so the field (and its focus) survives the rows above
@@ -464,8 +524,10 @@ class _MealDetailScreenState extends State<MealDetailScreen> {
       mainAxisSize: MainAxisSize.min,
       children: [
         if (_stepsError)
-          _QuietLine('Could not load the steps. Reopen the meal to try again.',
-              color: p.error)
+          _QuietLine(
+            'Could not load the steps. Reopen the meal to try again.',
+            color: p.error,
+          )
         else if (steps.isEmpty)
           const _QuietLine('No steps needed? That\'s fine.'),
         // Keyed so the field (and its focus) survives the rows above
@@ -505,10 +567,7 @@ class _MealDetailScreenState extends State<MealDetailScreen> {
 // ─── Header: category ────────────────────────────────────────────────────────
 
 class _MealInfo extends StatelessWidget {
-  const _MealInfo({
-    required this.categoryName,
-    required this.onCategoryTap,
-  });
+  const _MealInfo({required this.categoryName, required this.onCategoryTap});
 
   final String? categoryName;
   final VoidCallback onCategoryTap;
@@ -699,21 +758,68 @@ class _AllInStockLine extends StatelessWidget {
   }
 }
 
+class _QuantityCheckLine extends StatelessWidget {
+  const _QuantityCheckLine();
+
+  @override
+  Widget build(BuildContext context) {
+    final p = AppPalette.of(context);
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(16, 12, 16, 6),
+      child: Row(
+        children: [
+          Icon(Icons.help_outline_rounded, size: 16, color: p.warningText),
+          const SizedBox(width: 6),
+          Text(
+            'Check ingredient quantity',
+            style: nsSans(
+              fontSize: 13,
+              fontWeight: FontWeight.w600,
+              color: p.warningText,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
 class _IngredientRow extends StatelessWidget {
   const _IngredientRow({
     super.key,
     required this.item,
     required this.onRemove,
+    required this.onTap,
   });
 
   final MealNeedItem item;
   final VoidCallback onRemove;
+  final VoidCallback onTap;
 
   @override
   Widget build(BuildContext context) {
     final p = AppPalette.of(context);
-    final status = IngredientStatus(item.inventoryLocation);
-    final color = status.color(p);
+    final availability = item.availability;
+    final color = availability.isAvailable ? p.successText : p.warningText;
+    final icon = availability.isAvailable
+        ? Icons.check_circle_rounded
+        : availability.isUnknown
+        ? Icons.help_outline_rounded
+        : Icons.error_outline_rounded;
+    final requiredLabel = item.requiredQuantity == null
+        ? null
+        : 'Needs ${item.requiredQuantity}';
+    final availabilityLabel = switch (availability.kind) {
+      IngredientAvailabilityKind.available =>
+        item.inventoryLocation == null
+            ? 'In stock'
+            : 'In stock · ${item.inventoryLocation}',
+      IngredientAvailabilityKind.missing =>
+        availability.shortage == null
+            ? 'Missing'
+            : 'Need ${serializeQuantity(availability.shortage!)} more',
+      IngredientAvailabilityKind.unknownQuantity => 'Check quantity',
+    };
 
     return Dismissible(
       key: ValueKey('dismiss_${item.itemId}'),
@@ -725,37 +831,44 @@ class _IngredientRow extends StatelessWidget {
         child: Icon(Icons.delete_outline_rounded, color: p.error, size: 22),
       ),
       onDismissed: (_) => onRemove(),
-      child: Padding(
-        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-        child: Row(
-          children: [
-            Icon(status.icon, size: 22, color: color),
-            const SizedBox(width: 14),
-            Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    item.itemName,
-                    style: nsSans(
-                      fontSize: 15,
-                      fontWeight: FontWeight.w600,
-                      color: p.textPrimary,
+      child: InkWell(
+        onTap: onTap,
+        child: Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+          child: Row(
+            children: [
+              Icon(icon, size: 22, color: color),
+              const SizedBox(width: 14),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      item.itemName,
+                      style: nsSans(
+                        fontSize: 15,
+                        fontWeight: FontWeight.w600,
+                        color: p.textPrimary,
+                      ),
                     ),
-                  ),
-                  const SizedBox(height: 1),
-                  Text(
-                    status.label,
-                    style: nsSans(
-                      fontSize: 13,
-                      fontWeight: FontWeight.w600,
-                      color: color,
+                    const SizedBox(height: 1),
+                    Text(
+                      [
+                        if (requiredLabel != null) requiredLabel,
+                        availabilityLabel,
+                      ].join(' · '),
+                      style: nsSans(
+                        fontSize: 13,
+                        fontWeight: FontWeight.w600,
+                        color: color,
+                      ),
                     ),
-                  ),
-                ],
+                  ],
+                ),
               ),
-            ),
-          ],
+              Icon(Icons.edit_outlined, size: 18, color: p.textMuted),
+            ],
+          ),
         ),
       ),
     );
@@ -848,8 +961,11 @@ class _StepRow extends StatelessWidget {
                     child: SizedBox(
                       width: 44,
                       height: 44,
-                      child: Icon(Icons.drag_handle_rounded,
-                          color: p.textMuted, size: 22),
+                      child: Icon(
+                        Icons.drag_handle_rounded,
+                        color: p.textMuted,
+                        size: 22,
+                      ),
                     ),
                   ),
                 ),
@@ -871,10 +987,8 @@ class _InlineAddRow extends StatelessWidget {
   final Widget child;
 
   @override
-  Widget build(BuildContext context) => Padding(
-        padding: const EdgeInsets.fromLTRB(12, 8, 12, 0),
-        child: child,
-      );
+  Widget build(BuildContext context) =>
+      Padding(padding: const EdgeInsets.fromLTRB(12, 8, 12, 0), child: child);
 }
 
 class _QuietLine extends StatelessWidget {
@@ -907,20 +1021,23 @@ class _TextEditSheet extends StatefulWidget {
     required this.label,
     required this.initialText,
     this.maxLines = 1,
+    this.keyboardType,
   });
 
   final String title;
   final String label;
   final String initialText;
   final int maxLines;
+  final TextInputType? keyboardType;
 
   @override
   State<_TextEditSheet> createState() => _TextEditSheetState();
 }
 
 class _TextEditSheetState extends State<_TextEditSheet> {
-  late final TextEditingController _ctrl =
-      TextEditingController(text: widget.initialText);
+  late final TextEditingController _ctrl = TextEditingController(
+    text: widget.initialText,
+  );
 
   @override
   void dispose() {
@@ -942,6 +1059,7 @@ class _TextEditSheetState extends State<_TextEditSheet> {
             autofocus: true,
             minLines: 1,
             maxLines: widget.maxLines,
+            keyboardType: widget.keyboardType,
             textCapitalization: TextCapitalization.sentences,
             style: nsSans(fontSize: 15, color: p.textPrimary),
             decoration: InputDecoration(labelText: widget.label),

@@ -126,7 +126,8 @@ class _HomeScreenState extends State<HomeScreen> with TabActivation {
                       name: _profile?.displayName,
                       onSettings: () => Navigator.of(context).push(
                         MaterialPageRoute(
-                            builder: (_) => const SettingsScreen()),
+                          builder: (_) => const SettingsScreen(),
+                        ),
                       ),
                     ),
                     if (_profile?.isAnonymous == true) const _GuestBanner(),
@@ -181,8 +182,9 @@ class _HomeScreenState extends State<HomeScreen> with TabActivation {
                       child: _HungryButton(
                         onTap: () => Navigator.of(context).push(
                           MaterialPageRoute(
-                            settings:
-                                AppRoutes.settings(AppRoutes.hungryCategory),
+                            settings: AppRoutes.settings(
+                              AppRoutes.hungryCategory,
+                            ),
                             builder: (_) => const HungryCategoryScreen(),
                           ),
                         ),
@@ -376,10 +378,12 @@ class _PlanCard extends StatelessWidget {
   Widget build(BuildContext context) {
     final p = AppPalette.of(context);
     final upcoming = days.skip(2).toList();
-    final plannedUpcoming =
-        upcoming.where((d) => entries[dateKey(d)]?.hasMeal == true).length;
+    final plannedUpcoming = upcoming
+        .where((d) => entries[dateKey(d)]?.hasMeal == true)
+        .length;
 
-    Widget divider() => Divider(height: 1, indent: 14, endIndent: 14, color: p.border);
+    Widget divider() =>
+        Divider(height: 1, indent: 14, endIndent: 14, color: p.border);
 
     return Container(
       decoration: BoxDecoration(
@@ -455,8 +459,11 @@ class _PlanCard extends StatelessWidget {
                     AnimatedRotation(
                       turns: upcomingExpanded ? 0.5 : 0,
                       duration: const Duration(milliseconds: 180),
-                      child: Icon(Icons.expand_more_rounded,
-                          size: 22, color: p.textMuted),
+                      child: Icon(
+                        Icons.expand_more_rounded,
+                        size: 22,
+                        color: p.textMuted,
+                      ),
                     ),
                   ],
                 ),
@@ -505,14 +512,22 @@ class _DayRow extends StatelessWidget {
     final e = entry;
     final hasMeal = e != null && e.hasMeal;
     final status = hasMeal
-        ? MealStatus(needCount: e.needCount, missingCount: e.missingCount)
+        ? MealStatus(
+            needCount: e.needCount,
+            missingCount: e.missingCount,
+            unknownCount: e.unknownCount,
+          )
         : null;
 
     return InkWell(
       onTap: onTap,
       child: Padding(
-        padding: EdgeInsets.fromLTRB(14, emphasized ? 12 : 10, 12,
-            emphasized ? 12 : 10),
+        padding: EdgeInsets.fromLTRB(
+          14,
+          emphasized ? 12 : 10,
+          12,
+          emphasized ? 12 : 10,
+        ),
         child: Row(
           children: [
             SizedBox(
@@ -554,8 +569,11 @@ class _DayRow extends StatelessWidget {
                         const SizedBox(height: 2),
                         Row(
                           children: [
-                            Icon(status!.icon,
-                                size: 13, color: status.textColor(p)),
+                            Icon(
+                              status!.icon,
+                              size: 13,
+                              color: status.textColor(p),
+                            ),
                             const SizedBox(width: 4),
                             Flexible(
                               child: Text(
@@ -632,18 +650,26 @@ class _HungryButton extends StatelessWidget {
                     Text(
                       "I'm Hungry",
                       style: nsSans(
-                          fontSize: 17, fontWeight: FontWeight.w700, color: fg),
+                        fontSize: 17,
+                        fontWeight: FontWeight.w700,
+                        color: fg,
+                      ),
                     ),
                     Text(
                       'Find something to eat',
                       style: nsSans(
-                          fontSize: 13, color: fg.withValues(alpha: 0.8)),
+                        fontSize: 13,
+                        color: fg.withValues(alpha: 0.8),
+                      ),
                     ),
                   ],
                 ),
               ),
-              Icon(Icons.arrow_forward_ios_rounded,
-                  size: 14, color: fg.withValues(alpha: 0.7)),
+              Icon(
+                Icons.arrow_forward_ios_rounded,
+                size: 14,
+                color: fg.withValues(alpha: 0.7),
+              ),
             ],
           ),
         ),

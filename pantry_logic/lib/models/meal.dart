@@ -1,3 +1,5 @@
+import '../core/ingredient_availability.dart';
+
 class Meal {
   final String id;
   final String householdId;
@@ -11,8 +13,10 @@ class Meal {
 
   /// Number of need-list items NOT currently in the pantry.
   final int missingCount;
+  final int unknownCount;
 
-  bool get allInPantry => needCount > 0 && missingCount == 0;
+  bool get allInPantry =>
+      needCount > 0 && missingCount == 0 && unknownCount == 0;
   bool get hasNeedList => needCount > 0;
 
   const Meal({
@@ -24,18 +28,25 @@ class Meal {
     this.notes,
     required this.needCount,
     required this.missingCount,
+    required this.unknownCount,
   });
 
   factory Meal.fromJson(
     Map<String, dynamic> json, {
-    Set<String> inventoryItemIds = const {},
+    Map<String, String?> inventoryQuantities = const {},
   }) {
     final category = json['meal_categories'] as Map<String, dynamic>?;
     final needList = json['meal_need_list'] as List<dynamic>? ?? [];
-    final needCount = needList.length;
-    final missingCount = needList
-        .where((n) => !inventoryItemIds.contains(n['item_id'] as String))
-        .length;
+    final availability = MealAvailabilitySummary.fromIngredients(
+      needList.map((need) {
+        final itemId = need['item_id'] as String;
+        return calculateIngredientAvailability(
+          isInInventory: inventoryQuantities.containsKey(itemId),
+          requiredQuantity: need['required_quantity'] as int?,
+          inventoryQuantity: inventoryQuantities[itemId],
+        );
+      }),
+    );
 
     return Meal(
       id: json['id'] as String,
@@ -44,8 +55,9 @@ class Meal {
       categoryId: json['category_id'] as String?,
       categoryName: category?['name'] as String?,
       notes: json['notes'] as String?,
-      needCount: needCount,
-      missingCount: missingCount,
+      needCount: availability.needCount,
+      missingCount: availability.missingCount,
+      unknownCount: availability.unknownCount,
     );
   }
 }

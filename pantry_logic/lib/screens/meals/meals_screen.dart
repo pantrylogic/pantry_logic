@@ -58,7 +58,9 @@ class _MealsScreenState extends State<MealsScreen> with TabActivation {
     if (!mounted) return;
     if (_categories.isEmpty) {
       showAppSnackBar(
-          messenger, 'Add a meal category in Settings before adding meals.');
+        messenger,
+        'Add a meal category in Settings before adding meals.',
+      );
       return;
     }
 
@@ -89,10 +91,12 @@ class _MealsScreenState extends State<MealsScreen> with TabActivation {
   }
 
   void _openMeal(Meal meal) {
-    Navigator.of(context).push(MaterialPageRoute(
-      settings: AppRoutes.settings(AppRoutes.mealDetail),
-      builder: (_) => MealDetailScreen(meal: meal),
-    ));
+    Navigator.of(context).push(
+      MaterialPageRoute(
+        settings: AppRoutes.settings(AppRoutes.mealDetail),
+        builder: (_) => MealDetailScreen(meal: meal),
+      ),
+    );
   }
 
   List<Widget> _buildItems(List<Meal> meals, AppPalette p) {
@@ -119,77 +123,92 @@ class _MealsScreenState extends State<MealsScreen> with TabActivation {
           ? (group.first.categoryName ?? 'Other')
           : 'Uncategorized';
 
-      widgets.add(Padding(
-        padding: const EdgeInsets.fromLTRB(16, 20, 16, 6),
-        child: Text(
-          label.toUpperCase(),
-          style: nsSans(
-            fontSize: 11,
-            fontWeight: FontWeight.w700,
-            letterSpacing: 0.8,
-            color: p.textMuted,
+      widgets.add(
+        Padding(
+          padding: const EdgeInsets.fromLTRB(16, 20, 16, 6),
+          child: Text(
+            label.toUpperCase(),
+            style: nsSans(
+              fontSize: 11,
+              fontWeight: FontWeight.w700,
+              letterSpacing: 0.8,
+              color: p.textMuted,
+            ),
           ),
         ),
-      ));
+      );
 
       for (var i = 0; i < group.length; i++) {
         final meal = group[i];
         final status = MealStatus(
           needCount: meal.needCount,
           missingCount: meal.missingCount,
+          unknownCount: meal.unknownCount,
         );
         final statusColor = status.textColor(p);
 
-        widgets.add(Dismissible(
-          key: ValueKey(meal.id),
-          direction: DismissDirection.endToStart,
-          background: Container(
-            alignment: Alignment.centerRight,
-            padding: const EdgeInsets.only(right: 20),
-            color: p.error.withValues(alpha: 0.12),
-            child: Icon(Icons.delete_outline_rounded, color: p.error, size: 22),
-          ),
-          confirmDismiss: (_) => confirmDeleteMeal(context, meal.name),
-          onDismissed: (_) => _deleteMeal(meal),
-          child: InkWell(
-            onTap: () => _openMeal(meal),
-            child: Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
-              child: Row(
-                children: [
-                  Expanded(
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text(
-                          meal.name,
-                          style: nsSans(
-                            fontSize: 15,
-                            fontWeight: FontWeight.w600,
-                            color: p.textPrimary,
-                          ),
-                        ),
-                        const SizedBox(height: 3),
-                        Row(
-                          children: [
-                            Icon(status.icon, size: 14, color: statusColor),
-                            const SizedBox(width: 4),
-                            Text(
-                              status.label,
-                              style: nsSans(fontSize: 12, color: statusColor),
+        widgets.add(
+          Dismissible(
+            key: ValueKey(meal.id),
+            direction: DismissDirection.endToStart,
+            background: Container(
+              alignment: Alignment.centerRight,
+              padding: const EdgeInsets.only(right: 20),
+              color: p.error.withValues(alpha: 0.12),
+              child: Icon(
+                Icons.delete_outline_rounded,
+                color: p.error,
+                size: 22,
+              ),
+            ),
+            confirmDismiss: (_) => confirmDeleteMeal(context, meal.name),
+            onDismissed: (_) => _deleteMeal(meal),
+            child: InkWell(
+              onTap: () => _openMeal(meal),
+              child: Padding(
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 16,
+                  vertical: 14,
+                ),
+                child: Row(
+                  children: [
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            meal.name,
+                            style: nsSans(
+                              fontSize: 15,
+                              fontWeight: FontWeight.w600,
+                              color: p.textPrimary,
                             ),
-                          ],
-                        ),
-                      ],
+                          ),
+                          const SizedBox(height: 3),
+                          Row(
+                            children: [
+                              Icon(status.icon, size: 14, color: statusColor),
+                              const SizedBox(width: 4),
+                              Text(
+                                status.label,
+                                style: nsSans(fontSize: 12, color: statusColor),
+                              ),
+                            ],
+                          ),
+                        ],
+                      ),
                     ),
-                  ),
-                  Icon(Icons.chevron_right_rounded,
-                      size: 18, color: p.textMuted),
-                ],
+                    Icon(
+                      Icons.chevron_right_rounded,
+                      size: 18,
+                      color: p.textMuted,
+                    ),
+                  ],
+                ),
               ),
             ),
           ),
-        ));
+        );
 
         if (i < group.length - 1) {
           widgets.add(

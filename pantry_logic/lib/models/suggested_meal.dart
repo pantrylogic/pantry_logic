@@ -10,12 +10,15 @@ class SuggestedMeal {
 
   /// Items in the need list that are NOT currently in inventory.
   final int missingCount;
+  final int unknownCount;
 
   /// Names of the missing items — used in the suggestion UI.
   final List<String> missingItemNames;
+  final List<String> unknownItemNames;
 
   bool get hasNeedList => needCount > 0;
-  bool get allInPantry => needCount > 0 && missingCount == 0;
+  bool get allInPantry =>
+      needCount > 0 && missingCount == 0 && unknownCount == 0;
 
   const SuggestedMeal({
     required this.id,
@@ -24,6 +27,8 @@ class SuggestedMeal {
     this.categoryName,
     required this.needCount,
     required this.missingCount,
+    required this.unknownCount,
     required this.missingItemNames,
+    required this.unknownItemNames,
   });
 }

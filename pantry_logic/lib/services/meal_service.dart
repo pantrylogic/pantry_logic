@@ -8,6 +8,8 @@ import '../models/meal_step.dart';
 import '../models/item.dart';
 import '../core/like.dart';
 import '../core/item_name.dart';
+import '../core/ingredient_availability.dart';
+import '../core/quantity.dart';
 
 class MealService {
   static final _client = Supabase.instance.client;
@@ -71,18 +73,29 @@ class MealService {
       try {
         final mealRows = await _client
             .from('meals')
-            .select('*, meal_categories(name), meal_need_list(item_id)')
+            .select(
+              '*, meal_categories(name), '
+              'meal_need_list(item_id, required_quantity)',
+            )
             .order('name');
 
-        final inventoryRows =
-            await _client.from('inventory_items').select('item_id');
-        final inventoryIds =
-            inventoryRows.map((r) => r['item_id'] as String).toSet();
+        final inventoryRows = await _client
+            .from('inventory_items')
+            .select('item_id, quantity');
+        final inventoryQuantities = {
+          for (final row in inventoryRows)
+            row['item_id'] as String: row['quantity'] as String?,
+        };
 
         if (!ctrl.isClosed) {
           ctrl.add(
             mealRows
-                .map((r) => Meal.fromJson(r, inventoryItemIds: inventoryIds))
+                .map(
+                  (r) => Meal.fromJson(
+                    r,
+                    inventoryQuantities: inventoryQuantities,
+                  ),
+                )
                 .toList(),
           );
         }
@@ -130,20 +143,23 @@ class MealService {
       try {
         final needRows = await _client
             .from('meal_need_list')
-            .select('meal_id, item_id, items(name)')
+            .select('meal_id, item_id, required_quantity, items(name)')
             .eq('meal_id', mealId);
 
         final itemIds = needRows.map((r) => r['item_id'] as String).toList();
 
-        Map<String, String> inventoryLocations = {};
+        Map<String, ({String location, String? quantity})> inventory = {};
         if (itemIds.isNotEmpty) {
           final invRows = await _client
               .from('inventory_items')
-              .select('item_id, location')
+              .select('item_id, location, quantity')
               .inFilter('item_id', itemIds);
-          inventoryLocations = {
+          inventory = {
             for (final r in invRows)
-              r['item_id'] as String: r['location'] as String,
+              r['item_id'] as String: (
+                location: r['location'] as String,
+                quantity: r['quantity'] as String?,
+              ),
           };
         }
 
@@ -156,10 +172,11 @@ class MealService {
               mealId: r['meal_id'] as String,
               itemId: itemId,
               itemName: item?['name'] as String? ?? '',
-              inventoryLocation: inventoryLocations[itemId],
+              inventoryLocation: inventory[itemId]?.location,
+              inventoryQuantity: inventory[itemId]?.quantity,
+              requiredQuantity: r['required_quantity'] as int?,
             );
-          }).toList()
-            ..sort((a, b) => a.itemName.compareTo(b.itemName));
+          }).toList()..sort((a, b) => a.itemName.compareTo(b.itemName));
 
           ctrl.add(items);
         }
@@ -201,15 +218,21 @@ class MealService {
   Future<Meal?> getMeal(String mealId) async {
     final row = await _client
         .from('meals')
-        .select('*, meal_categories(name), meal_need_list(item_id)')
+        .select(
+          '*, meal_categories(name), '
+          'meal_need_list(item_id, required_quantity)',
+        )
         .eq('id', mealId)
         .maybeSingle();
     if (row == null) return null;
-    final inventoryRows =
-        await _client.from('inventory_items').select('item_id');
-    final inventoryIds =
-        inventoryRows.map((r) => r['item_id'] as String).toSet();
-    return Meal.fromJson(row, inventoryItemIds: inventoryIds);
+    final inventoryRows = await _client
+        .from('inventory_items')
+        .select('item_id, quantity');
+    final inventoryQuantities = {
+      for (final inventory in inventoryRows)
+        inventory['item_id'] as String: inventory['quantity'] as String?,
+    };
+    return Meal.fromJson(row, inventoryQuantities: inventoryQuantities);
   }
 
   Future<void> addMeal({required String name, String? categoryId}) async {
@@ -248,16 +271,30 @@ class MealService {
   Future<void> addNeedItem({
     required String mealId,
     required String itemId,
+    int? requiredQuantity,
   }) async {
     try {
       await _client.from('meal_need_list').insert({
         'meal_id': mealId,
         'item_id': itemId,
+        if (requiredQuantity != null) 'required_quantity': requiredQuantity,
       });
     } on PostgrestException catch (e) {
       if (e.code == '23505') return; // already in need list — ignore
       rethrow;
     }
+  }
+
+  Future<void> updateNeedItemRequiredQuantity({
+    required String mealId,
+    required String itemId,
+    required int? requiredQuantity,
+  }) async {
+    await _client
+        .from('meal_need_list')
+        .update({'required_quantity': requiredQuantity})
+        .eq('meal_id', mealId)
+        .eq('item_id', itemId);
   }
 
   Future<void> removeNeedItem({
@@ -297,7 +334,9 @@ class MealService {
     ctrl.onListen = () {
       fetchAndEmit();
       channel = _client
-          .channel('meal_steps_${mealId}_${DateTime.now().millisecondsSinceEpoch}')
+          .channel(
+            'meal_steps_${mealId}_${DateTime.now().millisecondsSinceEpoch}',
+          )
           .onPostgresChanges(
             event: PostgresChangeEvent.all,
             schema: 'public',
@@ -338,7 +377,8 @@ class MealService {
   Future<void> updateStepText(String stepId, String text) async {
     await _client
         .from('meal_steps')
-        .update({'text': text.trim()}).eq('id', stepId);
+        .update({'text': text.trim()})
+        .eq('id', stepId);
   }
 
   Future<void> deleteStep(String stepId) async {
@@ -366,13 +406,17 @@ class MealService {
         if (ordered[i].position != i)
           _client
               .from('meal_steps')
-              .update({'position': i}).eq('id', ordered[i].id),
+              .update({'position': i})
+              .eq('id', ordered[i].id),
     ]);
   }
 
   // ─── Add missing to grocery list ─────────────────────────────────────────────
 
-  /// Adds all need-list items not currently in the pantry to the grocery list.
+  /// Adds missing need-list items to the grocery list.
+  ///
+  /// For count-based requirements, a numeric shortage is stored as the grocery
+  /// quantity. Unknown free-text pantry quantities are deliberately skipped.
   /// Skips items already on the grocery list (unpurchased).
   /// Returns the number of items actually added.
   Future<int> addMissingToGroceryList(String mealId) async {
@@ -382,42 +426,62 @@ class MealService {
 
     final needRows = await _client
         .from('meal_need_list')
-        .select('item_id')
+        .select('item_id, required_quantity')
         .eq('meal_id', mealId);
     final needIds = needRows.map((r) => r['item_id'] as String).toList();
     if (needIds.isEmpty) return 0;
 
     final invRows = await _client
         .from('inventory_items')
-        .select('item_id')
+        .select('item_id, quantity')
         .inFilter('item_id', needIds);
-    final inventoryIds = invRows.map((r) => r['item_id'] as String).toSet();
-
-    final missing =
-        needIds.where((id) => !inventoryIds.contains(id)).toList();
+    final inventoryQuantities = {
+      for (final row in invRows)
+        row['item_id'] as String: row['quantity'] as String?,
+    };
+    final missing = needRows.where((row) {
+      final itemId = row['item_id'] as String;
+      return calculateIngredientAvailability(
+        isInInventory: inventoryQuantities.containsKey(itemId),
+        requiredQuantity: row['required_quantity'] as int?,
+        inventoryQuantity: inventoryQuantities[itemId],
+      ).isMissing;
+    }).toList();
     if (missing.isEmpty) return 0;
+
+    final missingIds = missing.map((row) => row['item_id'] as String).toList();
 
     final existingRows = await _client
         .from('grocery_items')
         .select('item_id')
         .eq('purchased', false)
-        .inFilter('item_id', missing);
-    final existingIds =
-        existingRows.map((r) => r['item_id'] as String).toSet();
+        .inFilter('item_id', missingIds);
+    final existingIds = existingRows.map((r) => r['item_id'] as String).toSet();
 
-    final toAdd =
-        missing.where((id) => !existingIds.contains(id)).toList();
+    final toAdd = missing
+        .where((row) => !existingIds.contains(row['item_id'] as String))
+        .toList();
     if (toAdd.isEmpty) return 0;
 
-    await _client.from('grocery_items').insert(
-      toAdd
-          .map((itemId) => {
-                'household_id': hid,
-                'item_id': itemId,
-                if (userId != null) 'added_by': userId,
-              })
-          .toList(),
-    );
+    await _client
+        .from('grocery_items')
+        .insert(
+          toAdd.map((row) {
+            final itemId = row['item_id'] as String;
+            final availability = calculateIngredientAvailability(
+              isInInventory: inventoryQuantities.containsKey(itemId),
+              requiredQuantity: row['required_quantity'] as int?,
+              inventoryQuantity: inventoryQuantities[itemId],
+            );
+            return {
+              'household_id': hid,
+              'item_id': itemId,
+              if (availability.shortage != null)
+                'quantity': serializeQuantity(availability.shortage!),
+              if (userId != null) 'added_by': userId,
+            };
+          }).toList(),
+        );
 
     return toAdd.length;
   }
@@ -438,12 +502,14 @@ class MealService {
         .limit(8);
 
     return itemRows
-        .map((r) => AutocompleteSuggestion(
-              itemId: r['id'] as String,
-              name: r['name'] as String,
-              category: r['category'] as String?,
-              defaultLocation: r['default_location'] as String? ?? 'Pantry',
-            ))
+        .map(
+          (r) => AutocompleteSuggestion(
+            itemId: r['id'] as String,
+            name: r['name'] as String,
+            category: r['category'] as String?,
+            defaultLocation: r['default_location'] as String? ?? 'Pantry',
+          ),
+        )
         .toList();
   }
 

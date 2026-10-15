@@ -4,6 +4,7 @@ import '../models/suggested_meal.dart';
 import '../models/restock_item.dart';
 import '../models/meal_category.dart';
 import '../core/quantity.dart';
+import '../core/ingredient_availability.dart';
 
 class HungryService {
   static final _client = Supabase.instance.client;
@@ -42,30 +43,60 @@ class HungryService {
   // ─── Suggestions ──────────────────────────────────────────────────────────────
 
   /// Returns meals in the given category, sorted by priority:
-  /// - Pool A (shuffled): meals where every need-list item is in inventory,
-  ///   OR meals with no need list at all.
-  /// - Pool B (shuffled): meals where one or more need-list items are missing.
+  /// - Pool A (shuffled): meals with all requirements satisfied, or no need
+  ///   list at all.
+  /// - Pool B (shuffled): meals with missing or unknown requirements.
   Future<List<SuggestedMeal>> getSuggestions(String categoryId) async {
     final mealRows = await _client
         .from('meals')
         .select(
           'id, name, category_id, meal_categories(name), '
-          'meal_need_list(item_id, items(name))',
+          'meal_need_list(item_id, required_quantity, items(name))',
         )
         .eq('category_id', categoryId)
         .order('name');
 
-    final invRows = await _client.from('inventory_items').select('item_id');
-    final inventoryIds =
-        invRows.map((r) => r['item_id'] as String).toSet();
+    final invRows = await _client
+        .from('inventory_items')
+        .select('item_id, quantity');
+    final inventoryQuantities = {
+      for (final row in invRows)
+        row['item_id'] as String: row['quantity'] as String?,
+    };
 
     final meals = mealRows.map((r) {
       final needList = r['meal_need_list'] as List<dynamic>? ?? [];
-      final missingEntries = needList
-          .where((n) => !inventoryIds.contains(n['item_id'] as String))
+      final entries = needList.map((need) {
+        final itemId = need['item_id'] as String;
+        return (
+          need: need,
+          availability: calculateIngredientAvailability(
+            isInInventory: inventoryQuantities.containsKey(itemId),
+            requiredQuantity: need['required_quantity'] as int?,
+            inventoryQuantity: inventoryQuantities[itemId],
+          ),
+        );
+      }).toList();
+      final summary = MealAvailabilitySummary.fromIngredients(
+        entries.map((entry) => entry.availability),
+      );
+      final missingEntries = entries
+          .where((entry) => entry.availability.isMissing)
+          .toList();
+      final unknownEntries = entries
+          .where((entry) => entry.availability.isUnknown)
           .toList();
       final missingNames = missingEntries
-          .map((n) => (n['items'] as Map<String, dynamic>)['name'] as String)
+          .map(
+            (entry) =>
+                (entry.need['items'] as Map<String, dynamic>)['name'] as String,
+          )
+          .toList();
+      final unknownNames = unknownEntries
+          .map(
+            (entry) =>
+                (entry.need['items'] as Map<String, dynamic>)['name'] as String,
+          )
           .toList();
       return SuggestedMeal(
         id: r['id'] as String,
@@ -73,14 +104,20 @@ class HungryService {
         categoryId: r['category_id'] as String?,
         categoryName:
             (r['meal_categories'] as Map<String, dynamic>?)?['name'] as String?,
-        needCount: needList.length,
-        missingCount: missingEntries.length,
+        needCount: summary.needCount,
+        missingCount: summary.missingCount,
+        unknownCount: summary.unknownCount,
         missingItemNames: missingNames,
+        unknownItemNames: unknownNames,
       );
     }).toList();
 
-    final poolA = meals.where((m) => m.missingCount == 0).toList()..shuffle();
-    final poolB = meals.where((m) => m.missingCount > 0).toList()..shuffle();
+    final poolA =
+        meals.where((meal) => meal.allInPantry || !meal.hasNeedList).toList()
+          ..shuffle();
+    final poolB =
+        meals.where((meal) => !meal.allInPantry && meal.hasNeedList).toList()
+          ..shuffle();
     return [...poolA, ...poolB];
   }
 
@@ -137,15 +174,14 @@ class HungryService {
         final newQty = parsedQty - 1;
         if (newQty <= 0) {
           // Delete from inventory
-          await _client
-              .from('inventory_items')
-              .delete()
-              .eq('id', inv.id);
-          decisions.add(RestockDecisionItem(
-            itemId: itemId,
-            itemName: itemName,
-            reason: RestockReason.hitZero,
-          ));
+          await _client.from('inventory_items').delete().eq('id', inv.id);
+          decisions.add(
+            RestockDecisionItem(
+              itemId: itemId,
+              itemName: itemName,
+              reason: RestockReason.hitZero,
+            ),
+          );
         } else {
           // Silently update
           await _client
@@ -155,11 +191,13 @@ class HungryService {
         }
       } else {
         // No parseable quantity — user must decide
-        decisions.add(RestockDecisionItem(
-          itemId: itemId,
-          itemName: itemName,
-          reason: RestockReason.noQuantity,
-        ));
+        decisions.add(
+          RestockDecisionItem(
+            itemId: itemId,
+            itemName: itemName,
+            reason: RestockReason.noQuantity,
+          ),
+        );
       }
     }
 

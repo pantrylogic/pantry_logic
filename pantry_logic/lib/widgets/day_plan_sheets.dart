@@ -94,10 +94,12 @@ abstract final class DayPlanSheets {
         showAppSnackBar(messenger, 'That meal no longer exists.');
         return;
       }
-      await navigator.push(MaterialPageRoute<void>(
-        settings: AppRoutes.settings(AppRoutes.mealDetail),
-        builder: (_) => MealDetailScreen(meal: meal),
-      ));
+      await navigator.push(
+        MaterialPageRoute<void>(
+          settings: AppRoutes.settings(AppRoutes.mealDetail),
+          builder: (_) => MealDetailScreen(meal: meal),
+        ),
+      );
     } catch (e, st) {
       showErrorSnackBar(messenger, 'Could not open the meal.', e, st);
     }
@@ -105,13 +107,15 @@ abstract final class DayPlanSheets {
 
   /// Starts the Eat This / restock flow for a planned meal.
   static Future<void> eatThis(BuildContext context, CalendarEntry entry) =>
-      Navigator.of(context).push(MaterialPageRoute<void>(
-        settings: AppRoutes.settings(AppRoutes.restock),
-        builder: (_) => RestockScreen(
-          mealId: entry.mealId!,
-          mealName: entry.mealName ?? '',
+      Navigator.of(context).push(
+        MaterialPageRoute<void>(
+          settings: AppRoutes.settings(AppRoutes.restock),
+          builder: (_) => RestockScreen(
+            mealId: entry.mealId!,
+            mealName: entry.mealName ?? '',
+          ),
         ),
-      ));
+      );
 
   static Future<void> _remove(
     BuildContext context,
@@ -144,9 +148,11 @@ abstract final class DayPlanSheets {
 
 /// "Tonight", "Tomorrow", "Yesterday" or "Tue 14 Oct".
 String relativeDayLabel(DateTime date, DateTime today) {
-  final diff = DateTime.utc(date.year, date.month, date.day)
-      .difference(DateTime.utc(today.year, today.month, today.day))
-      .inDays;
+  final diff = DateTime.utc(
+    date.year,
+    date.month,
+    date.day,
+  ).difference(DateTime.utc(today.year, today.month, today.day)).inDays;
   return switch (diff) {
     0 => 'Tonight',
     1 => 'Tomorrow',
@@ -169,6 +175,7 @@ class _DayActionsSheet extends StatelessWidget {
     final status = MealStatus(
       needCount: entry.needCount,
       missingCount: entry.missingCount,
+      unknownCount: entry.unknownCount,
     );
 
     Widget action(_DayAction a, IconData icon, String label, {Color? color}) =>
@@ -217,8 +224,12 @@ class _DayActionsSheet extends StatelessWidget {
           action(_DayAction.view, Icons.menu_book_rounded, 'View meal'),
           action(_DayAction.eat, Icons.restaurant_rounded, 'Eat This'),
           action(_DayAction.change, Icons.swap_horiz_rounded, 'Change meal'),
-          action(_DayAction.remove, Icons.delete_outline_rounded, 'Remove',
-              color: p.error),
+          action(
+            _DayAction.remove,
+            Icons.delete_outline_rounded,
+            'Remove',
+            color: p.error,
+          ),
         ],
       ),
     );
@@ -269,17 +280,25 @@ class _MealPickerSheet extends StatelessWidget {
                 controller: controller,
                 padding: const EdgeInsets.only(bottom: 16),
                 itemCount: meals.length,
-                separatorBuilder: (ctx2, i2) =>
-                    Divider(height: 1, indent: 16, endIndent: 16, color: p.border),
+                separatorBuilder: (ctx2, i2) => Divider(
+                  height: 1,
+                  indent: 16,
+                  endIndent: 16,
+                  color: p.border,
+                ),
                 itemBuilder: (_, i) {
                   final meal = meals[i];
                   final status = MealStatus(
                     needCount: meal.needCount,
                     missingCount: meal.missingCount,
+                    unknownCount: meal.unknownCount,
                   );
                   return ListTile(
-                    leading: Icon(status.icon,
-                        size: 20, color: status.textColor(p)),
+                    leading: Icon(
+                      status.icon,
+                      size: 20,
+                      color: status.textColor(p),
+                    ),
                     title: Text(
                       meal.name,
                       style: nsSans(
@@ -295,8 +314,11 @@ class _MealPickerSheet extends StatelessWidget {
                       ].join(' · '),
                       style: nsSans(fontSize: 12, color: p.textMuted),
                     ),
-                    trailing: Icon(Icons.add_circle_outline_rounded,
-                        color: p.primary, size: 22),
+                    trailing: Icon(
+                      Icons.add_circle_outline_rounded,
+                      color: p.primary,
+                      size: 22,
+                    ),
                     onTap: () => Navigator.of(context).pop(meal),
                   );
                 },
