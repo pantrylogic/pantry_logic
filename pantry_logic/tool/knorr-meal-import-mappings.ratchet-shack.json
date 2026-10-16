@@ -1,0 +1,1328 @@
+{
+  "version": 1,
+  "sourceId": "knorr-sidekicks-meal-plan",
+  "sourceChecksum": "fbb594df284dc5cc8b189dad4181d31578afc5aad8e58d540d1c7a20af50d2e3",
+  "householdId": "1a8bed36-0959-4286-b1d7-eec1f43af889",
+  "householdName": "Ratchet Shack",
+  "generatedAt": "2026-10-16T04:02:33.591Z",
+  "duplicate": null,
+  "recipeReviews": [],
+  "existingMatches": [
+    {
+      "itemId": "5770ba3d-63b1-48fd-aaee-5e505c3bcc94",
+      "itemName": "Ground Beef",
+      "matchTypes": [
+        "exact"
+      ],
+      "sourceNames": [
+        "Ground beef"
+      ],
+      "occurrenceCount": 1
+    },
+    {
+      "itemId": "23b9e553-3516-40eb-8b13-377c1f2e8290",
+      "itemName": "milk",
+      "matchTypes": [
+        "exact"
+      ],
+      "sourceNames": [
+        "Milk"
+      ],
+      "occurrenceCount": 15
+    }
+  ],
+  "duplicateMealNames": [],
+  "sidekicksCounts": [
+    {
+      "sourceKey": "knorr-sidekicks-01",
+      "mealName": "Creamy Bacon Carbonara with Lemon-Herb Chicken & Asparagus",
+      "originalText": "2 packages Knorr Sidekicks Creamy Bacon Carbonara",
+      "requiredQuantity": 2
+    },
+    {
+      "sourceKey": "knorr-sidekicks-02",
+      "mealName": "Butter & Herb Pasta with Lemon Salmon & Broccoli",
+      "originalText": "2 packages Knorr Sidekicks Butter & Herb",
+      "requiredQuantity": 2
+    },
+    {
+      "sourceKey": "knorr-sidekicks-03",
+      "mealName": "Creamy Garlic Raffaello Pasta with Garlic Steak & Mushrooms",
+      "originalText": "2 packages Knorr Sidekicks Creamy Garlic Raffaello",
+      "requiredQuantity": 2
+    },
+    {
+      "sourceKey": "knorr-sidekicks-04",
+      "mealName": "Sour Cream & Chives Pasta with Pork Chops & Roasted Carrots",
+      "originalText": "2 packages Knorr Sidekicks Sour Cream & Chives",
+      "requiredQuantity": 2
+    },
+    {
+      "sourceKey": "knorr-sidekicks-05",
+      "mealName": "Fettuccine Alfredo with Blackened Chicken & Spinach",
+      "originalText": "2 packages Knorr Sidekicks Fettuccine Alfredo",
+      "requiredQuantity": 2
+    },
+    {
+      "sourceKey": "knorr-sidekicks-06",
+      "mealName": "Tomato Alfredo Pasta with Italian Meatballs & Zucchini",
+      "originalText": "2 packages Knorr Sidekicks Tomato Alfredo",
+      "requiredQuantity": 2
+    },
+    {
+      "sourceKey": "knorr-sidekicks-07",
+      "mealName": "White Cheddar & Broccoli Pasta with Chicken Tenders",
+      "originalText": "2 packages Knorr Sidekicks White Cheddar & Broccoli",
+      "requiredQuantity": 2
+    },
+    {
+      "sourceKey": "knorr-sidekicks-08",
+      "mealName": "Homestyle Cheddar Pasta with BBQ Pulled Pork & Corn",
+      "originalText": "2 packages Knorr Sidekicks Homestyle Cheddar",
+      "requiredQuantity": 2
+    },
+    {
+      "sourceKey": "knorr-sidekicks-09",
+      "mealName": "Cheddar Chipotle Pasta with Spiced Pork Chops & Black Beans",
+      "originalText": "2 packages Knorr Sidekicks Cheddar Chipotle",
+      "requiredQuantity": 2
+    },
+    {
+      "sourceKey": "knorr-sidekicks-10",
+      "mealName": "Creamy Chicken Pasta with Roast Turkey Breast & Green Beans",
+      "originalText": "2 packages Knorr Sidekicks Creamy Chicken",
+      "requiredQuantity": 2
+    },
+    {
+      "sourceKey": "knorr-sidekicks-11",
+      "mealName": "Chicken Pasta with Garlic Butter Chicken & Peas/Carrots",
+      "originalText": "2 packages Knorr Sidekicks Chicken",
+      "requiredQuantity": 2
+    },
+    {
+      "sourceKey": "knorr-sidekicks-12",
+      "mealName": "Teriyaki Noodles with Tofu & Snap Pea Stir-Fry",
+      "originalText": "2 packages Knorr Sidekicks Teriyaki Noodles",
+      "requiredQuantity": 2
+    },
+    {
+      "sourceKey": "knorr-sidekicks-13",
+      "mealName": "Cheddar & Broccoli Rice with Pan-Seared Salmon",
+      "originalText": "2 packages Knorr Sidekicks Cheddar & Broccoli Rice",
+      "requiredQuantity": 2
+    },
+    {
+      "sourceKey": "knorr-sidekicks-14",
+      "mealName": "Harvest Chicken Rice with Roasted Root Vegetables",
+      "originalText": "2 packages Knorr Sidekicks Harvest Chicken Rice",
+      "requiredQuantity": 2
+    },
+    {
+      "sourceKey": "knorr-sidekicks-15",
+      "mealName": "Chicken Fried Rice with Shrimp & Mixed Veggies",
+      "originalText": "2 packages Knorr Sidekicks Chicken Fried Rice",
+      "requiredQuantity": 2
+    },
+    {
+      "sourceKey": "knorr-sidekicks-16",
+      "mealName": "Sheet-Pan Lemon Herb Chicken & Veggies (Lazy Recipe 1)",
+      "originalText": "2 packages Knorr Sidekicks Butter & Herb",
+      "requiredQuantity": 2
+    },
+    {
+      "sourceKey": "knorr-sidekicks-17",
+      "mealName": "Smoked Sausage & Roasted Broccoli Skillet (Lazy Recipe 2)",
+      "originalText": "2 packages Knorr Sidekicks White Cheddar & Broccoli",
+      "requiredQuantity": 2
+    },
+    {
+      "sourceKey": "knorr-sidekicks-18",
+      "mealName": "One-Skillet Taco Beef & Peppers \"Chili Mac\" (Lazy Recipe 3)",
+      "originalText": "2 packages Knorr Sidekicks Cheddar Chipotle",
+      "requiredQuantity": 2
+    },
+    {
+      "sourceKey": "knorr-sidekicks-19",
+      "mealName": "15-Minute Chicken & Veggie Teriyaki Stir-Fry (Lazy Recipe 4)",
+      "originalText": "2 packages Knorr Sidekicks Teriyaki Noodles",
+      "requiredQuantity": 2
+    },
+    {
+      "sourceKey": "knorr-sidekicks-20",
+      "mealName": "Rotisserie Chicken & Peas Alfredo (Lazy Recipe 5)",
+      "originalText": "2 packages Knorr Sidekicks Fettuccine Alfredo",
+      "requiredQuantity": 2
+    },
+    {
+      "sourceKey": "knorr-sidekicks-21",
+      "mealName": "Quick Pork Chops & Applesauce with Harvest Rice (Lazy Recipe 6)",
+      "originalText": "2 packages Knorr Sidekicks Harvest Chicken Rice",
+      "requiredQuantity": 2
+    }
+  ],
+  "mappings": [
+    {
+      "ingredientKey": "and shrimp",
+      "sourceNames": [
+        "Raw peeled and deveined shrimp"
+      ],
+      "sourceTexts": [
+        "1 lb Raw peeled and deveined shrimp"
+      ],
+      "occurrenceCount": 1,
+      "status": "new",
+      "action": "create",
+      "itemId": null,
+      "itemName": "Raw peeled and deveined shrimp",
+      "candidates": [],
+      "approved": true
+    },
+    {
+      "ingredientKey": "applesauce",
+      "sourceNames": [
+        "Jarred applesauce"
+      ],
+      "sourceTexts": [
+        "1 cup Jarred applesauce"
+      ],
+      "occurrenceCount": 1,
+      "status": "new",
+      "action": "create",
+      "itemId": null,
+      "itemName": "Jarred applesauce",
+      "candidates": [],
+      "approved": true
+    },
+    {
+      "ingredientKey": "asparagus",
+      "sourceNames": [
+        "Fresh asparagus"
+      ],
+      "sourceTexts": [
+        "2 bunches Fresh asparagus (woody ends trimmed)"
+      ],
+      "occurrenceCount": 1,
+      "status": "new",
+      "action": "create",
+      "itemId": null,
+      "itemName": "Fresh asparagus",
+      "candidates": [],
+      "approved": true
+    },
+    {
+      "ingredientKey": "baby spinach",
+      "sourceNames": [
+        "Fresh baby spinach"
+      ],
+      "sourceTexts": [
+        "4 cups Fresh baby spinach"
+      ],
+      "occurrenceCount": 1,
+      "status": "new",
+      "action": "create",
+      "itemId": null,
+      "itemName": "Fresh baby spinach",
+      "candidates": [],
+      "approved": true
+    },
+    {
+      "ingredientKey": "bbq sauce",
+      "sourceNames": [
+        "BBQ sauce"
+      ],
+      "sourceTexts": [
+        "0.66 cup BBQ sauce"
+      ],
+      "occurrenceCount": 1,
+      "status": "new",
+      "action": "create",
+      "itemId": null,
+      "itemName": "BBQ sauce",
+      "candidates": [],
+      "approved": true
+    },
+    {
+      "ingredientKey": "bell pepper and onion stir-fry mix",
+      "sourceNames": [
+        "Frozen bell pepper & onion stir-fry mix"
+      ],
+      "sourceTexts": [
+        "3 cups Frozen bell pepper & onion stir-fry mix"
+      ],
+      "occurrenceCount": 1,
+      "status": "new",
+      "action": "create",
+      "itemId": null,
+      "itemName": "Frozen bell pepper & onion stir-fry mix",
+      "candidates": [],
+      "approved": true
+    },
+    {
+      "ingredientKey": "black beans",
+      "sourceNames": [
+        "Black beans"
+      ],
+      "sourceTexts": [
+        "2 cans (15 oz each) Black beans (drained and rinsed)"
+      ],
+      "occurrenceCount": 1,
+      "status": "new",
+      "action": "create",
+      "itemId": null,
+      "itemName": "Black beans",
+      "candidates": [],
+      "approved": true
+    },
+    {
+      "ingredientKey": "black pepper",
+      "sourceNames": [
+        "Black pepper"
+      ],
+      "sourceTexts": [
+        "Black pepper (to taste)"
+      ],
+      "occurrenceCount": 10,
+      "status": "new",
+      "action": "create",
+      "itemId": null,
+      "itemName": "Black pepper",
+      "candidates": [],
+      "approved": true
+    },
+    {
+      "ingredientKey": "blackening or cajun seasoning",
+      "sourceNames": [
+        "Blackening or Cajun seasoning"
+      ],
+      "sourceTexts": [
+        "3 tbsp Blackening or Cajun seasoning"
+      ],
+      "occurrenceCount": 1,
+      "status": "new",
+      "action": "create",
+      "itemId": null,
+      "itemName": "Blackening or Cajun seasoning",
+      "candidates": [],
+      "approved": true
+    },
+    {
+      "ingredientKey": "boneless pork loin chops",
+      "sourceNames": [
+        "boneless pork loin chops"
+      ],
+      "sourceTexts": [
+        "5-6 Thin-cut boneless pork loin chops"
+      ],
+      "occurrenceCount": 1,
+      "status": "new",
+      "action": "create",
+      "itemId": null,
+      "itemName": "boneless pork loin chops",
+      "candidates": [],
+      "approved": true
+    },
+    {
+      "ingredientKey": "broccoli florets",
+      "sourceNames": [
+        "Frozen broccoli florets"
+      ],
+      "sourceTexts": [
+        "2 cups Frozen broccoli florets (extra)",
+        "4 cups Frozen broccoli florets"
+      ],
+      "occurrenceCount": 3,
+      "status": "new",
+      "action": "create",
+      "itemId": null,
+      "itemName": "Frozen broccoli florets",
+      "candidates": [],
+      "approved": true
+    },
+    {
+      "ingredientKey": "butter",
+      "sourceNames": [
+        "Butter"
+      ],
+      "sourceTexts": [
+        "2 tbsp Butter"
+      ],
+      "occurrenceCount": 3,
+      "status": "new",
+      "action": "create",
+      "itemId": null,
+      "itemName": "Butter",
+      "candidates": [],
+      "approved": true
+    },
+    {
+      "ingredientKey": "button or cremini mushrooms",
+      "sourceNames": [
+        "Button or Cremini mushrooms"
+      ],
+      "sourceTexts": [
+        "4 cups Button or Cremini mushrooms (sliced)"
+      ],
+      "occurrenceCount": 1,
+      "status": "new",
+      "action": "create",
+      "itemId": null,
+      "itemName": "Button or Cremini mushrooms",
+      "candidates": [],
+      "approved": true
+    },
+    {
+      "ingredientKey": "carrots",
+      "sourceNames": [
+        "Carrots"
+      ],
+      "sourceTexts": [
+        "4 Carrots (peeled and chopped)",
+        "6 medium Carrots (peeled and sliced into sticks)"
+      ],
+      "occurrenceCount": 2,
+      "status": "new",
+      "action": "create",
+      "itemId": null,
+      "itemName": "Carrots",
+      "candidates": [],
+      "approved": true
+    },
+    {
+      "ingredientKey": "chicken breasts",
+      "sourceNames": [
+        "Chicken breasts",
+        "chicken breasts"
+      ],
+      "sourceTexts": [
+        "4 Chicken breasts (approx. 2 lbs)",
+        "4 Large chicken breasts (approx. 2 lbs)"
+      ],
+      "occurrenceCount": 3,
+      "status": "new",
+      "action": "create",
+      "itemId": null,
+      "itemName": "chicken breasts",
+      "candidates": [],
+      "approved": true
+    },
+    {
+      "ingredientKey": "chicken breasts or thighs",
+      "sourceNames": [
+        "chicken breasts or thighs"
+      ],
+      "sourceTexts": [
+        "4 Large chicken breasts or thighs (approx. 2 lbs)"
+      ],
+      "occurrenceCount": 1,
+      "status": "new",
+      "action": "create",
+      "itemId": null,
+      "itemName": "chicken breasts or thighs",
+      "candidates": [],
+      "approved": true
+    },
+    {
+      "ingredientKey": "chicken thighs",
+      "sourceNames": [
+        "Chicken thighs"
+      ],
+      "sourceTexts": [
+        "5 Chicken thighs (bone-in or boneless)"
+      ],
+      "occurrenceCount": 1,
+      "status": "new",
+      "action": "create",
+      "itemId": null,
+      "itemName": "Chicken thighs",
+      "candidates": [],
+      "approved": true
+    },
+    {
+      "ingredientKey": "chili powder",
+      "sourceNames": [
+        "Chili powder"
+      ],
+      "sourceTexts": [
+        "2 tsp Chili powder"
+      ],
+      "occurrenceCount": 1,
+      "status": "new",
+      "action": "create",
+      "itemId": null,
+      "itemName": "Chili powder",
+      "candidates": [],
+      "approved": true
+    },
+    {
+      "ingredientKey": "corn on the cob",
+      "sourceNames": [
+        "Fresh corn on the cob"
+      ],
+      "sourceTexts": [
+        "5 ears Fresh corn on the cob (or 3 cups frozen corn)"
+      ],
+      "occurrenceCount": 1,
+      "status": "new",
+      "action": "create",
+      "itemId": null,
+      "itemName": "Fresh corn on the cob",
+      "candidates": [],
+      "approved": true
+    },
+    {
+      "ingredientKey": "crispy chicken tenders",
+      "sourceNames": [
+        "Frozen crispy chicken tenders"
+      ],
+      "sourceTexts": [
+        "12-15 Frozen crispy chicken tenders"
+      ],
+      "occurrenceCount": 1,
+      "status": "new",
+      "action": "create",
+      "itemId": null,
+      "itemName": "Frozen crispy chicken tenders",
+      "candidates": [],
+      "approved": true
+    },
+    {
+      "ingredientKey": "cumin",
+      "sourceNames": [
+        "Cumin"
+      ],
+      "sourceTexts": [
+        "1 tsp Cumin"
+      ],
+      "occurrenceCount": 1,
+      "status": "new",
+      "action": "create",
+      "itemId": null,
+      "itemName": "Cumin",
+      "candidates": [],
+      "approved": true
+    },
+    {
+      "ingredientKey": "deli roast turkey breast or turkey breast",
+      "sourceNames": [
+        "Thick-sliced deli roast turkey breast or cooked turkey breast"
+      ],
+      "sourceTexts": [
+        "2 lbs Thick-sliced deli roast turkey breast or cooked turkey breast"
+      ],
+      "occurrenceCount": 1,
+      "status": "new",
+      "action": "create",
+      "itemId": null,
+      "itemName": "Thick-sliced deli roast turkey breast or cooked turkey breast",
+      "candidates": [],
+      "approved": true
+    },
+    {
+      "ingredientKey": "dried thyme",
+      "sourceNames": [
+        "Dried thyme"
+      ],
+      "sourceTexts": [
+        "2 tsp Dried thyme"
+      ],
+      "occurrenceCount": 1,
+      "status": "new",
+      "action": "create",
+      "itemId": null,
+      "itemName": "Dried thyme",
+      "candidates": [],
+      "approved": true
+    },
+    {
+      "ingredientKey": "eggs",
+      "sourceNames": [
+        "Eggs"
+      ],
+      "sourceTexts": [
+        "4 Eggs (beaten)"
+      ],
+      "occurrenceCount": 1,
+      "status": "new",
+      "action": "create",
+      "itemId": null,
+      "itemName": "Eggs",
+      "candidates": [],
+      "approved": true
+    },
+    {
+      "ingredientKey": "garlic powder",
+      "sourceNames": [
+        "Garlic powder"
+      ],
+      "sourceTexts": [
+        "1 tsp Garlic powder",
+        "2 tsp Garlic powder"
+      ],
+      "occurrenceCount": 5,
+      "status": "new",
+      "action": "create",
+      "itemId": null,
+      "itemName": "Garlic powder",
+      "candidates": [],
+      "approved": true
+    },
+    {
+      "ingredientKey": "green beans or asparagus",
+      "sourceNames": [
+        "Fresh green beans or asparagus"
+      ],
+      "sourceTexts": [
+        "2 lbs Fresh green beans or asparagus"
+      ],
+      "occurrenceCount": 1,
+      "status": "new",
+      "action": "create",
+      "itemId": null,
+      "itemName": "Fresh green beans or asparagus",
+      "candidates": [],
+      "approved": true
+    },
+    {
+      "ingredientKey": "green peas",
+      "sourceNames": [
+        "Frozen green peas"
+      ],
+      "sourceTexts": [
+        "2 cups Frozen green peas"
+      ],
+      "occurrenceCount": 1,
+      "status": "new",
+      "action": "create",
+      "itemId": null,
+      "itemName": "Frozen green peas",
+      "candidates": [],
+      "approved": true
+    },
+    {
+      "ingredientKey": "ground chicken or chicken breast",
+      "sourceNames": [
+        "Ground chicken or sliced chicken breast"
+      ],
+      "sourceTexts": [
+        "2 lbs Ground chicken or sliced chicken breast"
+      ],
+      "occurrenceCount": 1,
+      "status": "new",
+      "action": "create",
+      "itemId": null,
+      "itemName": "Ground chicken or sliced chicken breast",
+      "candidates": [],
+      "approved": true
+    },
+    {
+      "ingredientKey": "italian meatballs",
+      "sourceNames": [
+        "Frozen fully cooked Italian meatballs"
+      ],
+      "sourceTexts": [
+        "25-30 Frozen fully cooked Italian meatballs"
+      ],
+      "occurrenceCount": 1,
+      "status": "new",
+      "action": "create",
+      "itemId": null,
+      "itemName": "Frozen fully cooked Italian meatballs",
+      "candidates": [],
+      "approved": true
+    },
+    {
+      "ingredientKey": "knorr sidekicks butter and herb",
+      "sourceNames": [
+        "Knorr Sidekicks Butter & Herb"
+      ],
+      "sourceTexts": [
+        "2 packages Knorr Sidekicks Butter & Herb"
+      ],
+      "occurrenceCount": 2,
+      "status": "new",
+      "action": "create",
+      "itemId": null,
+      "itemName": "Knorr Sidekicks Butter & Herb",
+      "candidates": [],
+      "approved": true
+    },
+    {
+      "ingredientKey": "knorr sidekicks cheddar and broccoli rice",
+      "sourceNames": [
+        "Knorr Sidekicks Cheddar & Broccoli Rice"
+      ],
+      "sourceTexts": [
+        "2 packages Knorr Sidekicks Cheddar & Broccoli Rice"
+      ],
+      "occurrenceCount": 1,
+      "status": "new",
+      "action": "create",
+      "itemId": null,
+      "itemName": "Knorr Sidekicks Cheddar & Broccoli Rice",
+      "candidates": [],
+      "approved": true
+    },
+    {
+      "ingredientKey": "knorr sidekicks cheddar chipotle",
+      "sourceNames": [
+        "Knorr Sidekicks Cheddar Chipotle"
+      ],
+      "sourceTexts": [
+        "2 packages Knorr Sidekicks Cheddar Chipotle"
+      ],
+      "occurrenceCount": 2,
+      "status": "new",
+      "action": "create",
+      "itemId": null,
+      "itemName": "Knorr Sidekicks Cheddar Chipotle",
+      "candidates": [],
+      "approved": true
+    },
+    {
+      "ingredientKey": "knorr sidekicks chicken",
+      "sourceNames": [
+        "Knorr Sidekicks Chicken"
+      ],
+      "sourceTexts": [
+        "2 packages Knorr Sidekicks Chicken"
+      ],
+      "occurrenceCount": 1,
+      "status": "new",
+      "action": "create",
+      "itemId": null,
+      "itemName": "Knorr Sidekicks Chicken",
+      "candidates": [],
+      "approved": true
+    },
+    {
+      "ingredientKey": "knorr sidekicks chicken fried rice",
+      "sourceNames": [
+        "Knorr Sidekicks Chicken Fried Rice"
+      ],
+      "sourceTexts": [
+        "2 packages Knorr Sidekicks Chicken Fried Rice"
+      ],
+      "occurrenceCount": 1,
+      "status": "new",
+      "action": "create",
+      "itemId": null,
+      "itemName": "Knorr Sidekicks Chicken Fried Rice",
+      "candidates": [],
+      "approved": true
+    },
+    {
+      "ingredientKey": "knorr sidekicks creamy bacon carbonara",
+      "sourceNames": [
+        "Knorr Sidekicks Creamy Bacon Carbonara"
+      ],
+      "sourceTexts": [
+        "2 packages Knorr Sidekicks Creamy Bacon Carbonara"
+      ],
+      "occurrenceCount": 1,
+      "status": "new",
+      "action": "create",
+      "itemId": null,
+      "itemName": "Knorr Sidekicks Creamy Bacon Carbonara",
+      "candidates": [],
+      "approved": true
+    },
+    {
+      "ingredientKey": "knorr sidekicks creamy chicken",
+      "sourceNames": [
+        "Knorr Sidekicks Creamy Chicken"
+      ],
+      "sourceTexts": [
+        "2 packages Knorr Sidekicks Creamy Chicken"
+      ],
+      "occurrenceCount": 1,
+      "status": "new",
+      "action": "create",
+      "itemId": null,
+      "itemName": "Knorr Sidekicks Creamy Chicken",
+      "candidates": [],
+      "approved": true
+    },
+    {
+      "ingredientKey": "knorr sidekicks creamy garlic raffaello",
+      "sourceNames": [
+        "Knorr Sidekicks Creamy Garlic Raffaello"
+      ],
+      "sourceTexts": [
+        "2 packages Knorr Sidekicks Creamy Garlic Raffaello"
+      ],
+      "occurrenceCount": 1,
+      "status": "new",
+      "action": "create",
+      "itemId": null,
+      "itemName": "Knorr Sidekicks Creamy Garlic Raffaello",
+      "candidates": [],
+      "approved": true
+    },
+    {
+      "ingredientKey": "knorr sidekicks fettuccine alfredo",
+      "sourceNames": [
+        "Knorr Sidekicks Fettuccine Alfredo"
+      ],
+      "sourceTexts": [
+        "2 packages Knorr Sidekicks Fettuccine Alfredo"
+      ],
+      "occurrenceCount": 2,
+      "status": "new",
+      "action": "create",
+      "itemId": null,
+      "itemName": "Knorr Sidekicks Fettuccine Alfredo",
+      "candidates": [],
+      "approved": true
+    },
+    {
+      "ingredientKey": "knorr sidekicks harvest chicken rice",
+      "sourceNames": [
+        "Knorr Sidekicks Harvest Chicken Rice"
+      ],
+      "sourceTexts": [
+        "2 packages Knorr Sidekicks Harvest Chicken Rice"
+      ],
+      "occurrenceCount": 2,
+      "status": "new",
+      "action": "create",
+      "itemId": null,
+      "itemName": "Knorr Sidekicks Harvest Chicken Rice",
+      "candidates": [],
+      "approved": true
+    },
+    {
+      "ingredientKey": "knorr sidekicks homestyle cheddar",
+      "sourceNames": [
+        "Knorr Sidekicks Homestyle Cheddar"
+      ],
+      "sourceTexts": [
+        "2 packages Knorr Sidekicks Homestyle Cheddar"
+      ],
+      "occurrenceCount": 1,
+      "status": "new",
+      "action": "create",
+      "itemId": null,
+      "itemName": "Knorr Sidekicks Homestyle Cheddar",
+      "candidates": [],
+      "approved": true
+    },
+    {
+      "ingredientKey": "knorr sidekicks sour cream and chives",
+      "sourceNames": [
+        "Knorr Sidekicks Sour Cream & Chives"
+      ],
+      "sourceTexts": [
+        "2 packages Knorr Sidekicks Sour Cream & Chives"
+      ],
+      "occurrenceCount": 1,
+      "status": "new",
+      "action": "create",
+      "itemId": null,
+      "itemName": "Knorr Sidekicks Sour Cream & Chives",
+      "candidates": [],
+      "approved": true
+    },
+    {
+      "ingredientKey": "knorr sidekicks teriyaki noodles",
+      "sourceNames": [
+        "Knorr Sidekicks Teriyaki Noodles"
+      ],
+      "sourceTexts": [
+        "2 packages Knorr Sidekicks Teriyaki Noodles"
+      ],
+      "occurrenceCount": 2,
+      "status": "new",
+      "action": "create",
+      "itemId": null,
+      "itemName": "Knorr Sidekicks Teriyaki Noodles",
+      "candidates": [],
+      "approved": true
+    },
+    {
+      "ingredientKey": "knorr sidekicks tomato alfredo",
+      "sourceNames": [
+        "Knorr Sidekicks Tomato Alfredo"
+      ],
+      "sourceTexts": [
+        "2 packages Knorr Sidekicks Tomato Alfredo"
+      ],
+      "occurrenceCount": 1,
+      "status": "new",
+      "action": "create",
+      "itemId": null,
+      "itemName": "Knorr Sidekicks Tomato Alfredo",
+      "candidates": [],
+      "approved": true
+    },
+    {
+      "ingredientKey": "knorr sidekicks white cheddar and broccoli",
+      "sourceNames": [
+        "Knorr Sidekicks White Cheddar & Broccoli"
+      ],
+      "sourceTexts": [
+        "2 packages Knorr Sidekicks White Cheddar & Broccoli"
+      ],
+      "occurrenceCount": 2,
+      "status": "new",
+      "action": "create",
+      "itemId": null,
+      "itemName": "Knorr Sidekicks White Cheddar & Broccoli",
+      "candidates": [],
+      "approved": true
+    },
+    {
+      "ingredientKey": "lemon",
+      "sourceNames": [
+        "Lemon"
+      ],
+      "sourceTexts": [
+        "1 Lemon (juiced)"
+      ],
+      "occurrenceCount": 3,
+      "status": "new",
+      "action": "create",
+      "itemId": null,
+      "itemName": "Lemon",
+      "candidates": [],
+      "approved": true
+    },
+    {
+      "ingredientKey": "lemon pepper seasoning",
+      "sourceNames": [
+        "Lemon pepper seasoning"
+      ],
+      "sourceTexts": [
+        "1 tsp Lemon pepper seasoning"
+      ],
+      "occurrenceCount": 1,
+      "status": "new",
+      "action": "create",
+      "itemId": null,
+      "itemName": "Lemon pepper seasoning",
+      "candidates": [],
+      "approved": true
+    },
+    {
+      "ingredientKey": "margarine or butter",
+      "sourceNames": [
+        "Margarine or Butter"
+      ],
+      "sourceTexts": [
+        "2 tbsp Margarine or Butter"
+      ],
+      "occurrenceCount": 21,
+      "status": "new",
+      "action": "create",
+      "itemId": null,
+      "itemName": "Margarine or Butter",
+      "candidates": [],
+      "approved": true
+    },
+    {
+      "ingredientKey": "mixed veggies",
+      "sourceNames": [
+        "Frozen mixed veggies"
+      ],
+      "sourceTexts": [
+        "2 cups Frozen mixed veggies (peas, carrots, corn)"
+      ],
+      "occurrenceCount": 1,
+      "status": "new",
+      "action": "create",
+      "itemId": null,
+      "itemName": "Frozen mixed veggies",
+      "candidates": [],
+      "approved": true
+    },
+    {
+      "ingredientKey": "olive oil",
+      "sourceNames": [
+        "Olive oil"
+      ],
+      "sourceTexts": [
+        "2 tbsp Olive oil",
+        "3 tbsp Olive oil"
+      ],
+      "occurrenceCount": 11,
+      "status": "new",
+      "action": "create",
+      "itemId": null,
+      "itemName": "Olive oil",
+      "candidates": [],
+      "approved": true
+    },
+    {
+      "ingredientKey": "onion powder",
+      "sourceNames": [
+        "Onion powder"
+      ],
+      "sourceTexts": [
+        "1 tsp Onion powder"
+      ],
+      "occurrenceCount": 1,
+      "status": "new",
+      "action": "create",
+      "itemId": null,
+      "itemName": "Onion powder",
+      "candidates": [],
+      "approved": true
+    },
+    {
+      "ingredientKey": "or green beans",
+      "sourceNames": [
+        "Fresh or frozen green beans"
+      ],
+      "sourceTexts": [
+        "4 cups Fresh or frozen green beans"
+      ],
+      "occurrenceCount": 1,
+      "status": "new",
+      "action": "create",
+      "itemId": null,
+      "itemName": "Fresh or frozen green beans",
+      "candidates": [],
+      "approved": true
+    },
+    {
+      "ingredientKey": "parsnips",
+      "sourceNames": [
+        "Parsnips"
+      ],
+      "sourceTexts": [
+        "4 Parsnips (peeled and chopped)"
+      ],
+      "occurrenceCount": 1,
+      "status": "new",
+      "action": "create",
+      "itemId": null,
+      "itemName": "Parsnips",
+      "candidates": [],
+      "approved": true
+    },
+    {
+      "ingredientKey": "peas and carrots",
+      "sourceNames": [
+        "Frozen peas and carrots"
+      ],
+      "sourceTexts": [
+        "2 cups Frozen peas and carrots"
+      ],
+      "occurrenceCount": 1,
+      "status": "new",
+      "action": "create",
+      "itemId": null,
+      "itemName": "Frozen peas and carrots",
+      "candidates": [],
+      "approved": true
+    },
+    {
+      "ingredientKey": "pork chops",
+      "sourceNames": [
+        "Pork chops",
+        "pork chops"
+      ],
+      "sourceTexts": [
+        "5 Center-cut pork chops",
+        "5 Pork chops"
+      ],
+      "occurrenceCount": 2,
+      "status": "new",
+      "action": "create",
+      "itemId": null,
+      "itemName": "pork chops",
+      "candidates": [],
+      "approved": true
+    },
+    {
+      "ingredientKey": "pulled pork",
+      "sourceNames": [
+        "Pre-cooked pulled pork"
+      ],
+      "sourceTexts": [
+        "4 cups Pre-cooked pulled pork (tub or canned)"
+      ],
+      "occurrenceCount": 1,
+      "status": "new",
+      "action": "create",
+      "itemId": null,
+      "itemName": "Pre-cooked pulled pork",
+      "candidates": [],
+      "approved": true
+    },
+    {
+      "ingredientKey": "red bell peppers",
+      "sourceNames": [
+        "Red bell peppers"
+      ],
+      "sourceTexts": [
+        "2 Red bell peppers (sliced)"
+      ],
+      "occurrenceCount": 1,
+      "status": "new",
+      "action": "create",
+      "itemId": null,
+      "itemName": "Red bell peppers",
+      "candidates": [],
+      "approved": true
+    },
+    {
+      "ingredientKey": "rotisserie chicken",
+      "sourceNames": [
+        "Shredded store-bought rotisserie chicken"
+      ],
+      "sourceTexts": [
+        "4 cups Shredded store-bought rotisserie chicken"
+      ],
+      "occurrenceCount": 1,
+      "status": "new",
+      "action": "create",
+      "itemId": null,
+      "itemName": "Shredded store-bought rotisserie chicken",
+      "candidates": [],
+      "approved": true
+    },
+    {
+      "ingredientKey": "salmon fillets",
+      "sourceNames": [
+        "Salmon fillets"
+      ],
+      "sourceTexts": [
+        "5 Salmon fillets",
+        "5 Salmon fillets (approx. 5–6 oz each)"
+      ],
+      "occurrenceCount": 2,
+      "status": "new",
+      "action": "create",
+      "itemId": null,
+      "itemName": "Salmon fillets",
+      "candidates": [],
+      "approved": true
+    },
+    {
+      "ingredientKey": "salt",
+      "sourceNames": [
+        "Salt"
+      ],
+      "sourceTexts": [
+        "Salt (to taste)"
+      ],
+      "occurrenceCount": 12,
+      "status": "new",
+      "action": "create",
+      "itemId": null,
+      "itemName": "Salt",
+      "candidates": [],
+      "approved": true
+    },
+    {
+      "ingredientKey": "sesame oil",
+      "sourceNames": [
+        "Sesame oil"
+      ],
+      "sourceTexts": [
+        "2 tbsp Sesame oil"
+      ],
+      "occurrenceCount": 1,
+      "status": "new",
+      "action": "create",
+      "itemId": null,
+      "itemName": "Sesame oil",
+      "candidates": [],
+      "approved": true
+    },
+    {
+      "ingredientKey": "sesame oil or vegetable oil",
+      "sourceNames": [
+        "Sesame oil or Vegetable oil"
+      ],
+      "sourceTexts": [
+        "2 tbsp Sesame oil or Vegetable oil"
+      ],
+      "occurrenceCount": 1,
+      "status": "new",
+      "action": "create",
+      "itemId": null,
+      "itemName": "Sesame oil or Vegetable oil",
+      "candidates": [],
+      "approved": true
+    },
+    {
+      "ingredientKey": "sirloin steak or flank steak",
+      "sourceNames": [
+        "Sirloin steak or Flank steak"
+      ],
+      "sourceTexts": [
+        "2 lbs Sirloin steak or Flank steak"
+      ],
+      "occurrenceCount": 1,
+      "status": "new",
+      "action": "create",
+      "itemId": null,
+      "itemName": "Sirloin steak or Flank steak",
+      "candidates": [],
+      "approved": true
+    },
+    {
+      "ingredientKey": "smoked sausage loops",
+      "sourceNames": [
+        "Smoked sausage loops"
+      ],
+      "sourceTexts": [
+        "2 Smoked sausage loops (Kielbasa or Farmer's Sausage, sliced)"
+      ],
+      "occurrenceCount": 1,
+      "status": "new",
+      "action": "create",
+      "itemId": null,
+      "itemName": "Smoked sausage loops",
+      "candidates": [],
+      "approved": true
+    },
+    {
+      "ingredientKey": "soy sauce",
+      "sourceNames": [
+        "Soy sauce"
+      ],
+      "sourceTexts": [
+        "0.25 cup Soy sauce",
+        "2 tbsp Soy sauce"
+      ],
+      "occurrenceCount": 2,
+      "status": "new",
+      "action": "create",
+      "itemId": null,
+      "itemName": "Soy sauce",
+      "candidates": [],
+      "approved": true
+    },
+    {
+      "ingredientKey": "stir-fry vegetable mix",
+      "sourceNames": [
+        "Frozen stir-fry vegetable mix"
+      ],
+      "sourceTexts": [
+        "4 cups Frozen stir-fry vegetable mix"
+      ],
+      "occurrenceCount": 1,
+      "status": "new",
+      "action": "create",
+      "itemId": null,
+      "itemName": "Frozen stir-fry vegetable mix",
+      "candidates": [],
+      "approved": true
+    },
+    {
+      "ingredientKey": "sugar snap peas",
+      "sourceNames": [
+        "Sugar snap peas"
+      ],
+      "sourceTexts": [
+        "3 cups Sugar snap peas"
+      ],
+      "occurrenceCount": 1,
+      "status": "new",
+      "action": "create",
+      "itemId": null,
+      "itemName": "Sugar snap peas",
+      "candidates": [],
+      "approved": true
+    },
+    {
+      "ingredientKey": "taco seasoning",
+      "sourceNames": [
+        "Taco seasoning"
+      ],
+      "sourceTexts": [
+        "2 packets Taco seasoning"
+      ],
+      "occurrenceCount": 1,
+      "status": "new",
+      "action": "create",
+      "itemId": null,
+      "itemName": "Taco seasoning",
+      "candidates": [],
+      "approved": true
+    },
+    {
+      "ingredientKey": "teriyaki sauce or soy sauce",
+      "sourceNames": [
+        "Jarred teriyaki sauce or Soy sauce"
+      ],
+      "sourceTexts": [
+        "0.25 cup Jarred teriyaki sauce or Soy sauce"
+      ],
+      "occurrenceCount": 1,
+      "status": "new",
+      "action": "create",
+      "itemId": null,
+      "itemName": "Jarred teriyaki sauce or Soy sauce",
+      "candidates": [],
+      "approved": true
+    },
+    {
+      "ingredientKey": "tofu",
+      "sourceNames": [
+        "Extra firm tofu"
+      ],
+      "sourceTexts": [
+        "2 blocks (14 oz each) Extra firm tofu (cubed)"
+      ],
+      "occurrenceCount": 1,
+      "status": "new",
+      "action": "create",
+      "itemId": null,
+      "itemName": "Extra firm tofu",
+      "candidates": [],
+      "approved": true
+    },
+    {
+      "ingredientKey": "vegetable oil",
+      "sourceNames": [
+        "Vegetable oil"
+      ],
+      "sourceTexts": [
+        "2 tbsp Vegetable oil"
+      ],
+      "occurrenceCount": 1,
+      "status": "new",
+      "action": "create",
+      "itemId": null,
+      "itemName": "Vegetable oil",
+      "candidates": [],
+      "approved": true
+    },
+    {
+      "ingredientKey": "water",
+      "sourceNames": [
+        "Water"
+      ],
+      "sourceTexts": [
+        "2.5 cups Water",
+        "4 cups Water"
+      ],
+      "occurrenceCount": 21,
+      "status": "new",
+      "action": "create",
+      "itemId": null,
+      "itemName": "Water",
+      "candidates": [],
+      "approved": true
+    },
+    {
+      "ingredientKey": "zucchinis",
+      "sourceNames": [
+        "Zucchinis"
+      ],
+      "sourceTexts": [
+        "2 medium Zucchinis (sliced into half-moons)"
+      ],
+      "occurrenceCount": 1,
+      "status": "new",
+      "action": "create",
+      "itemId": null,
+      "itemName": "Zucchinis",
+      "candidates": [],
+      "approved": true
+    }
+  ]
+}

@@ -101,6 +101,10 @@ class _MealDetailScreenState extends State<MealDetailScreen> {
     String? itemId,
     String? category,
     String? defaultLocation,
+    int? requiredQuantity,
+    String? originalIngredientText,
+    String? sourceMarkdown,
+    int? ingredientPosition,
   }) async {
     final messenger = ScaffoldMessenger.of(context);
     try {
@@ -111,7 +115,14 @@ class _MealDetailScreenState extends State<MealDetailScreen> {
             category: category,
             defaultLocation: defaultLocation,
           )).id;
-      await _service.addNeedItem(mealId: _mealId, itemId: resolvedId);
+      await _service.addNeedItem(
+        mealId: _mealId,
+        itemId: resolvedId,
+        requiredQuantity: requiredQuantity,
+        originalIngredientText: originalIngredientText,
+        sourceMarkdown: sourceMarkdown,
+        ingredientPosition: ingredientPosition,
+      );
       if (mounted) setState(() => _hiddenItemIds.remove(resolvedId));
     } catch (e, st) {
       showErrorSnackBar(messenger, 'Could not add $name. Try again.', e, st);
@@ -131,7 +142,14 @@ class _MealDetailScreenState extends State<MealDetailScreen> {
     showUndoSnackBar(
       messenger,
       '${item.itemName} removed from ingredients.',
-      onUndo: () => _addIngredient(name: item.itemName, itemId: item.itemId),
+      onUndo: () => _addIngredient(
+        name: item.itemName,
+        itemId: item.itemId,
+        requiredQuantity: item.requiredQuantity,
+        originalIngredientText: item.originalIngredientText,
+        sourceMarkdown: item.sourceMarkdown,
+        ingredientPosition: item.ingredientPosition,
+      ),
     );
   }
 
@@ -421,7 +439,7 @@ class _MealDetailScreenState extends State<MealDetailScreen> {
                     loading
                         ? const Center(child: CircularProgressIndicator())
                         : _buildIngredients(items),
-                  _DetailTab.directions => _buildDirections(),
+                  _DetailTab.directions => _buildDirections(items),
                 },
               ),
               // Eat This is the only thing pinned to the bottom. It steps
@@ -512,12 +530,15 @@ class _MealDetailScreenState extends State<MealDetailScreen> {
     );
   }
 
-  Widget _buildDirections() {
+  Widget _buildDirections(List<MealNeedItem> items) {
     final p = AppPalette.of(context);
     if (!_stepsLoaded && !_stepsError) {
       return const Center(child: CircularProgressIndicator());
     }
     final steps = _visibleSteps;
+    final recipeIngredients = items
+        .where((item) => item.originalIngredientText != null)
+        .toList();
 
     final footer = Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -549,6 +570,9 @@ class _MealDetailScreenState extends State<MealDetailScreen> {
       padding: const EdgeInsets.only(bottom: 16),
       keyboardDismissBehavior: ScrollViewKeyboardDismissBehavior.onDrag,
       buildDefaultDragHandles: false,
+      header: recipeIngredients.isEmpty
+          ? null
+          : _RecipeQuantityReference(items: recipeIngredients),
       itemCount: steps.length,
       onReorderItem: _reorderStep,
       footer: footer,
@@ -844,7 +868,7 @@ class _IngredientRow extends StatelessWidget {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Text(
-                      item.itemName,
+                      item.originalIngredientText ?? item.itemName,
                       style: nsSans(
                         fontSize: 15,
                         fontWeight: FontWeight.w600,
@@ -852,6 +876,13 @@ class _IngredientRow extends StatelessWidget {
                       ),
                     ),
                     const SizedBox(height: 1),
+                    if (item.originalIngredientText != null) ...[
+                      Text(
+                        'Inventory item: ${item.itemName}',
+                        style: nsSans(fontSize: 12, color: p.textMuted),
+                      ),
+                      const SizedBox(height: 1),
+                    ],
                     Text(
                       [
                         if (requiredLabel != null) requiredLabel,
@@ -876,6 +907,48 @@ class _IngredientRow extends StatelessWidget {
 }
 
 // ─── Directions ──────────────────────────────────────────────────────────────
+
+class _RecipeQuantityReference extends StatelessWidget {
+  const _RecipeQuantityReference({required this.items});
+
+  final List<MealNeedItem> items;
+
+  @override
+  Widget build(BuildContext context) {
+    final p = AppPalette.of(context);
+    return Container(
+      margin: const EdgeInsets.fromLTRB(16, 12, 16, 8),
+      padding: const EdgeInsets.all(14),
+      decoration: BoxDecoration(
+        color: p.accentSoft,
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(color: p.border),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            'Recipe quantities',
+            style: nsSans(
+              fontSize: 14,
+              fontWeight: FontWeight.w700,
+              color: p.textPrimary,
+            ),
+          ),
+          const SizedBox(height: 8),
+          for (final item in items)
+            Padding(
+              padding: const EdgeInsets.only(bottom: 4),
+              child: Text(
+                '• ${item.originalIngredientText}',
+                style: nsSans(fontSize: 13, color: p.textSecondary),
+              ),
+            ),
+        ],
+      ),
+    );
+  }
+}
 
 class _StepRow extends StatelessWidget {
   const _StepRow({
