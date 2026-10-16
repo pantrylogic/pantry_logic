@@ -143,7 +143,11 @@ class MealService {
       try {
         final needRows = await _client
             .from('meal_need_list')
-            .select('meal_id, item_id, required_quantity, items(name)')
+            .select(
+              'meal_id, item_id, required_quantity, '
+              'original_ingredient_text, source_markdown, '
+              'ingredient_position, items(name)',
+            )
             .eq('meal_id', mealId);
 
         final itemIds = needRows.map((r) => r['item_id'] as String).toList();
@@ -165,18 +169,32 @@ class MealService {
 
         if (!ctrl.isClosed) {
           // Sort by item name
-          final items = needRows.map((r) {
-            final item = r['items'] as Map<String, dynamic>?;
-            final itemId = r['item_id'] as String;
-            return MealNeedItem(
-              mealId: r['meal_id'] as String,
-              itemId: itemId,
-              itemName: item?['name'] as String? ?? '',
-              inventoryLocation: inventory[itemId]?.location,
-              inventoryQuantity: inventory[itemId]?.quantity,
-              requiredQuantity: r['required_quantity'] as int?,
-            );
-          }).toList()..sort((a, b) => a.itemName.compareTo(b.itemName));
+          final items =
+              needRows.map((r) {
+                final item = r['items'] as Map<String, dynamic>?;
+                final itemId = r['item_id'] as String;
+                return MealNeedItem(
+                  mealId: r['meal_id'] as String,
+                  itemId: itemId,
+                  itemName: item?['name'] as String? ?? '',
+                  originalIngredientText:
+                      r['original_ingredient_text'] as String?,
+                  sourceMarkdown: r['source_markdown'] as String?,
+                  ingredientPosition: r['ingredient_position'] as int?,
+                  inventoryLocation: inventory[itemId]?.location,
+                  inventoryQuantity: inventory[itemId]?.quantity,
+                  requiredQuantity: r['required_quantity'] as int?,
+                );
+              }).toList()..sort((a, b) {
+                final leftPosition = a.ingredientPosition;
+                final rightPosition = b.ingredientPosition;
+                if (leftPosition != null && rightPosition != null) {
+                  return leftPosition.compareTo(rightPosition);
+                }
+                if (leftPosition != null) return -1;
+                if (rightPosition != null) return 1;
+                return a.itemName.compareTo(b.itemName);
+              });
 
           ctrl.add(items);
         }
@@ -272,12 +290,20 @@ class MealService {
     required String mealId,
     required String itemId,
     int? requiredQuantity,
+    String? originalIngredientText,
+    String? sourceMarkdown,
+    int? ingredientPosition,
   }) async {
     try {
       await _client.from('meal_need_list').insert({
         'meal_id': mealId,
         'item_id': itemId,
         if (requiredQuantity != null) 'required_quantity': requiredQuantity,
+        if (originalIngredientText != null)
+          'original_ingredient_text': originalIngredientText,
+        if (sourceMarkdown != null) 'source_markdown': sourceMarkdown,
+        if (ingredientPosition != null)
+          'ingredient_position': ingredientPosition,
       });
     } on PostgrestException catch (e) {
       if (e.code == '23505') return; // already in need list — ignore
