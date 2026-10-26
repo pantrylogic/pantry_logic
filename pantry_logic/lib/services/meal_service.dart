@@ -56,6 +56,13 @@ class MealService {
     return MealCategory.fromJson(row);
   }
 
+  Future<void> renameCategory(String categoryId, String name) async {
+    await _client
+        .from('meal_categories')
+        .update({'name': name.trim()})
+        .eq('id', categoryId);
+  }
+
   Future<void> deleteCategory(String categoryId) async {
     await _client.from('meal_categories').delete().eq('id', categoryId);
   }

@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import '../../core/meal_status.dart';
 import '../../core/routes.dart';
 import '../../core/theme.dart';
+import '../../core/ui_prefs.dart';
 import '../../models/meal.dart';
 import '../../models/meal_category.dart';
 import '../../services/meal_service.dart';
@@ -10,8 +11,10 @@ import '../../widgets/add_bar.dart';
 import '../../widgets/app_snack_bar.dart';
 import '../../widgets/brand.dart';
 import '../../widgets/category_picker_sheet.dart';
+import '../../widgets/collapsible_section_header.dart';
 import '../../widgets/confirm_dialog.dart';
 import '../shell/shell_controller.dart';
+import 'manage_categories_sheet.dart';
 import 'meal_detail_screen.dart';
 
 class MealsScreen extends StatefulWidget {
@@ -29,6 +32,13 @@ class _MealsScreenState extends State<MealsScreen> with TabActivation {
   /// Meals removed optimistically after a confirmed swipe-delete.
   final Set<String> _hiddenIds = {};
 
+  /// Latest meals from the stream, for per-category counts.
+  List<Meal> _meals = [];
+
+  /// Section keys (category ids, or [_uncategorizedKey]) the user collapsed.
+  Set<String> _collapsed = {};
+  static const _uncategorizedKey = '_uncategorized';
+
   @override
   int get tabIndex => ShellTab.meals;
 
@@ -40,6 +50,9 @@ class _MealsScreenState extends State<MealsScreen> with TabActivation {
     super.initState();
     _stream = _service.streamMeals().asBroadcastStream();
     _loadCategories();
+    UiPrefs.getStringSet(UiPrefs.mealsCollapsedCategories).then((saved) {
+      if (mounted) setState(() => _collapsed = saved);
+    });
   }
 
   Future<void> _loadCategories() async {
@@ -59,7 +72,7 @@ class _MealsScreenState extends State<MealsScreen> with TabActivation {
     if (_categories.isEmpty) {
       showAppSnackBar(
         messenger,
-        'Add a meal category in Settings before adding meals.',
+        'Add a meal category (top right) before adding meals.',
       );
       return;
     }
@@ -99,125 +112,154 @@ class _MealsScreenState extends State<MealsScreen> with TabActivation {
     );
   }
 
-  List<Widget> _buildItems(List<Meal> meals, AppPalette p) {
-    final order = {for (final c in _categories) c.id: c.sortOrder};
+  Future<void> _toggleSection(String key) async {
+    final next = {..._collapsed};
+    if (!next.remove(key)) next.add(key);
+    setState(() => _collapsed = next);
+    await UiPrefs.setStringSet(UiPrefs.mealsCollapsedCategories, next);
+  }
 
+  Future<void> _manageCategories() async {
+    final counts = <String, int>{};
+    for (final m in _meals) {
+      final id = m.categoryId;
+      if (id != null) counts[id] = (counts[id] ?? 0) + 1;
+    }
+    await showManageCategoriesSheet(
+      context,
+      categories: _categories,
+      mealCounts: counts,
+    );
+    await _loadCategories();
+  }
+
+  List<Widget> _buildItems(List<Meal> meals, AppPalette p) {
     final grouped = <String?, List<Meal>>{};
     for (final meal in meals) {
-      (grouped[meal.categoryId] ??= []).add(meal);
+      // Meals whose category isn't loaded yet (or was just deleted) fall
+      // into Uncategorized rather than vanishing.
+      final known = _categories.any((c) => c.id == meal.categoryId);
+      (grouped[known ? meal.categoryId : null] ??= []).add(meal);
     }
 
-    // Categories by sort_order; uncategorized (older meals) last.
-    final keys = grouped.keys.toList()
-      ..sort((a, b) {
-        if (a == null) return 1;
-        if (b == null) return -1;
-        return (order[a] ?? 999).compareTo(order[b] ?? 999);
-      });
+    // Every category gets a section (sort_order, then name — as loaded) so
+    // new, empty ones are visible; uncategorized meals go last.
+    final sections = <(String key, String title, List<Meal> meals)>[
+      for (final c in _categories) (c.id, c.name, grouped[c.id] ?? []),
+      if (grouped[null] != null)
+        (_uncategorizedKey, 'Uncategorized', grouped[null]!),
+    ];
 
     final widgets = <Widget>[];
-    for (final catId in keys) {
-      final group = grouped[catId]!
-        ..sort((a, b) => a.name.toLowerCase().compareTo(b.name.toLowerCase()));
-      final label = catId != null
-          ? (group.first.categoryName ?? 'Other')
-          : 'Uncategorized';
+    for (final (key, title, group) in sections) {
+      group.sort(
+        (a, b) => a.name.toLowerCase().compareTo(b.name.toLowerCase()),
+      );
+      final expanded = !_collapsed.contains(key);
 
       widgets.add(
-        Padding(
-          padding: const EdgeInsets.fromLTRB(16, 20, 16, 6),
-          child: Text(
-            label.toUpperCase(),
-            style: nsSans(
-              fontSize: 11,
-              fontWeight: FontWeight.w700,
-              letterSpacing: 0.8,
-              color: p.textMuted,
+        CollapsibleSectionHeader(
+          title: title,
+          count: group.length,
+          expanded: expanded,
+          onTap: () => _toggleSection(key),
+        ),
+      );
+      if (!expanded) continue;
+
+      widgets.add(
+        Container(
+          margin: const EdgeInsets.fromLTRB(12, 0, 12, 4),
+          decoration: BoxDecoration(
+            color: p.surface,
+            borderRadius: BorderRadius.circular(12),
+            border: Border.all(color: p.border),
+          ),
+          child: ClipRRect(
+            borderRadius: BorderRadius.circular(11),
+            child: Column(
+              children: [
+                if (group.isEmpty)
+                  Padding(
+                    padding: const EdgeInsets.all(16),
+                    child: Align(
+                      alignment: Alignment.centerLeft,
+                      child: Text(
+                        'No meals yet',
+                        style: nsSans(fontSize: 14, color: p.textMuted),
+                      ),
+                    ),
+                  ),
+                for (var i = 0; i < group.length; i++) ...[
+                  if (i > 0) Divider(height: 1, indent: 16, color: p.border),
+                  _mealRow(group[i], p),
+                ],
+              ],
             ),
           ),
         ),
       );
+    }
+    return widgets;
+  }
 
-      for (var i = 0; i < group.length; i++) {
-        final meal = group[i];
-        final status = MealStatus(
-          needCount: meal.needCount,
-          missingCount: meal.missingCount,
-          unknownCount: meal.unknownCount,
-        );
-        final statusColor = status.textColor(p);
+  Widget _mealRow(Meal meal, AppPalette p) {
+    final status = MealStatus(
+      needCount: meal.needCount,
+      missingCount: meal.missingCount,
+      unknownCount: meal.unknownCount,
+    );
+    final statusColor = status.textColor(p);
 
-        widgets.add(
-          Dismissible(
-            key: ValueKey(meal.id),
-            direction: DismissDirection.endToStart,
-            background: Container(
-              alignment: Alignment.centerRight,
-              padding: const EdgeInsets.only(right: 20),
-              color: p.error.withValues(alpha: 0.12),
-              child: Icon(
-                Icons.delete_outline_rounded,
-                color: p.error,
-                size: 22,
-              ),
-            ),
-            confirmDismiss: (_) => confirmDeleteMeal(context, meal.name),
-            onDismissed: (_) => _deleteMeal(meal),
-            child: InkWell(
-              onTap: () => _openMeal(meal),
-              child: Padding(
-                padding: const EdgeInsets.symmetric(
-                  horizontal: 16,
-                  vertical: 14,
-                ),
-                child: Row(
+    return Dismissible(
+      key: ValueKey(meal.id),
+      direction: DismissDirection.endToStart,
+      background: Container(
+        alignment: Alignment.centerRight,
+        padding: const EdgeInsets.only(right: 20),
+        color: p.error.withValues(alpha: 0.12),
+        child: Icon(Icons.delete_outline_rounded, color: p.error, size: 22),
+      ),
+      confirmDismiss: (_) => confirmDeleteMeal(context, meal.name),
+      onDismissed: (_) => _deleteMeal(meal),
+      child: InkWell(
+        onTap: () => _openMeal(meal),
+        child: Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+          child: Row(
+            children: [
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Expanded(
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Text(
-                            meal.name,
-                            style: nsSans(
-                              fontSize: 15,
-                              fontWeight: FontWeight.w600,
-                              color: p.textPrimary,
-                            ),
-                          ),
-                          const SizedBox(height: 3),
-                          Row(
-                            children: [
-                              Icon(status.icon, size: 14, color: statusColor),
-                              const SizedBox(width: 4),
-                              Text(
-                                status.label,
-                                style: nsSans(fontSize: 12, color: statusColor),
-                              ),
-                            ],
-                          ),
-                        ],
+                    Text(
+                      meal.name,
+                      style: nsSans(
+                        fontSize: 15,
+                        fontWeight: FontWeight.w600,
+                        color: p.textPrimary,
                       ),
                     ),
-                    Icon(
-                      Icons.chevron_right_rounded,
-                      size: 18,
-                      color: p.textMuted,
+                    const SizedBox(height: 3),
+                    Row(
+                      children: [
+                        Icon(status.icon, size: 14, color: statusColor),
+                        const SizedBox(width: 4),
+                        Text(
+                          status.label,
+                          style: nsSans(fontSize: 12, color: statusColor),
+                        ),
+                      ],
                     ),
                   ],
                 ),
               ),
-            ),
+              Icon(Icons.chevron_right_rounded, size: 18, color: p.textMuted),
+            ],
           ),
-        );
-
-        if (i < group.length - 1) {
-          widgets.add(
-            Divider(height: 1, indent: 16, endIndent: 16, color: p.border),
-          );
-        }
-      }
-    }
-    return widgets;
+        ),
+      ),
+    );
   }
 
   @override
@@ -225,7 +267,16 @@ class _MealsScreenState extends State<MealsScreen> with TabActivation {
     final p = AppPalette.of(context);
 
     return Scaffold(
-      appBar: AppBar(title: const Text('Meals')),
+      appBar: AppBar(
+        title: const Text('Meals'),
+        actions: [
+          IconButton(
+            tooltip: 'Manage categories',
+            icon: const Icon(Icons.category_outlined),
+            onPressed: _manageCategories,
+          ),
+        ],
+      ),
       body: Column(
         children: [
           Expanded(
@@ -239,7 +290,8 @@ class _MealsScreenState extends State<MealsScreen> with TabActivation {
                 final meals = (snap.data ?? [])
                     .where((m) => !_hiddenIds.contains(m.id))
                     .toList();
-                if (meals.isEmpty) {
+                _meals = meals;
+                if (meals.isEmpty && _categories.isEmpty) {
                   return Center(
                     child: Padding(
                       padding: const EdgeInsets.all(32),

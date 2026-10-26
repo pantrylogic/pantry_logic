@@ -9,6 +9,7 @@ class UiPrefs {
 
   static const stockCollapsedLocations = 'stock.collapsedLocations';
   static const homeUpcomingExpanded = 'home.upcomingExpanded';
+  static const mealsCollapsedCategories = 'meals.collapsedCategories';
 
   /// Last location picked in the add-to-stock sheet. Suffixed with the user
   /// id so people sharing a device keep their own.
