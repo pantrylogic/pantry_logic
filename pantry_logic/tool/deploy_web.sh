@@ -30,7 +30,20 @@ if [ "$missing" != 0 ]; then
   exit 1
 fi
 
+# The family beta guide lives at docs/guide/ (served at /pantry_logic/guide/).
+# The mirror below only adds/overwrites files, so it survives, but refuse to
+# deploy if it has gone missing so nobody ships a deploy that drops the guide.
+if [ ! -f ../docs/guide/index.html ]; then
+  echo "docs/guide/index.html is missing; restore the family guide before deploying." >&2
+  exit 1
+fi
+
 cp -r build/web/. ../docs/
+
+if [ ! -f ../docs/guide/index.html ]; then
+  echo "docs/guide/ was removed during the mirror; aborting." >&2
+  exit 1
+fi
 
 # Serve docs/ as-is, without Jekyll. Flutter doesn't copy dotfiles from web/,
 # so the marker is (re)created here on every deploy.

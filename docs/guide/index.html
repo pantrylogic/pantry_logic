@@ -1,0 +1,415 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="robots" content="noindex">
+<title>Pantry Logic Family Guide</title>
+<meta name="description" content="A friendly step-by-step guide to using Pantry Logic with your household.">
+<link rel="icon" type="image/png" href="assets/favicon.png">
+<style>
+:root{
+  --primary:#2D5A27; --primary-dark:#1E3D1A; --secondary:#7A9E77;
+  --accent-light:#C5D8C2; --accent-soft:#D4E2A5; --bg:#F7F7F4; --surface:#fff;
+  --text:#2C2C2C; --muted:#5C5C58; --border:#E3E3DD; --warn-bg:#F5EDDD; --warn:#8A5A00;
+  --frame:#2C2C2C;
+}
+*{box-sizing:border-box}
+html{overscroll-behavior-y:none;scroll-padding-top:64px}
+body{margin:0;background:var(--bg);color:var(--text);line-height:1.6;font-size:17px;
+  font-family:"Nunito Sans","Segoe UI",Roboto,"Helvetica Neue",Arial,sans-serif}
+a{color:var(--primary)}
+img{max-width:100%;display:block}
+.wrap{max-width:1040px;margin:0 auto;padding:0 16px}
+
+/* top nav */
+.nav{position:sticky;top:0;z-index:10;background:rgba(247,247,244,.96);border-bottom:1px solid var(--border)}
+.nav .wrap{display:flex;align-items:center;gap:6px;overflow-x:auto;scrollbar-width:none;height:52px}
+.nav .wrap::-webkit-scrollbar{display:none}
+.nav .brand,.nav a.l{flex:none}
+.nav .brand{display:flex;align-items:center;gap:8px;font-weight:800;color:var(--primary);text-decoration:none;margin-right:8px;white-space:nowrap}
+.nav .brand img{width:26px;height:26px}
+.nav a.l{white-space:nowrap;text-decoration:none;color:var(--muted);font-size:14.5px;font-weight:700;padding:6px 10px;border-radius:999px}
+.nav a.l:hover{background:var(--accent-light);color:var(--primary-dark)}
+.nav a.l.on{background:var(--primary);color:#fff}
+
+/* hero */
+.hero{padding:40px 0 24px;text-align:center}
+.hero img.logo{width:120px;margin:0 auto 12px}
+.hero h1{font-size:clamp(28px,6vw,44px);line-height:1.15;margin:0 0 12px;color:var(--primary)}
+.hero p.lead{font-size:clamp(18px,3.2vw,21px);color:var(--muted);max-width:640px;margin:0 auto 22px}
+.btn{display:inline-block;background:var(--primary);color:#fff;text-decoration:none;font-weight:800;padding:14px 26px;border-radius:14px;font-size:18px}
+.btn:hover{background:var(--primary-dark)}
+.btn.alt{background:#fff;color:var(--primary);border:2px solid var(--primary)}
+
+section{padding:44px 0;border-top:1px solid var(--border)}
+section h2{font-size:clamp(24px,4.5vw,32px);color:var(--primary);margin:0 0 6px;line-height:1.2}
+section .intro{font-size:19px;color:var(--muted);margin:0 0 22px;max-width:720px}
+h3{font-size:20px;margin:28px 0 10px;color:var(--primary-dark)}
+.num{display:inline-grid;place-items:center;width:28px;height:28px;border-radius:50%;background:var(--primary);color:#fff;font-weight:800;font-size:15px;flex:none}
+
+/* screenshot strips: the screenshots do the teaching */
+.strip{display:grid;grid-template-columns:repeat(auto-fill,minmax(230px,1fr));gap:28px 20px;padding:6px 0 18px;justify-items:center}
+figure.step{margin:0;width:100%;max-width:290px;}
+.phone{border:6px solid var(--frame);border-radius:30px;overflow:hidden;background:#fff;box-shadow:0 8px 24px rgba(30,61,26,.14);cursor:zoom-in}
+.phone img{width:100%;height:auto}
+figcaption{display:flex;gap:10px;align-items:flex-start;margin-top:12px;font-size:16px;line-height:1.4}
+figcaption b{color:var(--primary-dark)}
+.hint{font-size:14px;color:var(--muted);margin:-6px 0 6px}
+
+.hero-grid{display:grid;gap:22px;justify-items:center;max-width:760px;margin:0 auto}
+.hero-grid figure.step{width:236px}
+.hero-grid>div{width:100%}
+@media (min-width:760px){.hero-grid{grid-template-columns:236px 1fr;justify-items:stretch;align-items:start}}
+.callout{background:var(--accent-soft);border-radius:14px;padding:14px 18px;margin:18px 0;max-width:760px}
+.callout.warn{background:var(--warn-bg);color:#4d3300}
+.callout p{margin:0}
+.callout p+p{margin-top:8px}
+ul.tight{padding-left:20px;margin:8px 0}
+ul.tight li{margin:5px 0}
+
+/* quick reference */
+.ref{display:grid;gap:14px;grid-template-columns:repeat(auto-fit,minmax(280px,1fr))}
+.card{background:var(--surface);border:1px solid var(--border);border-radius:16px;padding:16px 18px}
+.card h3{margin:0 0 6px;font-size:19px}
+.card dl{margin:0}
+.card dt{font-weight:800;font-size:13px;text-transform:uppercase;letter-spacing:.05em;color:var(--muted);margin-top:8px}
+.card dd{margin:0}
+
+/* examples */
+.ex{background:var(--surface);border:1px solid var(--border);border-radius:16px;padding:18px 20px;margin:16px 0}
+.ex h3{margin:0 0 4px}
+.ex ol{margin:8px 0 0;padding-left:22px}
+.ex li{margin:6px 0}
+
+.cta{text-align:center;padding:36px 0 56px}
+footer{border-top:1px solid var(--border);padding:22px 0 40px;color:var(--muted);font-size:14.5px;text-align:center}
+
+dialog#zoom{border:0;background:transparent;padding:0;max-width:96vw;max-height:96vh}
+dialog#zoom::backdrop{background:rgba(0,0,0,.75)}
+dialog#zoom img{max-height:92vh;width:auto;border-radius:24px;margin:0 auto}
+
+@media (prefers-reduced-motion:reduce){html{scroll-behavior:auto}}
+</style>
+</head>
+<body>
+
+<nav class="nav" aria-label="Sections">
+  <div class="wrap">
+    <a class="brand" href="#top"><img src="assets/favicon.png" alt="">Pantry Logic</a>
+    <a class="l" href="#welcome">Welcome</a>
+    <a class="l" href="#start">Getting started</a>
+    <a class="l" href="#grocery">Groceries</a>
+    <a class="l" href="#stock">Stock</a>
+    <a class="l" href="#meals">Meals</a>
+    <a class="l" href="#hungry">I'm Hungry</a>
+    <a class="l" href="#together">Together</a>
+    <a class="l" href="#examples">Examples</a>
+    <a class="l" href="#reference">Quick reference</a>
+  </div>
+</nav>
+
+<main id="top">
+
+<!-- 1 WELCOME -->
+<header class="hero wrap" id="welcome">
+  <img class="logo" src="assets/logo.webp" alt="Pantry Logic jar logo">
+  <h1>Pantry Logic — Less figuring out food. More eating it.</h1>
+  <p class="lead">One shared place for your household's grocery list, the food you have on hand, and the meals you like to make. No more "what do we have?" and "what should we eat?" text threads.</p>
+  <p><a class="btn" href="https://pantrylogic.github.io/pantry_logic/" target="_blank" rel="noopener">Open Pantry Logic</a></p>
+  <p class="hint" style="margin-top:14px">Thanks for testing! Everything in this guide uses a practice household, so the screenshots are exactly what you'll see.</p>
+</header>
+
+<div class="wrap" style="padding-bottom:36px">
+  <div class="hero-grid">
+    <figure class="step"><div class="phone"><img src="assets/shots/home.webp" alt="Home screen with to-buy and in-stock counts, dinner plan and the I'm Hungry button" loading="lazy"></div>
+      <figcaption><span><b>Home</b> shows what's for dinner and one big button for when you're hungry.</span></figcaption></figure>
+    <div>
+      <div style="background:var(--surface);border:1px solid var(--border);border-radius:16px;padding:18px 20px">
+        <h3 style="margin-top:0">The app in five tabs</h3>
+        <p style="margin:6px 0"><b>Home</b> — a quick look at today.</p>
+        <p style="margin:6px 0"><b>Grocery</b> — what to buy. Tick it off when you've bought it.</p>
+        <p style="margin:6px 0"><b>Stock</b> — what you have, and where it lives (Fridge, Freezer, Pantry…).</p>
+        <p style="margin:6px 0"><b>Meals</b> — meals your household makes, with ingredients and directions.</p>
+        <p style="margin:6px 0"><b>Calendar</b> — pick a dinner for each day of the week.</p>
+        <p style="margin:12px 0 0">They all connect: buy something and it lands in Stock; a meal checks Stock to see if you have its ingredients.</p>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- 2 GETTING STARTED -->
+<section id="start"><div class="wrap">
+  <h2>Getting started</h2>
+  <p class="intro">One person sets up the household. Everyone else joins with a short code. Pick whichever describes you.</p>
+
+  <h3>A. You're the first one: start the household</h3>
+  <div class="strip three">
+    <figure class="step"><div class="phone"><img src="assets/shots/signup.webp" alt="Create account screen with name, email and password" loading="lazy"></div>
+      <figcaption><span class="num">1</span><span>Enter your <b>name, email and password</b>, then tap <b>Create Account</b>.</span></figcaption></figure>
+    <figure class="step"><div class="phone"><img src="assets/shots/name-household.webp" alt="Name your household screen" loading="lazy"></div>
+      <figcaption><span class="num">2</span><span>Give the household a name (like "The Smiths"), then <b>Create Household</b>.</span></figcaption></figure>
+    <figure class="step"><div class="phone"><img src="assets/shots/invite-code.webp" alt="Household ready screen showing a six-character invite code" loading="lazy"></div>
+      <figcaption><span class="num">3</span><span>You get a <b>6-character code</b>. Send it to your family, then tap <b>Go to app</b>. (The code is hidden in this picture.)</span></figcaption></figure>
+  </div>
+  <div class="callout"><p><b>Lost the code?</b> It's always in <b>Home → the gear icon (Settings) → Invite code</b>. Tap it to see and copy it.</p></div>
+
+  <h3>B. Someone already set it up: join with the code</h3>
+  <div class="strip three">
+    <figure class="step"><div class="phone"><img src="assets/shots/signup.webp" alt="Sign-up screen with Join a Household button" loading="lazy"></div>
+      <figcaption><span class="num">1</span><span>On the first screen tap <b>Join a Household</b>.</span></figcaption></figure>
+    <figure class="step"><div class="phone"><img src="assets/shots/join.webp" alt="Join a Household screen with name and household code fields" loading="lazy"></div>
+      <figcaption><span class="num">2</span><span>Type <b>your name</b> (it's shown next to things you add) and the <b>household code</b>, then <b>Join</b>. No email or password needed.</span></figcaption></figure>
+    <figure class="step"><div class="phone"><img src="assets/shots/guest-home.webp" alt="Home screen for a guest member with a guest session notice" loading="lazy"></div>
+      <figcaption><span class="num">3</span><span>You're in, and you see the same household as everyone else.</span></figcaption></figure>
+  </div>
+  <div class="callout warn">
+    <p><b>About that "Guest session" note.</b> When you join with a code, you're a guest on <em>that phone or browser</em>. As far as I can tell in the app today, there's no button to turn a guest into an email account, so keep using the same device and avoid clearing the browser's site data. Switching phones means joining again with the code.</p>
+  </div>
+
+  <h3>Signing in later</h3>
+  <div class="strip three">
+    <figure class="step"><div class="phone"><img src="assets/shots/signin.webp" alt="Welcome back sign-in screen" loading="lazy"></div>
+      <figcaption><span>If you made an account, use <b>Already have an account? Sign in</b> on the first screen with your email and password.</span></figcaption></figure>
+  </div>
+  <p class="hint">Sign out any time from Settings (bottom of the page).</p>
+</div></section>
+
+<!-- 3 GROCERY -->
+<section id="grocery"><div class="wrap">
+  <h2>Grocery list</h2>
+  <p class="intro">Add things as you think of them. Tick them off at the store, and they move into your Stock automatically.</p>
+  <div class="strip">
+    <figure class="step"><div class="phone"><img src="assets/shots/grocery-empty.webp" alt="Empty grocery list with Add an item bar at the bottom" loading="lazy"></div>
+      <figcaption><span class="num">1</span><span>Open the <b>Grocery</b> tab. Tap <b>Add an item…</b> at the bottom.</span></figcaption></figure>
+    <figure class="step"><div class="phone"><img src="assets/shots/grocery-autocomplete.webp" alt="Typing Ban shows a Bananas suggestion above the add bar" loading="lazy"></div>
+      <figcaption><span class="num">2</span><span>Start typing. Things you've added before pop up as suggestions. Press <b>Enter</b> (or the green <b>+</b>) to add.</span></figcaption></figure>
+    <figure class="step"><div class="phone"><img src="assets/shots/grocery-list.webp" alt="Grocery list with milk, eggs, bread, bananas, chicken breast and rice" loading="lazy"></div>
+      <figcaption><span class="num">3</span><span>Your list. The name on the right is <b>who added it</b>. Tap an item to add a <b>quantity</b> (like "2") or a <b>note</b> (like "2%").</span></figcaption></figure>
+    <figure class="step"><div class="phone"><img src="assets/shots/grocery-checked.webp" alt="Milk ticked off and struck through at the bottom of the list, Clear completed at top right" loading="lazy"></div>
+      <figcaption><span class="num">4</span><span>At the store, tap the <b>circle</b> to tick it off. It drops to the bottom, crossed out. <b>Clear completed</b> tidies those away.</span></figcaption></figure>
+  </div>
+  <ul class="tight">
+    <li><b>Ticking something off puts it in Stock.</b> It goes to the place the app has learned for that item (otherwise Pantry), and its quantity is added to what you already have. You can move it afterwards (see Stock).</li>
+    <li><b>Changed your mind?</b> Swipe an item to the left to remove it, or open it and choose <b>Delete item</b>.</li>
+    <li>Un-ticking an item doesn't take it back out of Stock.</li>
+  </ul>
+</div></section>
+
+<!-- 4 STOCK -->
+<section id="stock"><div class="wrap">
+  <h2>Keeping track of food (Stock)</h2>
+  <p class="intro">Stock is what you have right now, sorted by where it lives. Keep it rough. A few taps is plenty.</p>
+  <div class="strip">
+    <figure class="step"><div class="phone"><img src="assets/shots/stock-list.webp" alt="Stock grouped into Fridge, Freezer and Pantry with plus and minus buttons" loading="lazy"></div>
+      <figcaption><span class="num">1</span><span>Items are grouped as <b>Fridge, Freezer, Deep Freeze and Pantry</b>. Use <b>– / +</b> to change a count, like using up an egg. Items with no number just show a <b>+</b>. The magnifier at top right searches.</span></figcaption></figure>
+    <figure class="step"><div class="phone"><img src="assets/shots/stock-add.webp" alt="Add to stock sheet with location chips and items already added" loading="lazy"></div>
+      <figcaption><span class="num">2</span><span>Tap <b>Add to stock…</b>, choose a place at the top, and type items one after another. Add a number after the name for a quantity ("Yogurt 4").</span></figcaption></figure>
+    <figure class="step"><div class="phone"><img src="assets/shots/stock-edit.webp" alt="Edit item sheet with location, quantity, notes, add to grocery list and remove from stock" loading="lazy"></div>
+      <figcaption><span class="num">3</span><span>Tap an item's name to <b>edit</b>: rename, move it to another place, set a quantity or note.</span></figcaption></figure>
+    <figure class="step"><div class="phone"><img src="assets/shots/stock-empty.webp" alt="Empty stock screen reading Nothing in stock yet" loading="lazy"></div>
+      <figcaption><span class="num">4</span><span>Brand new? It starts empty. Add items here, or just tick things off your grocery list.</span></figcaption></figure>
+  </div>
+  <ul class="tight">
+    <li>At the bottom of the edit sheet: <b>Add to grocery list</b> (running low?) and <b>Remove from stock</b> (all gone).</li>
+    <li>Quantities are free text, so "2", "500 g" or "a few" all work. The – / + buttons only appear for plain numbers.</li>
+    <li>The places (Fridge, Freezer, …) can be renamed or added to in <b>Settings → Storage locations</b>.</li>
+  </ul>
+</div></section>
+
+<!-- 5 MEALS -->
+<section id="meals"><div class="wrap">
+  <h2>Meals and recipes</h2>
+  <p class="intro">Save the meals your household makes, list what each one needs, and the app tells you whether you have it.</p>
+  <div class="strip">
+    <figure class="step"><div class="phone"><img src="assets/shots/meal-category.webp" alt="Meals screen with a sheet asking what kind of meal it is" loading="lazy"></div>
+      <figcaption><span class="num">1</span><span>On <b>Meals</b>, type a name in <b>New meal…</b>, press Enter, then choose <b>Snack, Light Meal or Meal</b> and tap <b>Add meal</b>.</span></figcaption></figure>
+    <figure class="step"><div class="phone"><img src="assets/shots/meals-list.webp" alt="Meals list grouped by category" loading="lazy"></div>
+      <figcaption><span class="num">2</span><span>Meals are grouped by category (tap a heading to fold it). Tap a meal to open it.</span></figcaption></figure>
+    <figure class="step"><div class="phone"><img src="assets/shots/meal-ingredients.webp" alt="Ingredients tab showing Parmesan missing and Pasta and Tomato sauce in stock" loading="lazy"></div>
+      <figcaption><span class="num">3</span><span><b>Ingredients</b> tab: type ingredients into <b>Add ingredient…</b>. Each one says <b>In stock · where</b> or <b>Missing</b>.</span></figcaption></figure>
+    <figure class="step"><div class="phone"><img src="assets/shots/meal-add-missing.webp" alt="Tapping Add 1 missing shows a message that 1 item was added to the grocery list" loading="lazy"></div>
+      <figcaption><span class="num">4</span><span>Tap <b>Add 1 missing</b> and the missing items go straight onto your grocery list.</span></figcaption></figure>
+    <figure class="step"><div class="phone"><img src="assets/shots/meal-directions.webp" alt="Directions tab with three numbered steps" loading="lazy"></div>
+      <figcaption><span class="num">5</span><span><b>Directions</b> tab: add steps one at a time. They're numbered, and you can drag the handle on the right to reorder.</span></figcaption></figure>
+    <figure class="step"><div class="phone"><img src="assets/shots/meal-requirement.webp" alt="Ingredient requirement sheet with an optional count field" loading="lazy"></div>
+      <figcaption><span class="num">6</span><span>Optional: tap the pencil on an ingredient to say <b>how many</b> you need (e.g. 3 eggs). Leave it blank and the app only checks you have <em>some</em>.</span></figcaption></figure>
+  </div>
+  <ul class="tight">
+    <li>The <b>Eat This</b> button at the bottom of a meal is covered in the next section.</li>
+    <li>The ⋮ menu on a meal lets you rename it, change its category or delete it. The categories icon on the Meals screen manages categories.</li>
+    <li>You don't need directions. The Directions tab says "No steps needed? That's fine."</li>
+  </ul>
+</div></section>
+
+<!-- 6 HUNGRY -->
+<section id="hungry"><div class="wrap">
+  <h2>The "I'm Hungry" button</h2>
+  <p class="intro">Can't decide? Tell the app what kind of meal you want and it deals out one idea at a time, starting with the ones you can make right now.</p>
+  <div class="strip">
+    <figure class="step"><div class="phone"><img src="assets/shots/home.webp" alt="Home screen with the I'm Hungry button" loading="lazy"></div>
+      <figcaption><span class="num">1</span><span>On <b>Home</b>, tap the big green <b>I'm Hungry</b> button.</span></figcaption></figure>
+    <figure class="step"><div class="phone"><img src="assets/shots/hungry-categories.webp" alt="What are you feeling screen with Snack, Light Meal and Meal" loading="lazy"></div>
+      <figcaption><span class="num">2</span><span>Pick <b>Snack, Light Meal or Meal</b> (or whatever categories you've made).</span></figcaption></figure>
+    <figure class="step"><div class="phone"><img src="assets/shots/hungry-ready.webp" alt="Suggestion card for Chicken and rice saying You have everything and Ready to make" loading="lazy"></div>
+      <figcaption><span class="num">3</span><span>A suggestion: <b>"You have everything"</b> and <b>Ready to make</b>. Tap <b>Suggest Another</b> for the next one.</span></figcaption></figure>
+    <figure class="step"><div class="phone"><img src="assets/shots/hungry-missing.webp" alt="Suggestion card for Pasta with tomato sauce saying Missing 1 item: Parmesan" loading="lazy"></div>
+      <figcaption><span class="num">4</span><span>Once the ready ones are used up you see the rest, with <b>what's missing</b> listed. At the end the button says <b>No more suggestions</b>.</span></figcaption></figure>
+    <figure class="step"><div class="phone"><img src="assets/shots/hungry-review.webp" alt="Review stock screen: Butter and Bread not tracked, Eggs 12 to 9" loading="lazy"></div>
+      <figcaption><span class="num">5</span><span>Like it? Tap <b>Eat This</b>. You get a <b>Review stock</b> screen first. Nothing changes until you tap <b>Done - Update Stock</b>.</span></figcaption></figure>
+  </div>
+
+  <h3>What it really does</h3>
+  <ul class="tight">
+    <li><b>Order:</b> inside the category you chose, meals you can make from Stock (or that have no ingredients listed) come first in random order, then the others, also in random order. It does not learn your tastes, look at the time of day or remember what you ate lately.</li>
+    <li><b>"Have everything"</b> means every listed ingredient is in Stock (and, where you set a count, there's at least that many). If an ingredient's quantity is text the app can't read ("a few"), the card says <b>Check quantity</b> instead.</li>
+    <li><b>Eat This takes stock off only for ingredients where you set a count.</b> In the example, eggs go from 12 to 9 because that meal needs 3 eggs. Ingredients with no count show <b>Not tracked</b> and stay as they are. Anything short, unreadable, or not in stock is skipped and labelled. If an amount hits zero, the item is removed from Stock.</li>
+    <li>If a meal has no ingredients at all, <b>Eat This</b> just says "Enjoy …!" and changes nothing.</li>
+    <li>The suggestion card doesn't show directions. Open the meal from the Meals tab for those.</li>
+    <li><b>Eat This</b> doesn't put the meal on the Calendar. Use the Calendar for that.</li>
+  </ul>
+</div></section>
+
+<!-- CALENDAR -->
+<section id="calendar"><div class="wrap">
+  <h2>Planning the week (Calendar)</h2>
+  <p class="intro">Optional, but handy: one dinner per day, and the app shows if you have what it needs.</p>
+  <div class="strip">
+    <figure class="step"><div class="phone"><img src="assets/shots/calendar-empty.webp" alt="Calendar week with plus buttons on each day" loading="lazy"></div>
+      <figcaption><span class="num">1</span><span>The <b>Calendar</b> tab shows a week. Tap a day. Use the arrows at the top to change weeks.</span></figcaption></figure>
+    <figure class="step"><div class="phone"><img src="assets/shots/calendar-pick.webp" alt="Plan dinner sheet listing meals with All in stock or 1 missing" loading="lazy"></div>
+      <figcaption><span class="num">2</span><span>Choose a meal. Each shows <b>All in stock</b> or <b>how many are missing</b>.</span></figcaption></figure>
+    <figure class="step"><div class="phone"><img src="assets/shots/calendar-planned.webp" alt="Calendar week with three planned dinners" loading="lazy"></div>
+      <figcaption><span class="num">3</span><span>Planned days show the meal and its status. Today and tomorrow also appear on <b>Home</b>.</span></figcaption></figure>
+    <figure class="step"><div class="phone"><img src="assets/shots/calendar-actions.webp" alt="Day actions: View meal, Eat This, Change meal, Remove" loading="lazy"></div>
+      <figcaption><span class="num">4</span><span>Tap a planned day to <b>View meal</b>, <b>Eat This</b> (same Review stock step), <b>Change meal</b> or <b>Remove</b>.</span></figcaption></figure>
+  </div>
+</div></section>
+
+<!-- 7 TOGETHER -->
+<section id="together"><div class="wrap">
+  <h2>Using Pantry Logic together</h2>
+  <p class="intro">Everyone who joins your household sees the same grocery list, stock, meals and calendar.</p>
+  <div class="strip">
+    <figure class="step"><div class="phone"><img src="assets/shots/sync-grocery.webp" alt="Grocery list where Orange juice was added by Alex while Sam is watching" loading="lazy"></div>
+      <figcaption><span class="num">✓</span><span><b>Alex</b> added Orange juice on their phone. It showed up on <b>Sam's</b> list within a couple of seconds, with no refreshing, tagged with Alex's name.</span></figcaption></figure>
+    <figure class="step"><div class="phone"><img src="assets/shots/settings.webp" alt="Settings showing your name, household name, invite code, members and storage locations" loading="lazy"></div>
+      <figcaption><span class="num">⚙</span><span><b>Settings</b> (gear on Home) shows the household's <b>members</b>, the invite code, and your storage places and meal categories.</span></figcaption></figure>
+  </div>
+  <ul class="tight">
+    <li><b>Example:</b> one of you adds eggs to the list while the other is at the store. They see it appear and grab them.</li>
+    <li>The grocery list updates live (I tested it with two devices). The Stock, Meals and Calendar screens are built to update live as well. If something ever looks out of date, switch tabs and back.</li>
+    <li>Things you add are labelled with your name.</li>
+    <li>The person who created the household is listed as <b>owner</b> in Settings. Everyone else just uses the app.</li>
+  </ul>
+</div></section>
+
+<!-- 8 EXAMPLES -->
+<section id="examples"><div class="wrap">
+  <h2>Everyday examples</h2>
+
+  <div class="ex">
+    <h3>"The milk is almost gone."</h3>
+    <ol>
+      <li>Open <b>Grocery</b> and type <b>Milk</b>. Press Enter. Everyone can now see it.</li>
+      <li>Optional: tap Milk and add a quantity like "2".</li>
+      <li>Or from <b>Stock</b>: tap Milk's name, then <b>Add to grocery list</b>.</li>
+    </ol>
+  </div>
+
+  <div class="ex">
+    <h3>"I'm home and want dinner."</h3>
+    <ol>
+      <li>On <b>Home</b>, tap <b>I'm Hungry</b>.</li>
+      <li>Choose <b>Meal</b> (or Snack / Light Meal).</li>
+      <li>Not feeling it? Tap <b>Suggest Another</b>.</li>
+      <li>Happy? Tap <b>Eat This</b>, check the list, then <b>Done - Update Stock</b>.</li>
+    </ol>
+  </div>
+
+  <div class="ex">
+    <h3>"I'm putting groceries away."</h3>
+    <ol>
+      <li>If you shopped from the list, tap each circle on <b>Grocery</b> as you unpack. It all goes into Stock for you.</li>
+      <li>Bought extras that weren't on the list? In <b>Stock</b> tap <b>Add to stock…</b>, pick Fridge, Freezer or Pantry, and type them in.</li>
+      <li>Check the <b>Stock</b> tab. Move anything that landed in the wrong place by tapping its name.</li>
+    </ol>
+  </div>
+
+  <div class="ex">
+    <h3>"What do we have? I don't want to dig through the fridge."</h3>
+    <ol>
+      <li>Open the <b>Stock</b> tab. Everything is grouped by Fridge, Freezer and Pantry.</li>
+      <li>Looking for something specific? Tap the <b>magnifier</b> at the top right and search.</li>
+      <li>Want to know if you can make a meal? Open it on the <b>Meals</b> tab. Each ingredient says In stock or Missing, and <b>Add … missing</b> puts the gaps on your list.</li>
+    </ol>
+  </div>
+</div></section>
+
+<!-- 9 QUICK REFERENCE -->
+<section id="reference"><div class="wrap">
+  <h2>Quick reference</h2>
+  <p class="intro">The main screens at a glance.</p>
+  <div class="ref">
+    <div class="card"><h3>Home</h3><dl>
+      <dt>What it's for</dt><dd>A snapshot: items to buy, items in stock, tonight's and tomorrow's dinner.</dd>
+      <dt>Use it when</dt><dd>You open the app and want the quick picture, or you're hungry.</dd>
+      <dt>Most common action</dt><dd>Tap <b>I'm Hungry</b>.</dd></dl></div>
+    <div class="card"><h3>Grocery</h3><dl>
+      <dt>What it's for</dt><dd>The shared shopping list.</dd>
+      <dt>Use it when</dt><dd>You run out of something, or you're at the store.</dd>
+      <dt>Most common action</dt><dd>Type in <b>Add an item…</b>, or tap the circle to tick something off.</dd></dl></div>
+    <div class="card"><h3>Stock</h3><dl>
+      <dt>What it's for</dt><dd>What you have, by Fridge / Freezer / Deep Freeze / Pantry.</dd>
+      <dt>Use it when</dt><dd>You've put food away or used some up.</dd>
+      <dt>Most common action</dt><dd><b>Add to stock…</b> or tap <b>– / +</b>.</dd></dl></div>
+    <div class="card"><h3>Meals</h3><dl>
+      <dt>What it's for</dt><dd>Your household's meals, with ingredients and directions.</dd>
+      <dt>Use it when</dt><dd>You're saving a new meal or checking what a meal needs.</dd>
+      <dt>Most common action</dt><dd>Open a meal and read the Ingredients and Directions tabs.</dd></dl></div>
+    <div class="card"><h3>Calendar</h3><dl>
+      <dt>What it's for</dt><dd>One planned dinner per day for the week.</dd>
+      <dt>Use it when</dt><dd>You want to plan ahead.</dd>
+      <dt>Most common action</dt><dd>Tap a day and pick a meal.</dd></dl></div>
+    <div class="card"><h3>I'm Hungry</h3><dl>
+      <dt>What it's for</dt><dd>Picking something to eat, favouring meals you can make now.</dd>
+      <dt>Use it when</dt><dd>Nobody can decide.</dd>
+      <dt>Most common action</dt><dd>Pick a category, then <b>Suggest Another</b> until you like one.</dd></dl></div>
+    <div class="card"><h3>Settings</h3><dl>
+      <dt>What it's for</dt><dd>Your name, the household name and invite code, members, storage places, meal categories, sign out.</dd>
+      <dt>Use it when</dt><dd>You need the invite code or want to rename a place.</dd>
+      <dt>Most common action</dt><dd>Open <b>Invite code</b> to share it.</dd></dl></div>
+  </div>
+  <div class="cta"><a class="btn" href="https://pantrylogic.github.io/pantry_logic/" target="_blank" rel="noopener">Open Pantry Logic</a></div>
+</div></section>
+
+</main>
+
+<footer><div class="wrap">Pantry Logic family beta guide. Screenshots come from the real app using a practice household.</div></footer>
+
+<dialog id="zoom"><img alt=""></dialog>
+
+<script>
+(function(){
+  // Highlight the current section in the top nav.
+  var links=[].slice.call(document.querySelectorAll('.nav a.l'));
+  var map={};links.forEach(function(a){map[a.getAttribute('href').slice(1)]=a;});
+  if('IntersectionObserver' in window){
+    var io=new IntersectionObserver(function(es){
+      es.forEach(function(e){ if(e.isIntersecting && map[e.target.id]){
+        links.forEach(function(a){a.classList.remove('on');}); map[e.target.id].classList.add('on');
+        map[e.target.id].scrollIntoView({block:'nearest',inline:'center'}); } });
+    },{rootMargin:'-40% 0px -55% 0px'});
+    Object.keys(map).forEach(function(id){var el=document.getElementById(id); if(el) io.observe(el);});
+  }
+  // Tap a screenshot to see it larger.
+  var dlg=document.getElementById('zoom'), big=dlg.querySelector('img');
+  document.addEventListener('click',function(e){
+    var img=e.target.closest&&e.target.closest('.phone img');
+    if(img && dlg.showModal){ big.src=img.src; big.alt=img.alt; dlg.showModal(); }
+    else if(e.target===dlg || e.target===big){ dlg.close(); }
+  });
+})();
+</script>
+</body>
+</html>
