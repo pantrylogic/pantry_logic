@@ -47,23 +47,6 @@ class AuthService {
     await _client.auth.signInWithPassword(email: email, password: password);
   }
 
-  // ─── Anonymous sign-in (household joiner) ────────────────────────────────────
-
-  Future<void> signInAnonymously({required String displayName}) async {
-    final response = await _client.auth.signInAnonymously(
-      data: {'display_name': displayName},
-    );
-
-    if (response.user == null) {
-      throw Exception('Could not create a guest session. Please try again.');
-    }
-
-    await Future.delayed(const Duration(milliseconds: 300));
-    await _client.from('profiles').update({
-      'display_name': displayName,
-    }).eq('id', response.user!.id);
-  }
-
   // ─── Profile ─────────────────────────────────────────────────────────────────
 
   Future<Profile?> getProfile() async {
@@ -126,25 +109,6 @@ class AuthService {
     await _client.auth.refreshSession();
 
     return household;
-  }
-
-  // ─── Upgrade anonymous → full account ────────────────────────────────────────
-
-  Future<void> upgradeToFullAccount({
-    required String email,
-    required String password,
-  }) async {
-    final userId = _client.auth.currentUser?.id;
-    if (userId == null) throw Exception('Not signed in.');
-
-    await _client.auth.updateUser(
-      UserAttributes(email: email, password: password),
-    );
-
-    await _client
-        .from('profiles')
-        .update({'auth_type': 'full'})
-        .eq('id', userId);
   }
 
   // ─── Sign out ────────────────────────────────────────────────────────────────

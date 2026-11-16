@@ -9,12 +9,53 @@ import '../../widgets/brand.dart';
 class JoinHouseholdScreen extends StatefulWidget {
   const JoinHouseholdScreen({super.key});
 
+  /// Returns a message if the form is invalid, otherwise null.
+  static String? validate({
+    required String name,
+    required String email,
+    required String password,
+    required String code,
+  }) {
+    if (name.isEmpty) return 'What should we call you?';
+    if (email.isEmpty || !email.contains('@') || !email.contains('.')) {
+      return 'Please enter a valid email address.';
+    }
+    if (password.length < 6) {
+      return 'Password must be at least 6 characters.';
+    }
+    if (code.isEmpty) return 'Enter the household code.';
+    return null;
+  }
+
+  /// Turns an auth / join error into something a person can act on.
+  static String friendlyError(String raw) {
+    final e = raw.toLowerCase();
+    if (e.contains('already been registered') ||
+        e.contains('already registered') ||
+        e.contains('email_exists') ||
+        e.contains('user_already_exists')) {
+      return 'That email already has an account. Go back and use Sign in.';
+    }
+    if (e.contains('not found') || e.contains('no household')) {
+      return 'No household found with that code. Double-check and try again.';
+    }
+    if (e.contains('already in a household')) {
+      return 'You are already in a household.';
+    }
+    if (e.contains('weak') || e.contains('password')) {
+      return 'Please choose a stronger password.';
+    }
+    return 'Something went wrong. Please try again.';
+  }
+
   @override
   State<JoinHouseholdScreen> createState() => _JoinHouseholdScreenState();
 }
 
 class _JoinHouseholdScreenState extends State<JoinHouseholdScreen> {
   final _nameCtrl = TextEditingController();
+  final _emailCtrl = TextEditingController();
+  final _passwordCtrl = TextEditingController();
   final _codeCtrl = TextEditingController();
   final _authService = AuthService();
 
@@ -24,20 +65,26 @@ class _JoinHouseholdScreenState extends State<JoinHouseholdScreen> {
   @override
   void dispose() {
     _nameCtrl.dispose();
+    _emailCtrl.dispose();
+    _passwordCtrl.dispose();
     _codeCtrl.dispose();
     super.dispose();
   }
 
   Future<void> _join() async {
     final name = _nameCtrl.text.trim();
+    final email = _emailCtrl.text.trim();
+    final password = _passwordCtrl.text;
     final code = _codeCtrl.text.trim();
 
-    if (name.isEmpty) {
-      setState(() => _error = 'What should we call you?');
-      return;
-    }
-    if (code.isEmpty) {
-      setState(() => _error = 'Enter the household code.');
+    final problem = JoinHouseholdScreen.validate(
+      name: name,
+      email: email,
+      password: password,
+      code: code,
+    );
+    if (problem != null) {
+      setState(() => _error = problem);
       return;
     }
 
@@ -47,9 +94,15 @@ class _JoinHouseholdScreenState extends State<JoinHouseholdScreen> {
     });
 
     try {
-      // Anonymous sign in first
-      await _authService.signInAnonymously(displayName: name);
-      // Then join the household
+      // Create the account unless an earlier attempt already did (for
+      // example the code was wrong): then just retry the join.
+      if (_authService.currentUser == null) {
+        await _authService.signUp(
+          displayName: name,
+          email: email,
+          password: password,
+        );
+      }
       await _authService.joinHousehold(code);
 
       if (!mounted) return;
@@ -58,31 +111,20 @@ class _JoinHouseholdScreenState extends State<JoinHouseholdScreen> {
         (_) => false,
       );
     } catch (e) {
-      // Sign out if something went wrong mid-flow
-      try {
-        await _authService.signOut();
-      } catch (_) {}
-
       if (!mounted) return;
-      setState(() => _error = _friendlyError(e.toString()));
+      setState(() => _error = JoinHouseholdScreen.friendlyError(e.toString()));
     } finally {
       if (mounted) setState(() => _loading = false);
     }
-  }
-
-  String _friendlyError(String raw) {
-    if (raw.contains('not found') || raw.contains('No household')) {
-      return 'No household found with that code. Double-check and try again.';
-    }
-    return 'Something went wrong. Please try again.';
   }
 
   @override
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
     final primary = isDark ? AppColors.primaryDm : AppColors.primary;
-    final textSecondary =
-        isDark ? AppColors.textSecondaryDm : AppColors.textSecondary;
+    final textSecondary = isDark
+        ? AppColors.textSecondaryDm
+        : AppColors.textSecondary;
     final textMuted = isDark ? AppColors.textMutedDm : AppColors.textMuted;
 
     return Scaffold(
@@ -100,8 +142,11 @@ class _JoinHouseholdScreenState extends State<JoinHouseholdScreen> {
                   child: Row(
                     mainAxisSize: MainAxisSize.min,
                     children: [
-                      Icon(Icons.arrow_back_ios_new_rounded,
-                          size: 14, color: primary),
+                      Icon(
+                        Icons.arrow_back_ios_new_rounded,
+                        size: 14,
+                        color: primary,
+                      ),
                       const SizedBox(width: 4),
                       Text(
                         'Back',
@@ -131,13 +176,9 @@ class _JoinHouseholdScreenState extends State<JoinHouseholdScreen> {
               const SizedBox(height: 8),
 
               Text(
-                'Enter the code from someone in your household.',
+                'Create your account and enter the code from someone in your household.',
                 textAlign: TextAlign.center,
-                style: nsSans(
-                  fontSize: 14,
-                  color: textSecondary,
-                  height: 1.5,
-                ),
+                style: nsSans(fontSize: 14, color: textSecondary, height: 1.5),
               ),
               const SizedBox(height: 36),
 
@@ -174,6 +215,20 @@ class _JoinHouseholdScreenState extends State<JoinHouseholdScreen> {
               ),
               const SizedBox(height: 10),
 
+              AuthTextField(
+                controller: _emailCtrl,
+                placeholder: 'Email',
+                keyboardType: TextInputType.emailAddress,
+              ),
+              const SizedBox(height: 10),
+
+              AuthTextField(
+                controller: _passwordCtrl,
+                placeholder: 'Password',
+                obscureText: true,
+              ),
+              const SizedBox(height: 10),
+
               // Invite code — centred, larger text
               AuthTextField(
                 controller: _codeCtrl,
@@ -184,7 +239,9 @@ class _JoinHouseholdScreenState extends State<JoinHouseholdScreen> {
                   fontSize: 20,
                   fontWeight: FontWeight.w700,
                   letterSpacing: 4,
-                  color: isDark ? AppColors.textPrimaryDm : AppColors.textPrimary,
+                  color: isDark
+                      ? AppColors.textPrimaryDm
+                      : AppColors.textPrimary,
                 ),
                 onSubmitted: (_) => _join(),
               ),
@@ -213,10 +270,7 @@ class _JoinHouseholdScreenState extends State<JoinHouseholdScreen> {
               // Divider + create own
               Text(
                 'Starting your own household?',
-                style: nsSans(
-                  fontSize: 14,
-                  color: textSecondary,
-                ),
+                style: nsSans(fontSize: 14, color: textSecondary),
               ),
               const SizedBox(height: 10),
 
@@ -227,23 +281,19 @@ class _JoinHouseholdScreenState extends State<JoinHouseholdScreen> {
                   onPressed: _loading
                       ? null
                       : () => Navigator.of(context).pushReplacement(
-                            MaterialPageRoute(
-                              builder: (_) => const SignUpScreen(),
-                            ),
+                          MaterialPageRoute(
+                            builder: (_) => const SignUpScreen(),
                           ),
+                        ),
                   child: const Text('Create a New Home'),
                 ),
               ),
               const SizedBox(height: 24),
 
               Text(
-                'You\'ll be asked to create an account later\nif you want access across devices.',
+                'Already have an account?\nGo back and use Sign in.',
                 textAlign: TextAlign.center,
-                style: nsSans(
-                  fontSize: 12,
-                  color: textMuted,
-                  height: 1.5,
-                ),
+                style: nsSans(fontSize: 12, color: textMuted, height: 1.5),
               ),
             ],
           ),

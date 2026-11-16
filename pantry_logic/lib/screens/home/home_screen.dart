@@ -12,7 +12,6 @@ import '../../services/calendar_service.dart';
 import '../../services/settings_service.dart';
 import '../../widgets/app_snack_bar.dart';
 import '../../widgets/day_plan_sheets.dart';
-import '../auth/upgrade_account_screen.dart';
 import '../hungry/hungry_category_screen.dart';
 import '../settings/settings_screen.dart';
 import '../shell/shell_controller.dart';
@@ -126,18 +125,6 @@ class _HomeScreenState extends State<HomeScreen> with TabActivation {
                         ),
                       ),
                     ),
-                    if (_profile?.isAnonymous == true)
-                      _GuestBanner(
-                        onTap: () async {
-                          final upgraded = await Navigator.of(context)
-                              .push<bool>(
-                                MaterialPageRoute(
-                                  builder: (_) => const UpgradeAccountScreen(),
-                                ),
-                              );
-                          if (upgraded == true && mounted) _load();
-                        },
-                      ),
                     const SizedBox(height: 20),
 
                     // ── Quick stats ──────────────────────────────────────────
@@ -261,62 +248,6 @@ class _Header extends StatelessWidget {
             ),
           ),
         ],
-      ),
-    );
-  }
-}
-
-class _GuestBanner extends StatelessWidget {
-  const _GuestBanner({required this.onTap});
-
-  final VoidCallback onTap;
-
-  @override
-  Widget build(BuildContext context) {
-    final p = AppPalette.of(context);
-    return Padding(
-      padding: const EdgeInsets.fromLTRB(16, 16, 16, 0),
-      child: Material(
-        color: p.warning.withValues(alpha: 0.12),
-        shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(10),
-          side: BorderSide(color: p.warning.withValues(alpha: 0.4)),
-        ),
-        child: InkWell(
-          customBorder: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(10),
-          ),
-          onTap: onTap,
-          child: Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
-            child: Row(
-              children: [
-                Icon(
-                  Icons.info_outline_rounded,
-                  color: p.warningText,
-                  size: 18,
-                ),
-                const SizedBox(width: 10),
-                Expanded(
-                  child: Text(
-                    'Guest session — tap to create an account and keep '
-                    'access across devices.',
-                    style: nsSans(
-                      fontSize: 13,
-                      color: p.warningText,
-                      height: 1.4,
-                    ),
-                  ),
-                ),
-                Icon(
-                  Icons.chevron_right_rounded,
-                  color: p.warningText,
-                  size: 18,
-                ),
-              ],
-            ),
-          ),
-        ),
       ),
     );
   }
